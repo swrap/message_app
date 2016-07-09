@@ -5,7 +5,7 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="15"
+        android:minSdkVersion="21"
         android:targetSdkVersion="24" />
 
     <!-- To auto-complete the email text field in the login form with the user's emails -->
@@ -27,7 +27,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="roofmessage.roofmessageapp.MainActivity"
+            android:name="roofmessage.roofmessageapp.activity.MainActivity"
             android:label="title_activity_main" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -36,7 +36,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="roofmessage.roofmessageapp.LoginActivity"
+            android:name="roofmessage.roofmessageapp.activity.LoginActivity"
             android:label="@string/title_activity_login" >
         </activity>
     </application>

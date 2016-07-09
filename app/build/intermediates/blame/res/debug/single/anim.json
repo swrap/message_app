@@ -20,10 +20,6 @@
         "source": "C:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\exploded-aar\\com.android.support\\appcompat-v7\\24.0.0\\res\\anim\\abc_popup_exit.xml"
     },
     {
-        "merged": "C:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\res\\merged\\debug\\anim\\design_bottom_sheet_slide_in.xml",
-        "source": "C:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\exploded-aar\\com.android.support\\design\\24.0.0\\res\\anim\\design_bottom_sheet_slide_in.xml"
-    },
-    {
         "merged": "C:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\res\\merged\\debug\\anim\\abc_slide_in_top.xml",
         "source": "C:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\exploded-aar\\com.android.support\\appcompat-v7\\24.0.0\\res\\anim\\abc_slide_in_top.xml"
     },
@@ -46,10 +42,6 @@
     {
         "merged": "C:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\res\\merged\\debug\\anim\\abc_popup_enter.xml",
         "source": "C:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\exploded-aar\\com.android.support\\appcompat-v7\\24.0.0\\res\\anim\\abc_popup_enter.xml"
-    },
-    {
-        "merged": "C:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\res\\merged\\debug\\anim\\design_bottom_sheet_slide_out.xml",
-        "source": "C:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\exploded-aar\\com.android.support\\design\\24.0.0\\res\\anim\\design_bottom_sheet_slide_out.xml"
     },
     {
         "merged": "C:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\res\\merged\\debug\\anim\\abc_slide_out_bottom.xml",

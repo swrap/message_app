@@ -10,7 +10,7 @@
     android:layout_centerVertical="true"
     android:layout_centerHorizontal="true"
     android:orientation="vertical"
-    tools:context=".LoginActivity"
+    tools:context=".activity.LoginActivity"
     android:gravity="center_vertical|center"
     android:baselineAligned="false">
 
@@ -58,11 +58,58 @@
         android:textStyle="bold"
         android:text="@string/connection" />
 
-    <Button
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="P_Contact"
-        android:id="@+id/post_contact"
-        android:layout_gravity="center_horizontal" />
+        android:gravity="center_horizontal">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="P_Contacts"
+            android:id="@+id/post_contact"
+            android:layout_gravity="center_horizontal" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="P_Conversations"
+            android:id="@+id/convo" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:gravity="center_horizontal">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MMS_Convo"
+            android:id="@+id/mms_convo" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SMS_CONVO"
+            android:id="@+id/sms_convo" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="253dp">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Get Messages"
+            android:id="@+id/messages"
+            android:layout_gravity="center_horizontal" />
+    </LinearLayout>
 
 </LinearLayout>
