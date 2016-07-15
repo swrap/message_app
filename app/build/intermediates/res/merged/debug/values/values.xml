@@ -294,7 +294,6 @@
     <string name="abc_shareactionprovider_share_with_application">Share with %s</string>
     <string name="abc_toolbar_collapse_description">Collapse</string>
     <string name="action_sign_in">Sign in</string>
-    <string name="action_sign_in_short">Sign in</string>
     <string name="app_name">RoofMessage</string>
     <string name="appbar_scrolling_view_behavior" translatable="false">android.support.design.widget.AppBarLayout$ScrollingViewBehavior</string>
     <string name="bottom_sheet_behavior" translatable="false">android.support.design.widget.BottomSheetBehavior</string>
@@ -304,14 +303,13 @@
     <string name="contact_rationale">"We need to access your contacts in order to sync with your account."</string>
     <string name="enable_permissions">Go to Permissions Page</string>
     <string name="error_field_required">This field is required</string>
-    <string name="error_invalid_email">This email address is invalid</string>
     <string name="error_invalid_password">This password is too short</string>
     <string name="error_login">"Failed to login:("</string>
     <string name="error_permissions">Can not connect without the minimum permissions we ask. Please consider
         this:)</string>
     <string name="permission_rationale">"Contact, Sending SMS, and Reading SMS are required."</string>
-    <string name="prompt_email">Email</string>
     <string name="prompt_password">Password</string>
+    <string name="prompt_username">Username</string>
     <string name="refuse_connect">"Can not connect without these permissions: "</string>
     <string name="register_online_at_roofmessage_com">Register Online at roofmessage.com</string>
     <string name="roof_permissions_internet">Internet</string>
@@ -320,6 +318,7 @@
     <string name="roof_permissions_send_sms">Contacts, </string>
     <string name="roof_permissions_unknown">UNKNOWN</string>
     <string name="roofmessage_hour_minute_sec">HH:MM:SS</string>
+    <string name="shared_preferences">user_pass_django</string>
     <string name="sms_rationale">"We need to access your messages in order to sync with your account."</string>
     <string name="status_bar_notification_info_overflow">999+</string>
     <string name="status_start">Status: Not Connected</string>

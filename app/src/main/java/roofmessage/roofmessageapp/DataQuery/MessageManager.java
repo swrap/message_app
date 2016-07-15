@@ -1,17 +1,10 @@
 package roofmessage.roofmessageapp.dataquery;
 
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.MergeCursor;
 import android.net.Uri;
-import android.provider.ContactsContract;
-import android.provider.MediaStore;
 import android.provider.Telephony;
-import android.telephony.PhoneNumberUtils;
-import android.telephony.TelephonyManager;
-import android.text.Editable;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -19,16 +12,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.reflect.Array;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
 
 import roofmessage.roofmessageapp.io.JSONBuilder;
-import roofmessage.roofmessageapp.utils.PhoneNumberFormatter;
 import roofmessage.roofmessageapp.utils.Tag;
 import roofmessage.roofmessageapp.utils.Utils;
 

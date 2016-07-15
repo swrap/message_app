@@ -14,4 +14,9 @@ public class Tag {
     //Activity Package
     public static final String MAIN_ACTIVITY = BASE_TAG + "MainAct";
     public static final String LOGIN_ACTIVITY = BASE_TAG + "LoginAct";
+
+    //IO Package
+    public static final String WEB_SOC_MANAGER = BASE_TAG + "WebSocMan";
+    public static final String SESSION_MANAGER = BASE_TAG + "SessionMan";
+    public static final String BASE_URL = "192.168.1.145:8000";
 }

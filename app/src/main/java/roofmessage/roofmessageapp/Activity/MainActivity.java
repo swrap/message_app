@@ -1,5 +1,6 @@
 package roofmessage.roofmessageapp.activity;
 
+import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -9,15 +10,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import roofmessage.roofmessageapp.dataquery.ContactManager;
 import roofmessage.roofmessageapp.R;
-import roofmessage.roofmessageapp.dataquery.MessageManager;
 import roofmessage.roofmessageapp.dataquery.QueryManager;
 import roofmessage.roofmessageapp.io.JSONBuilder;
-import roofmessage.roofmessageapp.io.PermissionsManager;
+import roofmessage.roofmessageapp.utils.PermissionsManager;
 import roofmessage.roofmessageapp.utils.Tag;
 
 public class MainActivity extends AppCompatActivity {
@@ -39,6 +35,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
 
         queryManager = QueryManager.getInstance(MainActivity.this.getApplicationContext());
         Log.d(Tag.MAIN_ACTIVITY, "IS ALIVE: " + queryManager.isAlive() + " STATE: " + queryManager.getState().name());
@@ -93,6 +92,14 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.GET_MESSAGES);
                 queryManager.addRequest(jsonBuilder);
+            }
+        });
+
+        Button websocket = (Button) findViewById(R.id.websocket);
+        websocket.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+//                SessionManager websocket = SessionManager.getInstance();
             }
         });
 

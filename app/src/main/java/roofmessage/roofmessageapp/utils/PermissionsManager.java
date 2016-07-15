@@ -1,11 +1,18 @@
-package roofmessage.roofmessageapp.io;
+package roofmessage.roofmessageapp.utils;
 
+import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 
-import java.security.Permission;
 import java.util.ArrayList;
 
 import roofmessage.roofmessageapp.R;
@@ -20,6 +27,49 @@ import static android.Manifest.permission.INTERNET;
  */
 public class PermissionsManager {
 
+    private static int MULTIPLE_MISSING_CODE = 1;
+
+    public static void checkPermissions(final AppCompatActivity activity) {
+        hasAllPermissions = PermissionsManager.hasAllPermissions(activity.getApplicationContext());
+        ArrayList<RoofPermissions> permissionArrayList = getMissingPermissions(activity);
+        ArrayList<RoofPermissions> requestDeniedPermanetly = new ArrayList<RoofPermissions>();
+        ArrayList<RoofPermissions> requestNormal = new ArrayList<RoofPermissions>();
+        for (RoofPermissions roofPermission : permissionArrayList) {
+            if(ActivityCompat.shouldShowRequestPermissionRationale(activity, roofPermission.getAndroidCode()) ) {
+                requestNormal.add(roofPermission);
+            } else {
+                requestDeniedPermanetly.add(roofPermission);
+            }
+        }
+        if (!requestNormal.isEmpty()) {
+            ActivityCompat.requestPermissions(activity,
+                    PermissionsManager.androidCodeStringArray(activity, requestNormal),
+                    MULTIPLE_MISSING_CODE);
+        } else if (!requestDeniedPermanetly.isEmpty()){
+            AlertDialog.Builder permissionsAlert = new AlertDialog.Builder(activity);
+            permissionsAlert.setMessage(R.string.error_permissions)
+                    .setPositiveButton(R.string.enable_permissions, new DialogInterface.OnClickListener() {
+
+                        @TargetApi(16)
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    Uri.fromParts("package", activity.getPackageName(), null));
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            activity.startActivity(intent);
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            //TODO: cancelled dialog
+                        }
+                    });
+            permissionsAlert.create();
+            permissionsAlert.show();
+        }
+    }
+
     public enum RoofPermissions {
 
         /***NOTE IF ADD NEW ENUM, MUST ADD TO valueStringARRAY***/
@@ -27,7 +77,6 @@ public class PermissionsManager {
         ROOF_READ_CONTACTS(READ_CONTACTS, 2),
         ROOF_SEND_SMS(SEND_SMS, 3),
         ROOF_INTERNET(INTERNET,4);
-
         private final String androidCode;
         private final int requestCode;
 
@@ -45,15 +94,20 @@ public class PermissionsManager {
         }
     }
 
+    private static boolean hasAllPermissions = false;
+
     public PermissionsManager(){}
 
-    public static boolean hasAllPermissions(Context context) {
+    public static boolean hasAllPermissions(Context context)  {
+        boolean retval = true;
         for (RoofPermissions roofPermission : RoofPermissions.values()) {
             if (ContextCompat.checkSelfPermission(context, roofPermission.getAndroidCode()) != PackageManager.PERMISSION_GRANTED) {
-                return false;
+                retval = false;
             }
         }
-        return true;
+
+        hasAllPermissions = retval;
+        return retval;
     }
 
     public static ArrayList<RoofPermissions> getMissingPermissions(Context context) {

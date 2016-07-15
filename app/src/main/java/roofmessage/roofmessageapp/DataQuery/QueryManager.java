@@ -20,7 +20,6 @@ public class QueryManager extends Thread{
     private static ContactManager contactManager = null;
     private static QueryManager queryManager = null;
     private static MessageManager messageManager = null;
-    private long waitTime = 1000;
     private boolean kill = false;
 
     private final static Object LOCK = new Object();

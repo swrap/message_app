@@ -100,16 +100,23 @@
     </LinearLayout>
 
     <LinearLayout
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="253dp">
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal">
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Get Messages"
-            android:id="@+id/messages"
-            android:layout_gravity="center_horizontal" />
+            android:id="@+id/messages" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="WS_Connect"
+            android:id="@+id/websocket" />
+
     </LinearLayout>
 
 </LinearLayout>

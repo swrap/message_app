@@ -24,4 +24,8 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:24.0.0'
     compile 'com.android.support:design:24.0.0'
+
+    //custom dependencies
+    compile 'com.neovisionaries:nv-websocket-client:1.28'
+    compile 'commons-io:commons-io:2.5'
 }

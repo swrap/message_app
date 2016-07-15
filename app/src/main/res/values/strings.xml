@@ -2,11 +2,9 @@
     <string name="app_name">RoofMessage</string>
 
     <!-- Strings related to login -->
-    <string name="prompt_email">Email</string>
+    <string name="prompt_username">Username</string>
     <string name="prompt_password">Password</string>
     <string name="action_sign_in">Sign in</string>
-    <string name="action_sign_in_short">Sign in</string>
-    <string name="error_invalid_email">This email address is invalid</string>
     <string name="error_invalid_password">This password is too short</string>
     <string name="error_field_required">This field is required</string>
     <string name="permission_rationale">"Contact, Sending SMS, and Reading SMS are required."</string>
@@ -36,4 +34,7 @@
     <string name="roof_permissions_internet">Internet</string>
     <string name="roof_permissions_unknown">UNKNOWN</string>
 
+
+    <!--Shared Preferences -->
+    <string name="shared_preferences">user_pass_django</string>
 </resources>
