@@ -22,20 +22,20 @@ import roofmessage.roofmessageapp.utils.Utils;
 /**
  * Created by Jesse Saran on 7/4/2016.
  */
-public class MessageManager {
-    private static MessageManager messageManager = null;
+public class MessageQuery {
+    private static MessageQuery messageQuery = null;
     private static ContentResolver contentResolver;
 
-    protected MessageManager(Context context) {
+    protected MessageQuery(Context context) {
         contentResolver = context.getContentResolver();
     }
 
-    protected static MessageManager getInstance(Context context) {
-        if( messageManager == null) {
-            messageManager = new MessageManager(context);
+    protected static MessageQuery getInstance(Context context) {
+        if( messageQuery == null) {
+            messageQuery = new MessageQuery(context);
         }
 
-        return messageManager;
+        return messageQuery;
     }
 
     public JSONBuilder getAllConversations() {
@@ -301,7 +301,7 @@ public class MessageManager {
                             cursor.getString(7));
                     jsonArray.put(message);
                 } catch (JSONException e) {
-                    Log.e(Tag.MESSAGE_MANAGER, "Could not add contact.");
+                    Log.d(Tag.MESSAGE_MANAGER, "Could not find message.");
                     e.printStackTrace();
                 }
             } while(cursor.moveToNext());
@@ -311,8 +311,7 @@ public class MessageManager {
             jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.MESSAGES.name().toLowerCase(),
                     (Object) jsonArray);
         } catch (JSONException e) {
-            Log.e(Tag.MESSAGE_MANAGER,"Could not add array to json.");
-            e.printStackTrace();
+            Log.e(Tag.MESSAGE_MANAGER,"Could not add array to json.", e);
         }
         if(cursor != null){
             cursor.close();

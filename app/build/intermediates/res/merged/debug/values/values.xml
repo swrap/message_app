@@ -243,7 +243,7 @@
     <dimen name="notification_large_icon_height">64dp</dimen>
     <dimen name="notification_large_icon_width">64dp</dimen>
     <dimen name="notification_subtext_size">12dp</dimen>
-    <dimen name="roofmessage_main_size">30dp</dimen>
+    <dimen name="roofmessage_main_size">16dp</dimen>
     <drawable name="notification_template_icon_bg">#3333B5E5</drawable>
     <item name="action_bar_activity_content" type="id"/>
     <item name="action_bar_spinner" type="id"/>
@@ -296,32 +296,41 @@
     <string name="action_sign_in">Sign in</string>
     <string name="app_name">RoofMessage</string>
     <string name="appbar_scrolling_view_behavior" translatable="false">android.support.design.widget.AppBarLayout$ScrollingViewBehavior</string>
+    <string name="back_button_cancel">Cancel</string>
+    <string name="back_button_dialog">Are you sure you want to logout?</string>
+    <string name="back_button_logout">Logout</string>
+    <string name="background_process">:RoofMessageBackground</string>
     <string name="bottom_sheet_behavior" translatable="false">android.support.design.widget.BottomSheetBehavior</string>
     <string name="cancel">Cancel</string>
     <string name="character_counter_pattern" translatable="false">%1$d / %2$d</string>
-    <string name="connection">connected</string>
+    <string name="connect">Connect</string>
     <string name="contact_rationale">"We need to access your contacts in order to sync with your account."</string>
+    <string name="disconnect">Disconnect</string>
     <string name="enable_permissions">Go to Permissions Page</string>
     <string name="error_field_required">This field is required</string>
     <string name="error_invalid_password">This password is too short</string>
     <string name="error_login">"Failed to login:("</string>
-    <string name="error_permissions">Can not connect without the minimum permissions we ask. Please consider
-        this:)</string>
+    <string name="error_permissions">Can not connect without the minimum permissions required for this app.</string>
     <string name="permission_rationale">"Contact, Sending SMS, and Reading SMS are required."</string>
     <string name="prompt_password">Password</string>
     <string name="prompt_username">Username</string>
     <string name="refuse_connect">"Can not connect without these permissions: "</string>
     <string name="register_online_at_roofmessage_com">Register Online at roofmessage.com</string>
+    <string name="remember_checkbox">Remember Me</string>
     <string name="roof_permissions_internet">Internet</string>
     <string name="roof_permissions_read_contacts">Contacts</string>
     <string name="roof_permissions_read_sms">Read SMS(Messages)</string>
     <string name="roof_permissions_send_sms">Contacts, </string>
     <string name="roof_permissions_unknown">UNKNOWN</string>
     <string name="roofmessage_hour_minute_sec">HH:MM:SS</string>
-    <string name="shared_preferences">user_pass_django</string>
+    <string name="shared_preferences">roof_message_app</string>
     <string name="sms_rationale">"We need to access your messages in order to sync with your account."</string>
     <string name="status_bar_notification_info_overflow">999+</string>
-    <string name="status_start">Status: Not Connected</string>
+    <string name="status_closed">Status: Closed</string>
+    <string name="status_closing">Status: Closing</string>
+    <string name="status_connecting">Status: Connecting</string>
+    <string name="status_created">Status: Created</string>
+    <string name="status_open">Status: Open</string>
     <string name="title_activity_login">RoofMessage: Sign In</string>
     <string name="title_activity_main">RoofMessage</string>
     <style name="AlertDialog.AppCompat" parent="Base.AlertDialog.AppCompat"/>
@@ -1348,6 +1357,11 @@
         <item name="tabTextAppearance">@style/TextAppearance.Design.Tab</item>
         <item name="tabSelectedTextColor">?android:textColorPrimary</item>
     </style>
+    <style name="Checkbox" parent="Theme.AppCompat.Light">
+        <item name="colorControlNormal">@color/colorPrimary</item>
+        <item name="colorControlActivated">@color/colorPrimaryDark</item>
+        <item name="android:typeface">serif</item>
+    </style>
     <style name="Platform.AppCompat" parent="android:Theme">
         <item name="android:windowNoTitle">true</item>
 
@@ -1446,6 +1460,12 @@
         <item name="android:dropDownItemStyle">@style/Widget.AppCompat.DropDownItem.Spinner</item>
     </style>
     <style name="Platform.Widget.AppCompat.Spinner" parent="android:Widget.Spinner"/>
+    <style name="RoofDefaultFont" parent="AppTheme">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">#000000</item>
+        <item name="android:textSize">@dimen/roofmessage_main_size</item>
+    </style>
     <style name="RtlOverlay.DialogWindowTitle.AppCompat" parent="Base.DialogWindowTitle.AppCompat">
     </style>
     <style name="RtlOverlay.Widget.AppCompat.ActionBar.TitleItem" parent="android:Widget">

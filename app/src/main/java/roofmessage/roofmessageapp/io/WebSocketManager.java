@@ -1,5 +1,8 @@
 package roofmessage.roofmessageapp.io;
 
+import android.content.Context;
+import android.content.Intent;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.neovisionaries.ws.client.WebSocket;
@@ -19,6 +22,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import roofmessage.roofmessageapp.BackgroundManager;
+import roofmessage.roofmessageapp.R;
 import roofmessage.roofmessageapp.utils.Tag;
 
 /**
@@ -27,25 +32,31 @@ import roofmessage.roofmessageapp.utils.Tag;
 public class WebSocketManager {
     private static WebSocketManager webSocketManager;
     private static WebSocketFactory webSocketFactory;
+    private BackgroundManager backgroundManager;
     private WebSocket webSocket;
+    private Context context;
     private boolean connected = false;
 
     private final static String COOKIE = "cookie";
-
     private static final String WS_URL = "ws://" + Tag.BASE_URL + "/message_route/";
 
-    private WebSocketManager() {}
+    private WebSocketManager(Context context) {
+        this.context = context;
+        backgroundManager = BackgroundManager.getInstance();
+    }
 
-    public static WebSocketManager getInstance() {
+    public static WebSocketManager getInstance(Context context) {
         if(webSocketManager == null) {
             webSocketFactory = new WebSocketFactory();
-            webSocketManager = new WebSocketManager();
+            webSocketManager = new WebSocketManager(context);
+            Log.d(Tag.WEB_SOC_MANAGER, "WebsocketManager started from scratch");
         }
         return webSocketManager;
     }
 
     public boolean createConnection() {
-        //create websocket if null
+        Log.d(Tag.WEB_SOC_MANAGER, "Attempting connection");
+
         if (webSocket == null) {
             webSocketFactory.setConnectionTimeout(5000);
             try {
@@ -58,8 +69,11 @@ public class WebSocketManager {
             webSocket.addListener(new Listener());
         }
 
+        if (webSocket != null) {
+            Log.d(Tag.WEB_SOC_MANAGER, "Websocket state [" + webSocket.getState() + "]");
+        }
         //check state
-        if ( webSocket.getState() == WebSocketState.CLOSED ) {
+        if ( webSocket.getState() == WebSocketState.CLOSED || webSocket.getState() == WebSocketState.CREATED) {
             // Prepare an ExecutorService.
             ExecutorService es = Executors.newSingleThreadExecutor();
             Future<WebSocket> future = webSocket.connect(es);
@@ -71,11 +85,11 @@ public class WebSocketManager {
             catch (ExecutionException e)
             {
                 if (e.getCause() instanceof WebSocketException) {
-                    Log.e(Tag.WEB_SOC_MANAGER, "Failed to connect: " + e.getMessage(), e);
+                    Log.d(Tag.WEB_SOC_MANAGER, "Failed to connect: " + e.getMessage(), e);
                 }
                 return false;
             } catch (InterruptedException e) {
-                Log.e(Tag.WEB_SOC_MANAGER, "Future interrupted", e);
+                Log.d(Tag.WEB_SOC_MANAGER, "Future interrupted", e);
                 return false;
             }
         }
@@ -88,10 +102,10 @@ public class WebSocketManager {
         return false;
     }
 
-    private static String getCookies() {
+    private String getCookies() {
         StringBuilder cookieStringBuilder = new StringBuilder();
         //add cookies in from http session
-        SessionManager sessionManager = SessionManager.getInstance();
+        SessionManager sessionManager = SessionManager.getInstance(context);
         CookieStore cookieStore = sessionManager.getCookieManager().getCookieStore();
         List<HttpCookie> cookies = cookieStore.getCookies();
         for (int i = 0; i < cookies.size(); ++i ) {
@@ -112,11 +126,37 @@ public class WebSocketManager {
         webSocket.sendBinary(bytes);
     }
 
+    public WebSocketState getState() {
+        return webSocket.getState();
+    }
+
+    public String getLocalizeState() {
+        return localizeState(webSocket.getState());
+    }
+
+    private String localizeState(WebSocketState webSocketState) {
+        String state = "";
+        if (webSocketState.equals(WebSocketState.CREATED)) {
+            state = WebSocketManager.this.context.getString(R.string.status_created);
+        } else if (webSocketState.equals(WebSocketState.CONNECTING)) {
+            state = WebSocketManager.this.context.getString(R.string.status_connecting);
+        } else if (webSocketState.equals(WebSocketState.OPEN)) {
+            state = WebSocketManager.this.context.getString(R.string.status_open);
+        } else if (webSocketState.equals(WebSocketState.CLOSING)) {
+            state = WebSocketManager.this.context.getString(R.string.status_closing);
+        } else if (webSocketState.equals(WebSocketState.CLOSED)) {
+            state = WebSocketManager.this.context.getString(R.string.status_closed);
+        }
+        return state;
+    }
+
     private class Listener implements WebSocketListener {
 
         @Override
         public void onStateChanged(WebSocket websocket, WebSocketState newState) throws Exception {
-
+            Intent intent = new Intent(Tag.ACTION_WEBSOC_CHANGE);
+            intent.putExtra("state", localizeState(newState));
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
         }
 
         @Override
@@ -146,7 +186,6 @@ public class WebSocketManager {
 
         @Override
         public void onTextFrame(WebSocket websocket, WebSocketFrame frame) throws Exception {
-
         }
 
         @Override
@@ -173,6 +212,9 @@ public class WebSocketManager {
         public void onTextMessage(WebSocket websocket, String text) throws Exception {
             StringBuilder builder = new StringBuilder();
             Log.v(Tag.SESSION_MANAGER, "TEXT: " + builder.toString());
+            Intent intent = new Intent(Tag.ACTION_RECEIVED_MESSAGE);
+            intent.putExtra("message", text);
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
         }
 
         @Override
@@ -197,7 +239,7 @@ public class WebSocketManager {
 
         @Override
         public void onError(WebSocket websocket, WebSocketException cause) throws Exception {
-
+            backgroundManager.checkWebsocket();
         }
 
         @Override

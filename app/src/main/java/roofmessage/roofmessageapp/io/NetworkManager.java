@@ -27,6 +27,8 @@ public class NetworkManager extends BroadcastReceiver{
     private int MOBLIE_MIMIMUM_KBPS = 100;
     private boolean mobileMimimumSpeedEnable = false;
 
+    //mob
+
     private NetworkManager(Context context) {
         super();
         connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -60,6 +62,11 @@ public class NetworkManager extends BroadcastReceiver{
             return true;
         }
         return false;
+    }
+
+    public boolean canConnectBackgroundService() {
+        //TODO: Implement this damn code to check for conditions
+        return isConnected();
     }
 
     public boolean canSendMedia(int type, int subType){
@@ -113,6 +120,6 @@ public class NetworkManager extends BroadcastReceiver{
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        IntentFilter.
+
     }
 }

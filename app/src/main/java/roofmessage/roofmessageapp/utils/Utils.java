@@ -9,7 +9,6 @@ public class Utils {
 
     public static String convertMMStoSMSDate(String date) {
         String s = date + "000";
-        Log.e(Tag.MESSAGE_MANAGER, "FIRST: " + date + " after: " + s);
         return s;
     }
 

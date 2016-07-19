@@ -1,12 +1,10 @@
 package roofmessage.roofmessageapp.dataquery;
 
 import android.content.Context;
-import android.provider.MediaStore;
 import android.util.Log;
 
 import org.json.JSONException;
 
-import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import roofmessage.roofmessageapp.io.JSONBuilder;
@@ -17,10 +15,11 @@ import roofmessage.roofmessageapp.utils.Tag;
  */
 public class QueryManager extends Thread{
     private static ConcurrentLinkedQueue<JSONBuilder> requests;
-    private static ContactManager contactManager = null;
+    private static ContactQuery contactQuery = null;
     private static QueryManager queryManager = null;
-    private static MessageManager messageManager = null;
+    private static MessageQuery messageQuery = null;
     private boolean kill = false;
+    private int count = 0;
 
     private final static Object LOCK = new Object();
 
@@ -28,14 +27,14 @@ public class QueryManager extends Thread{
 
     public static QueryManager getInstance(Context context) {
         if(queryManager == null) {
-            contactManager = new ContactManager(context);
+            contactQuery = new ContactQuery(context);
             queryManager = new QueryManager();
-            messageManager = new MessageManager(context);
+            messageQuery = new MessageQuery(context);
             requests = new ConcurrentLinkedQueue<JSONBuilder>();
         } else if (queryManager.getState() == State.TERMINATED){
-            contactManager = new ContactManager(context);
+            contactQuery = new ContactQuery(context);
             queryManager = new QueryManager();
-            messageManager = new MessageManager(context);
+            messageQuery = new MessageQuery(context);
         }
 
         return queryManager;
@@ -59,7 +58,7 @@ public class QueryManager extends Thread{
     @Override
     public void run() {
 
-        Log.d(Tag.QUERY_MANAGER, "STRAING THREAD");
+        Log.d(Tag.QUERY_MANAGER, "Starting Thread");
         while(true) {
             try {
                 synchronized (this) {
@@ -73,26 +72,25 @@ public class QueryManager extends Thread{
                     JSONBuilder jsonRequest = requests.poll();
                     String action = jsonRequest.getString(JSONBuilder.JSON_KEY_MAIN.ACTION.name().toLowerCase());
 
+                    Log.d(Tag.QUERY_MANAGER, "Processing request action [" + action + "]");
                     if(action.equals(JSONBuilder.Action.GET_CONTACTS.name().toLowerCase())) {
-                        JSONBuilder send = contactManager.getContacts();
+                        JSONBuilder send = contactQuery.getContacts();
                         Log.d(Tag.QUERY_MANAGER, send.toString(4));
                     } else if(action.equals(JSONBuilder.Action.GET_CONVERSATIONS.name().toLowerCase())) {
-                        JSONBuilder send = messageManager.getAllConversations();
+                        JSONBuilder send = messageQuery.getAllConversations();
                         Log.d(Tag.QUERY_MANAGER, send.toString(4));
                     } else if(action.equals(JSONBuilder.Action.GET_SMS_CONVO.name().toLowerCase())) {
-                        JSONBuilder send = messageManager.getSMS("596", 5, 0);
+                        JSONBuilder send = messageQuery.getSMS("596", 5, 0);
                         Log.d(Tag.QUERY_MANAGER, send.toString(4));
                     } else if(action.equals(JSONBuilder.Action.GET_MMS_CONVO.name().toLowerCase())) {
-                        JSONBuilder send = messageManager.getMMS("596", 5, "0", "0");
+                        JSONBuilder send = messageQuery.getMMS("596", 5, "0", "0");
                         Log.d(Tag.QUERY_MANAGER, send.toString(4));
                     } else if(action.equals(JSONBuilder.Action.GET_MESSAGES.name().toLowerCase())) {
-                        JSONBuilder send = messageManager.getConversationMessages("596", 3, 13);
+                        JSONBuilder send = messageQuery.getConversationMessages("596", 3, 13);
                         Log.d(Tag.QUERY_MANAGER, send.toString(4));
                     } else {
-                        Log.e(Tag.QUERY_MANAGER, "Could not find action: " + action);
+                        Log.d(Tag.QUERY_MANAGER, "Could not find action: " + action);
                     }
-
-                    Log.d(Tag.QUERY_MANAGER, "Querying");
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();

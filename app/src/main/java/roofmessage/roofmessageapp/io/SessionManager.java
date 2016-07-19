@@ -4,7 +4,9 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.ConnectException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
@@ -22,6 +24,7 @@ import roofmessage.roofmessageapp.utils.Tag;
  */
 public class SessionManager {
     private static SessionManager sessionManager;
+    private Context context;
 
     private static final CookieManager cookieManager = new CookieManager();
 
@@ -31,19 +34,18 @@ public class SessionManager {
     private final String CSRF_TOKEN = "csrftoken";
     private final int RESPONSE_OKAY = 200;
 
-    private SessionManager() {}
+    private SessionManager(Context context) {
+        this.context = context;
+    }
 
-    public static SessionManager getInstance() {
-        Log.e(Tag.SESSION_MANAGER, "IN");
+    public static SessionManager getInstance(Context context) {
         if(sessionManager == null) {
-            sessionManager = new SessionManager();
+            sessionManager = new SessionManager(context);
             // Instantiate CookieManager;
             // make sure to set CookiePolicy
             cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
             CookieHandler.setDefault(cookieManager);
         }
-
-        Log.e(Tag.SESSION_MANAGER, "OUT");
 
         return sessionManager;
     }
@@ -55,36 +57,31 @@ public class SessionManager {
             URL url = new URL(LOGIN_URL);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.getContent();
+            int responseCode = connection.getResponseCode();
+            Log.d(Tag.SESSION_MANAGER, "Response code on get [" + responseCode + "]");
+            if (responseCode == 200) {
+                String csrf = getCSRFToken();
 
-            // get cookies from underlying
-            // CookieStore
-            CookieStore cookieStore = cookieManager.getCookieStore();
-            List<HttpCookie> cookies = cookieStore.getCookies();
-            String csrf = "";
-            for ( HttpCookie cookie : cookies ) {
-                if (cookie.getName().equals(CSRF_TOKEN)) {
-                    csrf = cookie.getValue();
+                url = new URL(LOGIN_URL);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setDoOutput(true);
+
+                OutputStreamWriter out = new OutputStreamWriter( connection.getOutputStream() );
+                String formParameters = CSRF_MID_TOKEN + "=" + csrf
+                        + "&username=" +  username
+                        + "&password=" + password;
+                out.write(formParameters);
+                out.close();
+                Log.d(Tag.SESSION_MANAGER, "Response: " + connection.getResponseCode());
+                if(connection.getResponseCode() == RESPONSE_OKAY) {
+                    return true;
                 }
             }
-
-            url = new URL(LOGIN_URL);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setDoOutput(true);
-
-            OutputStreamWriter out = new OutputStreamWriter( connection.getOutputStream() );
-            String formParameters = CSRF_MID_TOKEN + "=" + csrf
-                    + "&username=" +  username
-                    + "&password=" + password;
-            out.write(formParameters);
-            out.close();
-            Log.d(Tag.SESSION_MANAGER, "Response: " + connection.getResponseCode());
-            if(connection.getResponseCode() == RESPONSE_OKAY) {
-                WebSocketManager webSocketController = WebSocketManager.getInstance();
-                return webSocketController.createConnection();
-            }
+        } catch (ConnectException e) {
+            Log.d(Tag.SESSION_MANAGER, "Unable to connect to host.");
         } catch (Exception e) {
-            System.out.println("Unable to get cookie using CookieHandler");
+            Log.e(Tag.SESSION_MANAGER, "Failed for some reason.");
             e.printStackTrace();
         }
         return false;
@@ -92,5 +89,45 @@ public class SessionManager {
 
     public CookieManager getCookieManager(){
         return cookieManager;
+    }
+
+    public boolean logout(String username, String password) {
+        try {
+            URL url = new URL(LOGOUT_URL);
+            HttpURLConnection connection = null;
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setDoOutput(true);
+
+            String csrf = getCSRFToken();
+
+            OutputStreamWriter out = new OutputStreamWriter( connection.getOutputStream() );
+            String formParameters = CSRF_MID_TOKEN + "=" + getCSRFToken()
+                    + "&username=" +  username
+                    + "&password=" + password;
+            out.write(formParameters);
+            out.close();
+            Log.d(Tag.SESSION_MANAGER, "Response: " + connection.getResponseCode());
+            if(connection.getResponseCode() == RESPONSE_OKAY) {
+                return true;
+            }
+        } catch (ConnectException e) {
+            Log.d(Tag.SESSION_MANAGER, "Could not logout. IOException.", e);
+        } catch (IOException e) {
+            Log.d(Tag.SESSION_MANAGER, "Could not logout. IOException.", e);
+        }
+        return false;
+    }
+
+    private String getCSRFToken() {
+        CookieStore cookieStore = cookieManager.getCookieStore();
+        List<HttpCookie> cookies = cookieStore.getCookies();
+        String csrf = "";
+        for ( HttpCookie cookie : cookies ) {
+            if (cookie.getName().equals(CSRF_TOKEN)) {
+                csrf = cookie.getValue();
+            }
+        }
+        return csrf;
     }
 }

@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">RoofMessage</string>
+    <string name="background_process">:RoofMessageBackground</string>
 
     <!-- Strings related to login -->
     <string name="prompt_username">Username</string>
@@ -12,18 +13,27 @@
     <string name="sms_rationale">"We need to access your messages in order to sync with your account."</string>
     <string name="error_login">"Failed to login:("</string>
     <string name="title_activity_login">RoofMessage: Sign In</string>
-    <string name="error_permissions">Can not connect without the minimum permissions we ask. Please consider
-        this:)</string>
+    <string name="error_permissions">Can not connect without the minimum permissions required for this app.</string>
     <string name="enable_permissions">Go to Permissions Page</string>
     <string name="cancel">Cancel</string>
+    <string name="remember_checkbox">Remember Me</string>
+    <string name="register_online_at_roofmessage_com">Register Online at roofmessage.com</string>
 
 
     <!-- Strings related to main page -->
-    <string name="register_online_at_roofmessage_com">Register Online at roofmessage.com</string>
     <string name="roofmessage_hour_minute_sec">HH:MM:SS</string>
     <string name="title_activity_main">RoofMessage</string>
-    <string name="status_start">Status: Not Connected</string>
-    <string name="connection">connected</string>
+    <string name="status_created">Status: Created</string>
+    <string name="status_connecting">Status: Connecting</string>
+    <string name="status_open">Status: Open</string>
+    <string name="status_closing">Status: Closing</string>
+    <string name="status_closed">Status: Closed</string>
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="back_button_dialog">Are you sure you want to logout?</string>
+    <string name="back_button_logout">Logout</string>
+    <string name="back_button_cancel">Cancel</string>
+
     <!--ERROR FOR CONNECTION -->
     <string name="refuse_connect">"Can not connect without these permissions: "</string>
 
@@ -34,7 +44,6 @@
     <string name="roof_permissions_internet">Internet</string>
     <string name="roof_permissions_unknown">UNKNOWN</string>
 
-
     <!--Shared Preferences -->
-    <string name="shared_preferences">user_pass_django</string>
+    <string name="shared_preferences">roof_message_app</string>
 </resources>

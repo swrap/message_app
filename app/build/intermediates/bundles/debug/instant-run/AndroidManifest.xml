@@ -27,9 +27,14 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
+        <service
+            android:name="roofmessage.roofmessageapp.BackgroundManager"
+            android:exported="false"
+            android:process="@string/background_process" />
+
         <activity
             android:name="roofmessage.roofmessageapp.activity.MainActivity"
-            android:label="@string/title_activity_login" >
+            android:label="@string/title_activity_main" >
         </activity>
         <activity
             android:name="roofmessage.roofmessageapp.activity.LoginActivity"

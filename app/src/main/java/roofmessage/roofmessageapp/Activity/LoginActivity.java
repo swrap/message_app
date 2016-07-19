@@ -3,84 +3,121 @@ package roofmessage.roofmessageapp.activity;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.content.DialogInterface;
+import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.app.LoaderManager.LoaderCallbacks;
 
-import android.content.CursorLoader;
-import android.content.Loader;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.AsyncTask;
 
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.ContactsContract;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.inputmethod.EditorInfo;
-import android.widget.ArrayAdapter;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.neovisionaries.ws.client.WebSocketState;
 
+import roofmessage.roofmessageapp.BackgroundManager;
 import roofmessage.roofmessageapp.R;
-import roofmessage.roofmessageapp.io.PermissionsManager;
+import roofmessage.roofmessageapp.io.NetworkManager;
+import roofmessage.roofmessageapp.io.SharedPreferenceManager;
+import roofmessage.roofmessageapp.io.WebSocketManager;
+import roofmessage.roofmessageapp.utils.PermissionsManager;
+import roofmessage.roofmessageapp.io.SessionManager;
+import roofmessage.roofmessageapp.utils.Tag;
 
 /**
- * A login screen that offers login via email/password.
+ * A login screen that offers login via username/password.
  */
-public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<Cursor> {
+public class LoginActivity extends AppCompatActivity {
 
-    /**
-     * A dummy authentication store containing known user names and passwords.
-     * TODO: remove after connecting to a real authentication system.
-     */
-    private static final String[] DUMMY_CREDENTIALS = new String[]{
-            "admin@admin.com:admin"
-    };
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private UserLoginTask mAuthTask = null;
 
-    private boolean HAS_ALL_PERMISSIONS = false;
-
-    private static int MULTIPLE_MISSING_CODE = 1;
-    private ArrayList<PermissionsManager.RoofPermissions> permissionArrayList;
+    private BackgroundManager backgroundManager;
 
     // UI references.
-    private AutoCompleteTextView mEmailView;
+    private AutoCompleteTextView mUsernameView;
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
-    private Button mEmailSignInButton;
+    private Button mUsernameSignInButton;
+    private CheckBox mCheckBoxView;
+
+    private SharedPreferenceManager sharedPreferenceManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        backgroundManager = BackgroundManager.getInstance();
+        if (backgroundManager.isRunning()) {
+            Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
+            LoginActivity.this.startActivity(mainIntent);
+        }
         setContentView(R.layout.activity_login);
+        startBackgroundManager();
+        sharedPreferenceManager = SharedPreferenceManager.getInstance(this);
+
+        mLoginFormView = findViewById(R.id.login_form);
+        mProgressView = findViewById(R.id.login_progress);
+        mCheckBoxView = (CheckBox) findViewById(R.id.remember_checkbox);
+        mUsernameView = (AutoCompleteTextView) findViewById(R.id.username);
+        mPasswordView = (EditText) findViewById(R.id.password);
+        initiateCheckBox();
 
         // Set up the login form.
-        mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
+        mUsernameView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
+                Log.d(Tag.LOGIN_ACTIVITY, "Saved: " + mUsernameView.getText().toString() + " " +
+                        mPasswordView.getText().toString() + " " + mCheckBoxView.isChecked());
+                if (textView.getId() == R.id.username && mCheckBoxView.isChecked()) {
+                    boolean saved = sharedPreferenceManager.saveUserPass(mUsernameView.getText().toString(),
+                            mPasswordView.getText().toString());
+                    Log.d(Tag.LOGIN_ACTIVITY, "Saved: " + mUsernameView.getText().toString() + " " +
+                            mPasswordView.getText().toString() + " " + saved);
+                    return true;
+                }
+                return false;
+            }
+        });
 
-        mPasswordView = (EditText) findViewById(R.id.password);
+        mUsernameView.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if (mCheckBoxView.isChecked()) {
+                    boolean saved = sharedPreferenceManager.saveUserPass(mUsernameView.getText().toString(),
+                            mPasswordView.getText().toString());
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {}
+        });
+
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
-                if (id == R.id.login || id == EditorInfo.IME_NULL) {
+                if (textView.getId() == R.id.password) {
+                    LoginActivity.this.showKeyboard(false, mLoginFormView);
                     attemptLogin();
                     return true;
                 }
@@ -88,84 +125,68 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             }
         });
 
-        mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
-        mEmailSignInButton.setOnClickListener(new OnClickListener() {
+        mPasswordView.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if (mCheckBoxView.isChecked()) {
+                    boolean saved = sharedPreferenceManager.saveUserPass(mUsernameView.getText().toString(),
+                            mPasswordView.getText().toString());
+                    Log.d(Tag.LOGIN_ACTIVITY, "SAVED: " + saved);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {}
+        });
+
+        mUsernameSignInButton = (Button) findViewById(R.id.sign_in_button);
+        mUsernameSignInButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                HAS_ALL_PERMISSIONS = PermissionsManager.hasAllPermissions(LoginActivity.this.getApplicationContext());
-                if (!HAS_ALL_PERMISSIONS) {
-                    AlertDialog.Builder permissionsAlert = new AlertDialog.Builder(LoginActivity.this);
-                    permissionsAlert.setMessage(R.string.error_permissions)
-                            .setPositiveButton(R.string.enable_permissions, new DialogInterface.OnClickListener() {
+                LoginActivity.this.showKeyboard(false, mLoginFormView);
+                attemptLogin();
+            }
+        });
 
-                                @TargetApi(16)
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    permissionArrayList = PermissionsManager.getMissingPermissions(LoginActivity.this);
-//                                    Log.d(TAG, "Permission ArrayList: " + permissionArrayList.toString());
-                                    ActivityCompat.requestPermissions(LoginActivity.this,
-                                            PermissionsManager.androidCodeStringArray(LoginActivity.this, permissionArrayList),
-                                            MULTIPLE_MISSING_CODE
-                                    );
-                                }
-                            })
-                            .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    //TODO: cancelled dialog
-                                }
-                            });
-                    permissionsAlert.create();
-                    permissionsAlert.show();
+        PermissionsManager.checkPermissions(this);
+        NetworkManager.getInstance(this);
+
+        mCheckBoxView.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sharedPreferenceManager.saveRememberMe(mCheckBoxView.isChecked());
+                if(mCheckBoxView.isChecked()) {
+                    sharedPreferenceManager.saveUserPass(mUsernameView.getText().toString(),
+                            mPasswordView.getText().toString());
                 } else {
-                    attemptLogin();
+                    sharedPreferenceManager.saveUserPass("","");
                 }
             }
         });
 
-        mLoginFormView = findViewById(R.id.login_form);
-        mProgressView = findViewById(R.id.login_progress);
 
-        HAS_ALL_PERMISSIONS = PermissionsManager.hasAllPermissions(this.getApplicationContext());
-//        Log.v(TAG,"HAS_ALL_PERMISSIONS: " + HAS_ALL_PERMISSIONS);
-        if (!HAS_ALL_PERMISSIONS) {
-            permissionArrayList = PermissionsManager.getMissingPermissions(this);
-            for (int i = 0; i < permissionArrayList.size(); ++i) {
-                if(!ActivityCompat.shouldShowRequestPermissionRationale(this, permissionArrayList.get(i).getAndroidCode())) {
-                    permissionArrayList.remove(i);
-                    i--;
-                }
-            }
-            if (permissionArrayList.size() > 0) {
-                ActivityCompat.requestPermissions(this,
-                        PermissionsManager.androidCodeStringArray(this, permissionArrayList),
-                        MULTIPLE_MISSING_CODE
-                );
-            }
+    }
+
+    private void startBackgroundManager() {
+        boolean serviceStarted = backgroundManager.isRunning();
+        if (!serviceStarted) {
+            Intent intent = new Intent(LoginActivity.this, BackgroundManager.class);
+            intent.setAction(BackgroundManager.LOGIN_START);
+            LoginActivity.this.startService(intent);
         }
     }
 
-//    private boolean mayRequestContacts() {
-//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-//            return true;
-//        }
-//        if (checkSelfPermission(READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
-//            return true;
-//        }
-//        if (!shouldShowRequestPermissionRationale(READ_CONTACTS)) {
-//            Snackbar.make(mEmailView, R.string.contact_rationale, Snackbar.LENGTH_INDEFINITE)
-//                    .setAction(android.R.string.ok, new View.OnClickListener() {
-//                        @Override
-//                        @TargetApi(Build.VERSION_CODES.M)
-//                        public void onClick(View v) {
-//                            requestPermissions(new String[]{READ_CONTACTS}, REQUEST_READ_CONTACTS);
-//                        }
-//                    });
-//        } else {
-//            requestPermissions(new String[]{READ_CONTACTS}, REQUEST_READ_CONTACTS);
-//        }
-//        return false;
-//    }
+    private void showKeyboard(boolean show, View view) {
+        InputMethodManager keyboard = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (show) {
+            keyboard.showSoftInput(view, 0);
+        } else {
+            keyboard.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
 
     /**
      * Callback received when a permissions request has been completed.
@@ -179,7 +200,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     /**
      * Attempts to sign in or register the account specified by the login form.
-     * If there are form errors (invalid email, missing fields, etc.), the
+     * If there are form errors (missing fields, etc.), the
      * errors are presented and no actual login attempt is made.
      */
     private void attemptLogin() {
@@ -188,36 +209,24 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         }
 
         // Reset errors.
-        mEmailView.setError(null);
+        mUsernameView.setError(null);
         mPasswordView.setError(null);
 
         // Store values at the time of the login attempt.
-        String email = mEmailView.getText().toString();
+        String username = mUsernameView.getText().toString();
         String password = mPasswordView.getText().toString();
 
         boolean cancel = false;
         View focusView = null;
 
-        // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
-            mPasswordView.setError(getString(R.string.error_invalid_password));
+        // Check for a valid username address.
+        if (TextUtils.isEmpty(password)) {
+            mPasswordView.setError(getString(R.string.error_field_required));
             focusView = mPasswordView;
             cancel = true;
-        }
-
-        // Check for a valid email address.
-        if (TextUtils.isEmpty(password)) {
-            mEmailView.setError(getString(R.string.error_field_required));
-            focusView = mEmailView;
-            cancel = true;
-        }
-        else if (TextUtils.isEmpty(email)) {
-            mEmailView.setError(getString(R.string.error_field_required));
-            focusView = mEmailView;
-            cancel = true;
-        } else if (!isEmailValid(email)) {
-            mEmailView.setError(getString(R.string.error_invalid_email));
-            focusView = mEmailView;
+        } else if (TextUtils.isEmpty(username)) {
+            mUsernameView.setError(getString(R.string.error_field_required));
+            focusView = mUsernameView;
             cancel = true;
         }
 
@@ -228,22 +237,26 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 focusView.requestFocus();
             }
         } else {
-            // Show a progress spinner, and kick off a background task to
-            // perform the user login attempt.
-            showProgress(true);
-            mAuthTask = new UserLoginTask(email, password);
-            mAuthTask.execute();
+            //check for permissions
+            PermissionsManager.checkPermissions(this);
+            if (PermissionsManager.hasAllPermissions(this)) {
+                showProgress(true);
+                mAuthTask = new UserLoginTask(username, password);
+                mAuthTask.execute();
+            }
         }
     }
 
-    private boolean isEmailValid(String email) {
-        //TODO: Replace this with your own logic
-        return email.contains("@");
-    }
-
-    private boolean isPasswordValid(String password) {
-        //TODO: Replace this with your own logic
-        return password.length() > 0;
+    private void initiateCheckBox() {
+        boolean checked = sharedPreferenceManager.getRememberMe();
+        mCheckBoxView.setChecked(checked);
+        if ( checked ) {
+            mCheckBoxView.setTextIsSelectable(true);
+            String username = sharedPreferenceManager.getUsername();
+            mUsernameView.setText(username);
+            String password = sharedPreferenceManager.getPassword();
+            mPasswordView.setText(password);
+        }
     }
 
     /**
@@ -255,7 +268,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         // for very easy animations. If available, use these APIs to fade-in
         // the progress spinner.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+            int shortAnimTime = getResources().getInteger(android.R.integer.config_longAnimTime);
 
             mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
             mLoginFormView.animate().setDuration(shortAnimTime).alpha(
@@ -283,63 +296,19 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     }
 
     @Override
-    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        return new CursorLoader(this,
-                // Retrieve data rows for the device user's 'profile' contact.
-                Uri.withAppendedPath(ContactsContract.Profile.CONTENT_URI,
-                        ContactsContract.Contacts.Data.CONTENT_DIRECTORY), ProfileQuery.PROJECTION,
-
-                // Select only email addresses.
-                ContactsContract.Contacts.Data.MIMETYPE +
-                        " = ?", new String[]{ContactsContract.CommonDataKinds.Email
-                .CONTENT_ITEM_TYPE},
-
-                // Show primary email addresses first. Note that there won't be
-                // a primary email address if the user hasn't specified one.
-                ContactsContract.Contacts.Data.IS_PRIMARY + " DESC");
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-        List<String> emails = new ArrayList<>();
-        cursor.moveToFirst();
-        while (!cursor.isAfterLast()) {
-            emails.add(cursor.getString(ProfileQuery.ADDRESS));
-            cursor.moveToNext();
-        }
-
-        addEmailsToAutoComplete(emails);
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> cursorLoader) {
-
-    }
-
-    private void addEmailsToAutoComplete(List<String> emailAddressCollection) {
-        //Create adapter to tell the AutoCompleteTextView what to show in its dropdown list.
-        ArrayAdapter<String> adapter =
-                new ArrayAdapter<>(LoginActivity.this,
-                        android.R.layout.simple_dropdown_item_1line, emailAddressCollection);
-
-        mEmailView.setAdapter(adapter);
-    }
-
-
-    private interface ProfileQuery {
-        String[] PROJECTION = {
-                ContactsContract.CommonDataKinds.Email.ADDRESS,
-                ContactsContract.CommonDataKinds.Email.IS_PRIMARY,
-        };
-
-        int ADDRESS = 0;
-        int IS_PRIMARY = 1;
-    }
-
-    @Override
     protected void onResume() {
         super.onResume();
         showProgress(false);
+        if(!sharedPreferenceManager.getRememberMe()) {
+            mUsernameView.setText("");
+            mPasswordView.setText("");
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.d(Tag.LOGIN_ACTIVITY,"CLOSING APP");
+        super.onDestroy();
     }
 
     /**
@@ -348,35 +317,42 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      */
     public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
-        private final String mEmail;
+        private final String mUsername;
         private final String mPassword;
+        private SessionManager sessionManager;
+        private String mErrorMessage = "";
 
-        UserLoginTask(String email, String password) {
-            mEmail = email;
+        UserLoginTask(String username, String password) {
+            mUsername = username;
             mPassword = password;
+            sessionManager = SessionManager.getInstance(LoginActivity.this);
         }
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
+            mErrorMessage = getString(R.string.error_login);
+            boolean retval = false;
+            WebSocketManager webSocketManager = WebSocketManager.getInstance(LoginActivity.this);
 
-            try {
-                // Simulate network access.
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                return false;
-            }
-
-            for (String credential : DUMMY_CREDENTIALS) {
-                String[] pieces = credential.split(":");
-                if (pieces[0].equals(mEmail)) {
-                    // Account exists, return true if the password matches.
-                    return pieces[1].equals(mPassword);
+            NetworkManager networkManager = NetworkManager.getInstance();
+            if (networkManager != null && networkManager.isConnected()) {
+                //we have internet
+                retval = sessionManager.login(mUsername, mPassword);
+                if (retval) {
+                    //we can login to django
+                    WebSocketManager webSocketController = WebSocketManager.getInstance(LoginActivity.this);
+                    retval = webSocketController.createConnection();
+                    if (!retval) {
+                        //we can login but not create a connection
+                        Log.e(Tag.LOGIN_ACTIVITY, "Can login, but cannot connect socket.");
+                        sessionManager.logout(mUsername, mPassword);
+                    }
                 }
+            } else {
+                mErrorMessage = "Not connected to internet";
             }
 
-            // TODO: register the new account here.
-            return false;
+            return retval;
         }
 
         @Override
@@ -384,14 +360,24 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             mAuthTask = null;
 
             if (success) {
-                Intent main_activity = new Intent(LoginActivity.this, MainActivity.class);
-                LoginActivity.this.startActivity(main_activity);
+
+                if (!sharedPreferenceManager.getBackgroundState()) {
+                    //save session username and pass if background wasnt not running before
+                    sharedPreferenceManager.saveSessionUsernamePass(mUsername, mPassword);
+                    sharedPreferenceManager.saveBackgroundState(true);
+                }
+                Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
+                mainIntent.setAction(BackgroundManager.LOGIN_START);
+                LoginActivity.this.startActivity(mainIntent);
+                showProgress(false);
             } else {
                 showProgress(false);
-                Toast toast = Toast.makeText(LoginActivity.this, R.string.error_login, Toast.LENGTH_LONG);
-                toast.setGravity(Gravity.CENTER, 0, 0);
-                mEmailView.requestFocus();
+                Toast toast = Toast.makeText(LoginActivity.this, mErrorMessage, Toast.LENGTH_LONG);
+                toast.setGravity(Gravity.CENTER | Gravity.TOP, 0, 250);
+                toast.show();
             }
+            mUsernameView.requestFocus();
+            showKeyboard(true, mUsernameView);
         }
 
         @Override

@@ -12,28 +12,27 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import roofmessage.roofmessageapp.io.JSONBuilder;
-import roofmessage.roofmessageapp.utils.PhoneNumberFormatter;
 import roofmessage.roofmessageapp.utils.Tag;
 
 /**
  * Created by Jesse Saran on 6/22/2016.
  */
-public class ContactManager {
+public class ContactQuery {
 
     private static ContentResolver contentResolver;
-    private static ContactManager contactManager;
+    private static ContactQuery contactQuery;
 
 
-    protected ContactManager(Context context) {
+    protected ContactQuery(Context context) {
         this.contentResolver = context.getContentResolver();
     };
 
-    protected static ContactManager getInstance(Context context) {
-        if( contactManager == null) {
-            contactManager = new ContactManager(context);
+    protected static ContactQuery getInstance(Context context) {
+        if( contactQuery == null) {
+            contactQuery = new ContactQuery(context);
         }
 
-        return contactManager;
+        return contactQuery;
     }
 /**
     public JSONBuilder getContact(String name) {
@@ -113,7 +112,7 @@ public class ContactManager {
                                 cursor.getString(2));
                         jsonArray.put(contact);
                     } catch (JSONException e) {
-                        Log.e(Tag.CONTACT_MANAGER,"Could not add contact.");
+                        Log.d(Tag.CONTACT_MANAGER,"Could not add contact.");
                         e.printStackTrace();
                     }
                 }
@@ -123,8 +122,7 @@ public class ContactManager {
         try {
             jsonObject.put("contacts", (Object) jsonArray);
         } catch (JSONException e) {
-            Log.e(Tag.CONTACT_MANAGER,"Could not add array to json.");
-            e.printStackTrace();
+            Log.e(Tag.CONTACT_MANAGER,"Could not add array to json.", e);
         }
         if(cursor != null){
             cursor.close();

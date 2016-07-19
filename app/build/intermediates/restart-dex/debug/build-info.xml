@@ -4,76 +4,30 @@
     api-level="23"
     density="xxhdpi"
     format="7"
-    timestamp="13448468063720"
-    token="-3044968186596463802"
-    verifier="COMPATIBLE" >
+    timestamp="267458844848960"
+    token="-3044968186596463802" >
 
     <task
         name="javac"
-        duration="177" />
+        duration="641" />
     <task
         name="instant-run-dex"
-        duration="13" />
+        duration="0" />
     <task
         name="instant-run-transform"
-        duration="12" />
+        duration="308" />
     <task
         name="verifier"
-        duration="2" />
+        duration="137" />
 
     <artifact
-        location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\reload-dex\debug\classes.dex"
-        type="RELOAD_DEX" />
+        location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\outputs\apk\app-debug.apk"
+        type="MAIN" />
 
-    <build timestamp="12279056640640" >
+    <build timestamp="267458844848960" >
         <artifact
             location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\outputs\apk\app-debug.apk"
             type="MAIN" />
-    </build>
-    <build
-        timestamp="13311312866960"
-        verifier="COMPATIBLE" >
-        <artifact
-            location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\res\resources-debug.ap_"
-            type="RESOURCES" />
-        <artifact
-            location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\builds\debug\13311312866960\classes.dex"
-            type="RELOAD_DEX" />
-    </build>
-    <build
-        timestamp="13378752389440"
-        verifier="COMPATIBLE" >
-        <artifact
-            location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\builds\debug\13378752389440\classes.dex"
-            type="RELOAD_DEX" />
-    </build>
-    <build
-        timestamp="13410339515520"
-        verifier="COMPATIBLE" >
-        <artifact
-            location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\builds\debug\13410339515520\classes.dex"
-            type="RELOAD_DEX" />
-    </build>
-    <build
-        timestamp="13426748985840"
-        verifier="COMPATIBLE" >
-        <artifact
-            location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\builds\debug\13426748985840\classes.dex"
-            type="RELOAD_DEX" />
-    </build>
-    <build
-        timestamp="13435106264280"
-        verifier="COMPATIBLE" >
-        <artifact
-            location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\builds\debug\13435106264280\classes.dex"
-            type="RELOAD_DEX" />
-    </build>
-    <build
-        timestamp="13448468063720"
-        verifier="COMPATIBLE" >
-        <artifact
-            location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\reload-dex\debug\classes.dex"
-            type="RELOAD_DEX" />
     </build>
 
 </instant-run>

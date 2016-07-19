@@ -10,40 +10,74 @@ import roofmessage.roofmessageapp.R;
  */
 public class SharedPreferenceManager {
     private static SharedPreferenceManager sharedPreferenceManager;
-    private static Context context;
+    private SharedPreferences preferences;
 
-    private final static String USERNAME = "username";
-    private final static String PASSWORD = "password";
+    public enum PreferenceKey {
+        USERNAME,
+        PASSWORD,
+        SESSION_USERNAME,
+        SESSION_PASSWORD,
+        REMEMBER_ME,
+        BACKGROUND_STATE,
+    }
 
-    private SharedPreferenceManager(){}
+
+    private SharedPreferenceManager(Context context){
+        preferences = context.getSharedPreferences(
+                context.getString(R.string.shared_preferences), Context.MODE_PRIVATE);
+    }
 
     public static SharedPreferenceManager getInstance(Context context){
-        if(context == null){
-            context = context;
-        }
         if(sharedPreferenceManager == null){
-            sharedPreferenceManager = new SharedPreferenceManager();
+            sharedPreferenceManager = new SharedPreferenceManager(context);
         }
 
         return sharedPreferenceManager;
     }
 
-    public void saveUserPass(String username, String password){
-        SharedPreferences.Editor editor = context.getSharedPreferences(
-                context.getString(R.string.shared_preferences), Context.MODE_PRIVATE).edit();
-        editor.putString(USERNAME, username);
-        editor.putString(PASSWORD, password);
+    public boolean saveUserPass(String username, String password){
+        SharedPreferences.Editor editor = preferences.edit();
+        return editor.putString(PreferenceKey.USERNAME.name(), username).commit() &&
+        editor.putString(PreferenceKey.PASSWORD.name(), password).commit();
     }
 
-    public String getUserName() {
-        SharedPreferences preferences = context.getSharedPreferences(
-                context.getString(R.string.shared_preferences), Context.MODE_PRIVATE);
-        return preferences.getString(USERNAME, null);
+    public boolean saveRememberMe(boolean value) {
+        SharedPreferences.Editor editor = preferences.edit();
+        return editor.putBoolean(PreferenceKey.REMEMBER_ME.name(), value).commit();
+    }
+
+    public boolean saveBackgroundState(boolean value) {
+        SharedPreferences.Editor editor = preferences.edit();
+        return editor.putBoolean(PreferenceKey.BACKGROUND_STATE.name(), value).commit();
+    }
+
+    public boolean saveSessionUsernamePass(String username, String password) {
+        SharedPreferences.Editor editor = preferences.edit();
+        return editor.putString(PreferenceKey.SESSION_USERNAME.name(), username).commit() &&
+                editor.putString(PreferenceKey.SESSION_PASSWORD.name(), password).commit();
+    }
+
+    public String getUsername() {
+        return preferences.getString(PreferenceKey.USERNAME.name(), "");
     }
 
     public String getPassword() {
-        SharedPreferences preferences = context.getSharedPreferences(
-                context.getString(R.string.shared_preferences), Context.MODE_PRIVATE);
-        return preferences.getString(PASSWORD, null);
+        return preferences.getString(PreferenceKey.PASSWORD.name(), "");
+    }
+
+    public boolean getRememberMe() {
+        return preferences.getBoolean(PreferenceKey.REMEMBER_ME.name(), false);
+    }
+
+    public boolean getBackgroundState () {
+        return preferences.getBoolean(PreferenceKey.BACKGROUND_STATE.name(), false);
+    }
+
+    public String getSessionUsername() {
+        return preferences.getString(PreferenceKey.SESSION_USERNAME.name(), "");
+    }
+
+    public String getSessionPassword() {
+        return preferences.getString(PreferenceKey.SESSION_PASSWORD.name(), "");
     }
 }
