@@ -58,7 +58,7 @@ public class SessionManager {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.getContent();
             int responseCode = connection.getResponseCode();
-            Log.d(Tag.SESSION_MANAGER, "Response code on get [" + responseCode + "]");
+            Log.d(Tag.SESSION_MANAGER, "Response code on get login [" + responseCode + "]");
             if (responseCode == 200) {
                 String csrf = getCSRFToken();
 
@@ -93,28 +93,37 @@ public class SessionManager {
 
     public boolean logout(String username, String password) {
         try {
+            // get content from URLConnection;
+            // cookies are set by web site
             URL url = new URL(LOGOUT_URL);
-            HttpURLConnection connection = null;
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setDoOutput(true);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.getContent();
+            int responseCode = connection.getResponseCode();
+            Log.d(Tag.SESSION_MANAGER, "Response code on get logout [" + responseCode + "]");
+            if (responseCode == 200) {
+                String csrf = getCSRFToken();
 
-            String csrf = getCSRFToken();
+                url = new URL(LOGOUT_URL);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setDoOutput(true);
 
-            OutputStreamWriter out = new OutputStreamWriter( connection.getOutputStream() );
-            String formParameters = CSRF_MID_TOKEN + "=" + getCSRFToken()
-                    + "&username=" +  username
-                    + "&password=" + password;
-            out.write(formParameters);
-            out.close();
-            Log.d(Tag.SESSION_MANAGER, "Response: " + connection.getResponseCode());
-            if(connection.getResponseCode() == RESPONSE_OKAY) {
-                return true;
+                OutputStreamWriter out = new OutputStreamWriter( connection.getOutputStream() );
+                String formParameters = CSRF_MID_TOKEN + "=" + csrf
+                        + "&username=" +  username
+                        + "&password=" + password;
+                out.write(formParameters);
+                out.close();
+                Log.d(Tag.SESSION_MANAGER, "Response: " + connection.getResponseCode());
+                if(connection.getResponseCode() == RESPONSE_OKAY) {
+                    return true;
+                }
             }
         } catch (ConnectException e) {
-            Log.d(Tag.SESSION_MANAGER, "Could not logout. IOException.", e);
-        } catch (IOException e) {
-            Log.d(Tag.SESSION_MANAGER, "Could not logout. IOException.", e);
+            Log.d(Tag.SESSION_MANAGER, "Unable to connect to host.");
+        } catch (Exception e) {
+            Log.e(Tag.SESSION_MANAGER, "Failed for some reason.");
+            e.printStackTrace();
         }
         return false;
     }

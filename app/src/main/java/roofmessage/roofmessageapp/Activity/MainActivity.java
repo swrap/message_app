@@ -49,10 +49,6 @@ public class MainActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //TODO add this in to fix threads
-//        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-//        StrictMode.setThreadPolicy(policy);
-
         mConnectionButton = (Button) findViewById(R.id.connection_button);
         mStatus = (TextView) findViewById(R.id.status);
         mStatus.setText(WebSocketManager.getInstance(this).getLocalizeState());
