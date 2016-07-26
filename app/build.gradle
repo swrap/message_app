@@ -1,5 +1,14 @@
 apply plugin: 'com.android.application'
 
+//allprojects {
+//    repositories {
+//        mavenCentral()
+//        maven {
+//            url 'https://oss.sonatype.org/content/repositories/snapshots/'
+//        }
+//    }
+//}
+
 android {
     compileSdkVersion 24
     buildToolsVersion "24.0.0"
@@ -24,8 +33,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:24.0.0'
     compile 'com.android.support:design:24.0.0'
-
     //custom dependencies
-    compile 'com.neovisionaries:nv-websocket-client:1.28'
-    compile 'commons-io:commons-io:2.5'
+    compile 'com.neovisionaries:nv-websocket-client:+'
+//    compile 'com.klinkerapps:android-smsmms:3.1.0'
 }

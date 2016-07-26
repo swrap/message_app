@@ -15,7 +15,6 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
 
-
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -23,9 +22,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <service android:name=".BackgroundManager"
-            android:exported="false"
-            android:process="@string/background_process" />
+        <service android:name=".background.BackgroundManager"
+            android:process="@string/background_process"
+            android:exported="false"/>
 
         <activity android:name=".activity.MainActivity"
             android:label="@string/title_activity_main">

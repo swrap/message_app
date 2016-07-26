@@ -1,10 +1,8 @@
-package roofmessage.roofmessageapp.io;
+package roofmessage.roofmessageapp.background.io;
 
 import android.content.Context;
 import android.util.Log;
-import android.widget.Toast;
 
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.ConnectException;
 import java.net.CookieHandler;
@@ -13,10 +11,10 @@ import java.net.CookiePolicy;
 import java.net.CookieStore;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.List;
 
-import roofmessage.roofmessageapp.activity.LoginActivity;
 import roofmessage.roofmessageapp.utils.Tag;
 
 /**
@@ -33,6 +31,7 @@ public class SessionManager {
     private final String CSRF_MID_TOKEN = "csrfmiddlewaretoken";
     private final String CSRF_TOKEN = "csrftoken";
     private final int RESPONSE_OKAY = 200;
+    private final int connection_timeout = 4000;
 
     private SessionManager(Context context) {
         this.context = context;
@@ -54,8 +53,10 @@ public class SessionManager {
         try {
             // get content from URLConnection;
             // cookies are set by web site
+            Log.d(Tag.SESSION_MANAGER, "Before attempting to login.");
             URL url = new URL(LOGIN_URL);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(connection_timeout);
             connection.getContent();
             int responseCode = connection.getResponseCode();
             Log.d(Tag.SESSION_MANAGER, "Response code on get login [" + responseCode + "]");
@@ -67,21 +68,23 @@ public class SessionManager {
                 connection.setRequestMethod("POST");
                 connection.setDoOutput(true);
 
-                OutputStreamWriter out = new OutputStreamWriter( connection.getOutputStream() );
+                OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream());
                 String formParameters = CSRF_MID_TOKEN + "=" + csrf
-                        + "&username=" +  username
+                        + "&username=" + username
                         + "&password=" + password;
                 out.write(formParameters);
                 out.close();
                 Log.d(Tag.SESSION_MANAGER, "Response: " + connection.getResponseCode());
-                if(connection.getResponseCode() == RESPONSE_OKAY) {
+                if (connection.getResponseCode() == RESPONSE_OKAY) {
                     return true;
                 }
             }
+        } catch (SocketTimeoutException e) {
+            Log.d(Tag.SESSION_MANAGER, "Login waited [" + connection_timeout + "] to connect but failed.");
         } catch (ConnectException e) {
-            Log.d(Tag.SESSION_MANAGER, "Unable to connect to host.");
+            Log.d(Tag.SESSION_MANAGER, "Unable to connect to host.", e);
         } catch (Exception e) {
-            Log.e(Tag.SESSION_MANAGER, "Failed for some reason.");
+            Log.e(Tag.SESSION_MANAGER, "Failed for some reason.", e);
             e.printStackTrace();
         }
         return false;
@@ -97,6 +100,7 @@ public class SessionManager {
             // cookies are set by web site
             URL url = new URL(LOGOUT_URL);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(connection_timeout);
             connection.getContent();
             int responseCode = connection.getResponseCode();
             Log.d(Tag.SESSION_MANAGER, "Response code on get logout [" + responseCode + "]");
@@ -108,21 +112,23 @@ public class SessionManager {
                 connection.setRequestMethod("POST");
                 connection.setDoOutput(true);
 
-                OutputStreamWriter out = new OutputStreamWriter( connection.getOutputStream() );
+                OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream());
                 String formParameters = CSRF_MID_TOKEN + "=" + csrf
-                        + "&username=" +  username
+                        + "&username=" + username
                         + "&password=" + password;
                 out.write(formParameters);
                 out.close();
                 Log.d(Tag.SESSION_MANAGER, "Response: " + connection.getResponseCode());
-                if(connection.getResponseCode() == RESPONSE_OKAY) {
+                if (connection.getResponseCode() == RESPONSE_OKAY) {
                     return true;
                 }
             }
+        } catch (SocketTimeoutException e) {
+            Log.d(Tag.SESSION_MANAGER, "Logout waited [" + connection_timeout + "] to connect but failed.");
         } catch (ConnectException e) {
-            Log.d(Tag.SESSION_MANAGER, "Unable to connect to host.");
+            Log.d(Tag.SESSION_MANAGER, "Unable to connect to host.", e);
         } catch (Exception e) {
-            Log.e(Tag.SESSION_MANAGER, "Failed for some reason.");
+            Log.e(Tag.SESSION_MANAGER, "Failed for some reason.", e);
             e.printStackTrace();
         }
         return false;

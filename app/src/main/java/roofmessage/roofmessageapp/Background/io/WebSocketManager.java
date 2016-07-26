@@ -1,7 +1,9 @@
-package roofmessage.roofmessageapp.io;
+package roofmessage.roofmessageapp.background.io;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.WifiManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -11,6 +13,8 @@ import com.neovisionaries.ws.client.WebSocketFactory;
 import com.neovisionaries.ws.client.WebSocketFrame;
 import com.neovisionaries.ws.client.WebSocketListener;
 import com.neovisionaries.ws.client.WebSocketState;
+
+import org.json.JSONException;
 
 import java.io.IOException;
 import java.net.CookieStore;
@@ -22,27 +26,26 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import roofmessage.roofmessageapp.BackgroundManager;
+import roofmessage.roofmessageapp.background.BackgroundManager;
+import roofmessage.roofmessageapp.Flush;
 import roofmessage.roofmessageapp.R;
+import roofmessage.roofmessageapp.io.JSONBuilder;
 import roofmessage.roofmessageapp.utils.Tag;
 
 /**
  * Created by Jesse Saran on 7/13/2016.
  */
-public class WebSocketManager {
+public class WebSocketManager extends BroadcastReceiver implements Flush{
     private static WebSocketManager webSocketManager;
     private static WebSocketFactory webSocketFactory;
-    private BackgroundManager backgroundManager;
     private WebSocket webSocket;
     private Context context;
-    private boolean connected = false;
 
     private final static String COOKIE = "cookie";
     private static final String WS_URL = "ws://" + Tag.BASE_URL + "/message_route/";
 
     private WebSocketManager(Context context) {
         this.context = context;
-        backgroundManager = BackgroundManager.getInstance();
     }
 
     public static WebSocketManager getInstance(Context context) {
@@ -55,7 +58,8 @@ public class WebSocketManager {
     }
 
     public boolean createConnection() {
-        Log.d(Tag.WEB_SOC_MANAGER, "Attempting connection");
+        String state = webSocket == null ? "" : webSocket.getState().name();
+        Log.d(Tag.WEB_SOC_MANAGER, "Attempting connection, websocket state [" + state + "]");
 
         if (webSocket == null) {
             webSocketFactory.setConnectionTimeout(5000);
@@ -69,11 +73,18 @@ public class WebSocketManager {
             webSocket.addListener(new Listener());
         }
 
-        if (webSocket != null) {
-            Log.d(Tag.WEB_SOC_MANAGER, "Websocket state [" + webSocket.getState() + "]");
+        if (webSocket.getState() == WebSocketState.CLOSED) {
+            try {
+                webSocket = webSocket.recreate();
+            } catch (IOException e) {
+                Log.d(Tag.WEB_SOC_MANAGER, "Could not recreate connection.", e);
+                return false;
+            }
         }
+
         //check state
-        if ( webSocket.getState() == WebSocketState.CLOSED || webSocket.getState() == WebSocketState.CREATED) {
+        if (webSocket.getState() == WebSocketState.CREATED) {
+
             // Prepare an ExecutorService.
             ExecutorService es = Executors.newSingleThreadExecutor();
             Future<WebSocket> future = webSocket.connect(es);
@@ -94,11 +105,10 @@ public class WebSocketManager {
             }
         }
 
+        Log.d(Tag.WEB_SOC_MANAGER, "State when leaving function: " + webSocket.getState());
         if ( webSocket.getState() == WebSocketState.OPEN ) {
             return true;
         }
-
-        Log.d(Tag.WEB_SOC_MANAGER, "State when leaving function: " + webSocket.getState());
         return false;
     }
 
@@ -119,11 +129,22 @@ public class WebSocketManager {
     }
 
     public void sendString(String string) {
-        webSocket.sendText(string);
+
+        if (webSocket != null) {
+            webSocket.sendText(string);
+        }
     }
 
     public void sendBytes(byte[] bytes) {
-        webSocket.sendBinary(bytes);
+        if (webSocket != null) {
+            webSocket.sendBinary(bytes);
+        } else {
+            Log.d(Tag.WEB_SOC_MANAGER, "Unable to send bytes. Websocket is null.");
+        }
+    }
+
+    public void disconnect() {
+        webSocket.disconnect();
     }
 
     public WebSocketState getState() {
@@ -131,10 +152,14 @@ public class WebSocketManager {
     }
 
     public String getLocalizeState() {
-        return localizeState(webSocket.getState());
+        String localizeState = "UNKNOWN";
+        if (webSocket != null) {
+            localizeState = localizeState(webSocket.getState());
+        }
+        return localizeState;
     }
 
-    private String localizeState(WebSocketState webSocketState) {
+    public String localizeState(WebSocketState webSocketState) {
         String state = "";
         if (webSocketState.equals(WebSocketState.CREATED)) {
             state = WebSocketManager.this.context.getString(R.string.status_created);
@@ -150,18 +175,46 @@ public class WebSocketManager {
         return state;
     }
 
+    @Override
+    public boolean flush() {
+        Log.d(Tag.WEB_SOC_MANAGER, "Flushing now.");
+        webSocket.disconnect();
+        while (webSocket.getState() != WebSocketState.CLOSED) {
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                Log.d(Tag.WEB_SOC_MANAGER, "Flush sleep interrupted.");
+            }
+        }
+        Log.d(Tag.WEB_SOC_MANAGER, "Flushing done.");
+        return true;
+    }
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        if (intent != null) {
+            String action = intent.getAction();
+            if (!action.equals("") && action.equals(Tag.ACTION_LOCAL_SEND_MESSAGE)) {
+                String jsonString = intent.getStringExtra(Tag.KEY_SEND_JSON_STRING);
+                webSocket.sendText(jsonString);
+            }
+        }
+    }
+
     private class Listener implements WebSocketListener {
 
         @Override
         public void onStateChanged(WebSocket websocket, WebSocketState newState) throws Exception {
             Intent intent = new Intent(Tag.ACTION_WEBSOC_CHANGE);
             intent.putExtra("state", localizeState(newState));
+            Log.d(Tag.WEB_SOC_MANAGER, "State changed, sending broadcast. New state [" + newState + "], localized state [" + localizeState(newState) + "]");
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+            context.sendBroadcast(intent);
         }
 
         @Override
         public void onConnected(WebSocket websocket, Map<String, List<String>> headers) throws Exception {
-            connected = true;
+
         }
 
         @Override
@@ -171,7 +224,7 @@ public class WebSocketManager {
 
         @Override
         public void onDisconnected(WebSocket websocket, WebSocketFrame serverCloseFrame, WebSocketFrame clientCloseFrame, boolean closedByServer) throws Exception {
-            connected = false;
+
         }
 
         @Override
@@ -186,6 +239,7 @@ public class WebSocketManager {
 
         @Override
         public void onTextFrame(WebSocket websocket, WebSocketFrame frame) throws Exception {
+
         }
 
         @Override
@@ -210,10 +264,9 @@ public class WebSocketManager {
 
         @Override
         public void onTextMessage(WebSocket websocket, String text) throws Exception {
-            StringBuilder builder = new StringBuilder();
-            Log.v(Tag.SESSION_MANAGER, "TEXT: " + builder.toString());
-            Intent intent = new Intent(Tag.ACTION_RECEIVED_MESSAGE);
-            intent.putExtra("message", text);
+            Log.v(Tag.WEB_SOC_MANAGER, "TEXT: " + text);
+            Intent intent = new Intent(Tag.ACTION_LOCAL_RECEIVED_MESSAGE);
+            intent.putExtra(Tag.KEY_MESSAGE, text);
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
         }
 
@@ -239,7 +292,6 @@ public class WebSocketManager {
 
         @Override
         public void onError(WebSocket websocket, WebSocketException cause) throws Exception {
-            backgroundManager.checkWebsocket();
         }
 
         @Override

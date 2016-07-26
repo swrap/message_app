@@ -27,7 +27,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
         <service
-            android:name="roofmessage.roofmessageapp.BackgroundManager"
+            android:name="roofmessage.roofmessageapp.background.BackgroundManager"
             android:exported="false"
             android:process="@string/background_process" />
 

@@ -5,12 +5,12 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import roofmessage.roofmessageapp.utils.Tag;
+
 /**
  * Created by Jesse Saran on 6/30/2016.
  */
 public class JSONBuilder extends JSONObject{
-
-    private final static String LOG_TAG = "ROOFMESSAGE:JSONBuilder";
 
     public enum JSON_KEY_MAIN {
         //main message keys
@@ -48,6 +48,9 @@ public class JSONBuilder extends JSONObject{
         LOCKED,
         SEEN,
         SUBJECT,
+        ID,
+        AMOUNT,
+        OFFSET,
 
         //TYPES
         MMS,
@@ -61,30 +64,52 @@ public class JSONBuilder extends JSONObject{
         TYPE,
     }
 
+    public enum JSON_KEY_MESSAGE_DELIVERY {
+        ACTION,
+        BODY,
+        DATA,
+        NUMBER,
+        NUMBERS,
+        TEMP_MESSAGE_ID,
+        THREAD_ID,
+        MESSAGE_ID,
+    }
+
     public enum Action {
-        //CONTACTS
+        //QUERY_CONTACTS
         GET_CONTACTS,
         POST_CONTACTS,
 
-        //CONVERSATIONS
+        //QUERY_CONVERSATIONS
         GET_CONVERSATIONS,
         POST_CONVERSATIONS,
+        //QUERY_SMS_MMS_CONVO
+        GET_MMS_CONVO,
+        GET_SMS_CONVO,
 
-        //MESSAGES
+        //QUERY_MESSAGES
         GET_MESSAGES,
         POST_MESSAGES,
 
-        //tets
-        GET_MMS_CONVO,
-        GET_SMS_CONVO,
+        //SEND_MESSAGES
+        SEND_MESSAGES,
+        SENT_MESSAGES,
+        SENT_MESSAGES_FAILED,
+
+        //CANCEL ACTIONS
+        CANCELLED,
     }
 
     public JSONBuilder( Action action ) {
         try {
             this.put( "action", action.name().toLowerCase() );
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "unable to add action to JSON");
+            Log.e(Tag.JSON_BUILDER, "unable to add action to JSON");
             e.printStackTrace();
         }
+    }
+
+    public JSONBuilder(String stringExtra) throws JSONException {
+        super(stringExtra);
     }
 }

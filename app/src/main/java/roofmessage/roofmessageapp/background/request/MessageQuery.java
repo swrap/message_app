@@ -1,4 +1,4 @@
-package roofmessage.roofmessageapp.dataquery;
+package roofmessage.roofmessageapp.background.request;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -118,8 +118,8 @@ public class MessageQuery {
             start_date = smsCursor.getString(smsCursor.getColumnIndex(Telephony.TextBasedSmsColumns.DATE));
         }
         Cursor mmsCursor = getMMSMessages(thread_id, limit,
-                Utils.convertSMStoMMSDate(start_date),
-                Utils.convertSMStoMMSDate(end_date)
+                (start_date.length() > 3 ? Utils.convertSMStoMMSDate(start_date) : start_date),
+                (end_date.length() > 3 ? Utils.convertSMStoMMSDate(end_date) : end_date)
         );
 
         JSONBuilder jsonObject = new JSONBuilder( JSONBuilder.Action.POST_MESSAGES );
@@ -259,6 +259,7 @@ public class MessageQuery {
                 Telephony.TextBasedSmsColumns.READ,
                 Telephony.TextBasedSmsColumns.SUBJECT,
                 Telephony.TextBasedSmsColumns.THREAD_ID,
+                Telephony.Sms._ID,
         };
         String WHERE = Telephony.Sms.Conversations.THREAD_ID + " = ?";
         String [] QUESTIONMARK = {thread_id};
@@ -297,8 +298,10 @@ public class MessageQuery {
                             cursor.getString(5));
                     message.put(JSONBuilder.JSON_KEY_CONVERSATION.SUBJECT.name().toLowerCase(),
                             cursor.getString(6));
-                    message.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
+                    jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
                             cursor.getString(7));
+                    jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.ID.name().toLowerCase(),
+                            cursor.getString(8));
                     jsonArray.put(message);
                 } catch (JSONException e) {
                     Log.d(Tag.MESSAGE_MANAGER, "Could not find message.");
@@ -328,8 +331,7 @@ public class MessageQuery {
             do {
                 JSONObject message = new JSONObject();
                 try {
-                    message.put("Thread_id",
-                            cursor.getString(0));
+                    //TODO REMOVE THREAD_ID FROM CURSOR SEARCH
                     message.put("date",
                             cursor.getString(1));
                     message.put("date sent",
@@ -394,8 +396,8 @@ public class MessageQuery {
             WHERE += " AND " + Telephony.BaseMmsColumns.DATE + " BETWEEN ? AND ?";
         }
 
-        Log.e(Tag.MESSAGE_MANAGER, "LIMIT: " + limit + " \n" + ORDERBY +
-        " \n" + QUESTIONMARK[0] + " " + QUESTIONMARK[1] + " \n" + WHERE);
+//        Log.e(Tag.MESSAGE_MANAGER, "LIMIT: " + limit + " \n" + ORDERBY +
+//        " \n" + QUESTIONMARK[0] + " " + QUESTIONMARK[1] + " \n" + WHERE);
         Cursor cursor = contentResolver.query(contentURI,
                 COLUMN,
                 WHERE,

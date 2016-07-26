@@ -11,73 +11,75 @@
     android:layout_centerHorizontal="true"
     android:orientation="vertical"
     tools:context=".activity.LoginActivity"
-    android:gravity="center_vertical|center"
     android:baselineAligned="false"
-    android:weightSum="1">
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/status_open"
-            android:id="@+id/status"
-            android:theme="@style/RoofDefaultFont"
-            android:layout_gravity="center" />
-
-        <ProgressBar
-            style="?android:attr/progressBarStyleSmall"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/progressBar"
-            android:visibility="gone" />
-    </LinearLayout>
-
-    <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:measureWithLargestChild="false"
-        android:weightSum="1"
-            android:theme="@style/RoofDefaultFont">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:text="Active for:"
-                android:id="@+id/textView3"
-                android:paddingRight="5dp"
-                android:layout_gravity="left" />
-
-            <Chronometer
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:id="@+id/chronometer"
-                android:format="@string/roofmessage_hour_minute_sec"
-                android:layout_gravity="left" />
-
-    </LinearLayout>
+    android:weightSum="1"
+    android:gravity="center_vertical|center_horizontal">
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/scrollView">
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:id="@+id/scrollView3"
+        android:layout_gravity="center">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center">
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/status_open"
+                    android:id="@+id/status"
+                    android:theme="@style/RoofDefaultFont"
+                    android:layout_gravity="center"
+                    android:textSize="28dp" />
+
+            </LinearLayout>
+
+            <Switch
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/switch_mobile_data"
+                android:id="@+id/switch_mobile_data"
+                android:checked="false"
+                android:enabled="false"
+                android:layout_gravity="center_horizontal"
+                android:textSize="20dp"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:id="@+id/textView3"
+                android:layout_gravity="center_horizontal"
+                android:text="@string/text_info_display"
+                android:textColorHighlight="@android:color/holo_orange_light"
+                android:autoLink="web"
+                android:gravity="center_horizontal" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/testing_view"
+        android:layout_gravity="center">
 
         <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-
-            <Button
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/connection_button"
-                    android:layout_gravity="center_horizontal"
-                    android:textStyle="bold"
-                    android:text="@string/disconnect" />
 
             <LinearLayout
                     android:orientation="horizontal"
@@ -111,13 +113,15 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="MMS_Convo"
-                        android:id="@+id/mms_convo" />
+                        android:id="@+id/mms_convo"
+                        android:enabled="false" />
 
                     <Button
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="SMS_CONVO"
-                        android:id="@+id/sms_convo" />
+                        android:id="@+id/sms_convo"
+                        android:enabled="false" />
                 </LinearLayout>
 
             <LinearLayout
@@ -130,13 +134,22 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Get Messages"
-                        android:id="@+id/messages" />
+                        android:id="@+id/messages"
+                        android:enabled="false" />
 
-                    <Button
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="WS_Connect"
-                        android:id="@+id/websocket" />
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="MSG_SIN"
+                    android:id="@+id/send_msg"
+                    android:enabled="false" />
+
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="MSG_MULT"
+                    android:id="@+id/msg_mult"
+                    android:enabled="false" />
 
             </LinearLayout>
 
@@ -153,7 +166,7 @@
                     android:id="@+id/received_data"
                     android:allowUndo="true" />
             </ScrollView>
-
         </LinearLayout>
     </ScrollView>
+
 </LinearLayout>

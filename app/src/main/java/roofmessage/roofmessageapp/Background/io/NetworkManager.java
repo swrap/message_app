@@ -1,15 +1,17 @@
-package roofmessage.roofmessageapp.io;
+package roofmessage.roofmessageapp.background.io;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
 import android.telephony.TelephonyManager;
+import android.util.Log;
+
+import roofmessage.roofmessageapp.background.BackgroundManager;
+import roofmessage.roofmessageapp.utils.Tag;
 
 /**
  * Created by Jesse Saran on 6/22/2016.
@@ -19,6 +21,7 @@ public class NetworkManager extends BroadcastReceiver{
 
     private ConnectivityManager connectivityManager;
     private WifiManager wifiManager;
+    private BackgroundManager backgroundManager;
 
     //wifi
     private int WIFI_MINIMUM_MBPS = 1;
@@ -27,17 +30,16 @@ public class NetworkManager extends BroadcastReceiver{
     private int MOBLIE_MIMIMUM_KBPS = 100;
     private boolean mobileMimimumSpeedEnable = false;
 
-    //mob
-
-    private NetworkManager(Context context) {
+    private NetworkManager(BackgroundManager backgroundManager) {
         super();
-        connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        connectivityManager = (ConnectivityManager) backgroundManager.getSystemService(Context.CONNECTIVITY_SERVICE);
+        wifiManager = (WifiManager) backgroundManager.getSystemService(Context.WIFI_SERVICE);
+        this.backgroundManager = backgroundManager;
     }
 
-    public static NetworkManager getInstance(Context context) {
+    public static NetworkManager getInstance(BackgroundManager backgroundManager) {
         if (networkManager == null) {
-            networkManager = new NetworkManager(context);
+            networkManager = new NetworkManager(backgroundManager);
         }
         return networkManager;
     }
@@ -48,7 +50,9 @@ public class NetworkManager extends BroadcastReceiver{
 
     public boolean isConnectedTypeWifi() {
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE);
+        Log.d(Tag.NETWORK_MANAGER, "networkInfo [" + networkInfo + "], isconnected [" + networkInfo.isConnected() + "] getType [" + networkInfo.getType() + "], wifi type [" + ConnectivityManager.TYPE_WIFI + "], all ["
+                + (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI) + "]");
+        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
     }
 
     public boolean isConnectedTypeMobile() {
@@ -57,8 +61,7 @@ public class NetworkManager extends BroadcastReceiver{
     }
 
     public boolean isConnected() {
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-        if (networkInfo != null && networkInfo.isConnected()) {
+        if (isConnectedTypeWifi()) {
             return true;
         }
         return false;
@@ -120,6 +123,15 @@ public class NetworkManager extends BroadcastReceiver{
 
     @Override
     public void onReceive(Context context, Intent intent) {
-
+        String action = intent.getAction();
+        Log.d(Tag.NETWORK_MANAGER, "Changed action [" + action + " ] [" + WifiManager.NETWORK_STATE_CHANGED_ACTION + "]");
+        if(action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)){
+            NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+            if(info.getType() == ConnectivityManager.TYPE_WIFI){
+                if (isConnectedTypeWifi()) {
+                    backgroundManager.attemptThreadLogin(null);
+                }
+            }
+        }
     }
 }

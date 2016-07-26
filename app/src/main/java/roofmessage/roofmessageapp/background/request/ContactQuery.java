@@ -1,4 +1,4 @@
-package roofmessage.roofmessageapp.dataquery;
+package roofmessage.roofmessageapp.background.request;
 
 import android.content.ContentResolver;
 import android.content.Context;

@@ -3,8 +3,11 @@ package roofmessage.roofmessageapp.activity;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Message;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -29,15 +32,13 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.neovisionaries.ws.client.WebSocketState;
+import java.util.List;
 
-import roofmessage.roofmessageapp.BackgroundManager;
+import roofmessage.roofmessageapp.background.BackgroundManager;
+import roofmessage.roofmessageapp.io.BindListener;
 import roofmessage.roofmessageapp.R;
-import roofmessage.roofmessageapp.io.NetworkManager;
-import roofmessage.roofmessageapp.io.SharedPreferenceManager;
-import roofmessage.roofmessageapp.io.WebSocketManager;
+import roofmessage.roofmessageapp.background.io.SharedPreferenceManager;
 import roofmessage.roofmessageapp.utils.PermissionsManager;
-import roofmessage.roofmessageapp.io.SessionManager;
 import roofmessage.roofmessageapp.utils.Tag;
 
 /**
@@ -50,7 +51,7 @@ public class LoginActivity extends AppCompatActivity {
      */
     private UserLoginTask mAuthTask = null;
 
-    private BackgroundManager backgroundManager;
+    private BindListener bindListener;
 
     // UI references.
     private AutoCompleteTextView mUsernameView;
@@ -60,22 +61,36 @@ public class LoginActivity extends AppCompatActivity {
     private Button mUsernameSignInButton;
     private CheckBox mCheckBoxView;
 
-    private SharedPreferenceManager sharedPreferenceManager;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //TODO add this in to fix threads
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-        backgroundManager = BackgroundManager.getInstance();
-        if (backgroundManager.isRunning()) {
+        //TODO might need to change background state
+
+        //check to see if background manager has started else quit
+        ActivityManager activityManager = (ActivityManager) this.getSystemService( ACTIVITY_SERVICE );
+        List<ActivityManager.RunningAppProcessInfo> procInfos = activityManager.getRunningAppProcesses();
+        for (int i = 0; i < procInfos.size(); i++)
+        {
+            if (procInfos.get(i).processName.equals(this.getString(R.string.background_process)))
+            {
+                Toast.makeText(getApplicationContext(), "Browser is running", Toast.LENGTH_LONG).show();
+            }
+            if (i == procInfos.size()-1 ) {
+                startService(new Intent(this,BackgroundManager.class));
+            }
+        }
+
+        //move to next activity if already running
+        if (SharedPreferenceManager.getInstance(this).getBackgroundState()) {
             Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
             LoginActivity.this.startActivity(mainIntent);
         }
+        bindListener = new BindListener(this);
+        bindListener.doBindService();
         setContentView(R.layout.activity_login);
-        startBackgroundManager();
-        sharedPreferenceManager = SharedPreferenceManager.getInstance(this);
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
@@ -88,13 +103,11 @@ public class LoginActivity extends AppCompatActivity {
         mUsernameView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
-                Log.d(Tag.LOGIN_ACTIVITY, "Saved: " + mUsernameView.getText().toString() + " " +
-                        mPasswordView.getText().toString() + " " + mCheckBoxView.isChecked());
                 if (textView.getId() == R.id.username && mCheckBoxView.isChecked()) {
-                    boolean saved = sharedPreferenceManager.saveUserPass(mUsernameView.getText().toString(),
-                            mPasswordView.getText().toString());
-                    Log.d(Tag.LOGIN_ACTIVITY, "Saved: " + mUsernameView.getText().toString() + " " +
-                            mPasswordView.getText().toString() + " " + saved);
+                    bindListener.sendUserPass(
+                            mUsernameView.getText().toString(),
+                            mPasswordView.getText().toString(),
+                            false);
                     return true;
                 }
                 return false;
@@ -108,8 +121,10 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
                 if (mCheckBoxView.isChecked()) {
-                    boolean saved = sharedPreferenceManager.saveUserPass(mUsernameView.getText().toString(),
-                            mPasswordView.getText().toString());
+                    bindListener.sendUserPass(
+                            mUsernameView.getText().toString(),
+                            mPasswordView.getText().toString(),
+                            false);
                 }
             }
 
@@ -136,9 +151,10 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
                 if (mCheckBoxView.isChecked()) {
-                    boolean saved = sharedPreferenceManager.saveUserPass(mUsernameView.getText().toString(),
-                            mPasswordView.getText().toString());
-                    Log.d(Tag.LOGIN_ACTIVITY, "SAVED: " + saved);
+                    bindListener.sendUserPass(
+                            mUsernameView.getText().toString(),
+                            mPasswordView.getText().toString(),
+                            false);
                 }
             }
 
@@ -156,31 +172,27 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         PermissionsManager.checkPermissions(this);
-        NetworkManager.getInstance(this);
 
         mCheckBoxView.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                sharedPreferenceManager.saveRememberMe(mCheckBoxView.isChecked());
+                Message message = new Message();
+                message.what = BackgroundManager.MSG_SAVE_REMEMBERME;
+                message.arg1 = mCheckBoxView.isChecked() ? 1 : 0;
+                bindListener.sendMessage(message);
                 if(mCheckBoxView.isChecked()) {
-                    sharedPreferenceManager.saveUserPass(mUsernameView.getText().toString(),
-                            mPasswordView.getText().toString());
+                    bindListener.sendUserPass(
+                            mUsernameView.getText().toString(),
+                            mPasswordView.getText().toString(),
+                            false);
                 } else {
-                    sharedPreferenceManager.saveUserPass("","");
+                    bindListener.sendUserPass(
+                            "",
+                            "",
+                            false);
                 }
             }
         });
-
-
-    }
-
-    private void startBackgroundManager() {
-        boolean serviceStarted = backgroundManager.isRunning();
-        if (!serviceStarted) {
-            Intent intent = new Intent(LoginActivity.this, BackgroundManager.class);
-            intent.setAction(BackgroundManager.LOGIN_START);
-            LoginActivity.this.startService(intent);
-        }
     }
 
     private void showKeyboard(boolean show, View view) {
@@ -252,12 +264,15 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void initiateCheckBox() {
+        //TODO Preferences in LoginActivity might need to fix
+        SharedPreferenceManager sharedPreferenceManager = SharedPreferenceManager.getInstance(this);
         boolean checked = sharedPreferenceManager.getRememberMe();
         mCheckBoxView.setChecked(checked);
         if ( checked ) {
             mCheckBoxView.setTextIsSelectable(true);
             String username = sharedPreferenceManager.getUsername();
             mUsernameView.setText(username);
+            mUsernameView.setSelection(username.length());
             String password = sharedPreferenceManager.getPassword();
             mPasswordView.setText(password);
         }
@@ -303,15 +318,12 @@ public class LoginActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         showProgress(false);
-        if(!sharedPreferenceManager.getRememberMe()) {
-            mUsernameView.setText("");
-            mPasswordView.setText("");
-        }
     }
 
     @Override
     public void onDestroy() {
         Log.d(Tag.LOGIN_ACTIVITY,"CLOSING APP");
+        bindListener.doUnbindService();
         super.onDestroy();
     }
 
@@ -323,40 +335,32 @@ public class LoginActivity extends AppCompatActivity {
 
         private final String mUsername;
         private final String mPassword;
-        private SessionManager sessionManager;
         private String mErrorMessage = "";
 
         UserLoginTask(String username, String password) {
             mUsername = username;
             mPassword = password;
-            sessionManager = SessionManager.getInstance(LoginActivity.this);
         }
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            mErrorMessage = getString(R.string.error_login);
-            boolean retval = false;
-            WebSocketManager webSocketManager = WebSocketManager.getInstance(LoginActivity.this);
-
-            NetworkManager networkManager = NetworkManager.getInstance();
-            if (networkManager != null && networkManager.isConnected()) {
-                //we have internet
-                retval = sessionManager.login(mUsername, mPassword);
-                if (retval) {
-                    //we can login to django
-                    WebSocketManager webSocketController = WebSocketManager.getInstance(LoginActivity.this);
-                    retval = webSocketController.createConnection();
-                    if (!retval) {
-                        //we can login but not create a connection
-                        Log.e(Tag.LOGIN_ACTIVITY, "Can login, but cannot connect socket.");
-                        sessionManager.logout(mUsername, mPassword);
-                    }
-                }
+            if (Tag.DEV_MODE_SKIP_AUTH) {
+                return true;
             } else {
-                mErrorMessage = "Not connected to internet";
+                mErrorMessage = getString(R.string.error_login);
+                Log.d(Tag.LOGIN_ACTIVITY, "About to send message to login.");
+                //set session use pass and then attempt login
+                bindListener.sendUserPass(mUsername, mPassword, true);
+                bindListener.attemptLogin(UserLoginTask.this);
+                try {
+                    synchronized (this) {
+                        this.wait();
+                    }
+                } catch (InterruptedException e) {
+                    Log.d(Tag.LOGIN_ACTIVITY, "Waiting to login interrupted");
+                }
+                return bindListener.getLoginResponse();
             }
-
-            return retval;
         }
 
         @Override
@@ -364,16 +368,14 @@ public class LoginActivity extends AppCompatActivity {
             mAuthTask = null;
 
             if (success) {
-
-                if (!sharedPreferenceManager.getBackgroundState()) {
-                    //save session username and pass if background wasnt not running before
-                    sharedPreferenceManager.saveSessionUsernamePass(mUsername, mPassword);
-                    sharedPreferenceManager.saveBackgroundState(true);
-                }
+                bindListener.sendUserPass(mUsername, mPassword, true);
+                Message message = new Message();
+                message.what = BackgroundManager.MSG_SAVE_BACKGROUND_STATE;
+                message.arg1 = 1;
+                bindListener.sendMessage(message);
                 Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
                 mainIntent.setAction(BackgroundManager.LOGIN_START);
                 LoginActivity.this.startActivity(mainIntent);
-                showProgress(false);
             } else {
                 showProgress(false);
                 Toast toast = Toast.makeText(LoginActivity.this, mErrorMessage, Toast.LENGTH_LONG);

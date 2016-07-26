@@ -1,4 +1,4 @@
-package roofmessage.roofmessageapp.io;
+package roofmessage.roofmessageapp.background.io;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -23,8 +23,9 @@ public class SharedPreferenceManager {
 
 
     private SharedPreferenceManager(Context context){
+        //TODO Might night to switch to ContentProvider
         preferences = context.getSharedPreferences(
-                context.getString(R.string.shared_preferences), Context.MODE_PRIVATE);
+                context.getString(R.string.shared_preferences), Context.MODE_MULTI_PROCESS | Context.MODE_PRIVATE);
     }
 
     public static SharedPreferenceManager getInstance(Context context){

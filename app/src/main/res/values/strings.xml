@@ -1,6 +1,10 @@
 <resources>
     <string name="app_name">RoofMessage</string>
+
+    <!-- BackgroundManager-->
     <string name="background_process">:RoofMessageBackground</string>
+    <string name="remote_service_started">Roof Message Service Started</string>
+    <string name="remote_service_stopped">Roof Message Service Stopped</string>
 
     <!-- Strings related to login -->
     <string name="prompt_username">Username</string>
@@ -17,7 +21,7 @@
     <string name="enable_permissions">Go to Permissions Page</string>
     <string name="cancel">Cancel</string>
     <string name="remember_checkbox">Remember Me</string>
-    <string name="register_online_at_roofmessage_com">Register Online at roofmessage.com</string>
+    <string name="register_online_at_roofmessage_com">Register Online at www.rooftext.com</string>
 
 
     <!-- Strings related to main page -->
@@ -25,14 +29,16 @@
     <string name="title_activity_main">RoofMessage</string>
     <string name="status_created">Status: Created</string>
     <string name="status_connecting">Status: Connecting</string>
-    <string name="status_open">Status: Open</string>
+    <string name="status_open">Status: Connected</string>
     <string name="status_closing">Status: Closing</string>
     <string name="status_closed">Status: Closed</string>
     <string name="connect">Connect</string>
     <string name="disconnect">Disconnect</string>
-    <string name="back_button_dialog">Are you sure you want to logout?</string>
+    <string name="back_button_dialog">Are you sure you want to logout? Note this stops the background service from running.</string>
     <string name="back_button_logout">Logout</string>
     <string name="back_button_cancel">Cancel</string>
+    <string name="switch_mobile_data">Use mobile data</string>
+    <string name="switch_background_when_closed">Background Process When App Closed</string>
 
     <!--ERROR FOR CONNECTION -->
     <string name="refuse_connect">"Can not connect without these permissions: "</string>
@@ -44,6 +50,15 @@
     <string name="roof_permissions_internet">Internet</string>
     <string name="roof_permissions_unknown">UNKNOWN</string>
 
-    <!--Shared Preferences -->
+    <!--Shared Preferences: ***********DO NOT CHANGE************* -->
     <string name="shared_preferences">roof_message_app</string>
+    <string name="remote_service_connected">Remote Service Connected</string>
+    <string name="remote_service_disconnected">Remote Service Disconnected</string>
+    <string name="text_info_display">Thanks for choosing RoofText. This app keeps in contact
+        with our servers to provide the connection between your phone and the web browser. Please just
+        close this app and it will run in the background. We make it run as efficiently as possible and only
+        connect while on wifi and its up to you whether it uses mobile data. If you want to logout
+        hit the back button on your device. When you logout, the background service will not
+        run in, therefore you wont be connected to RoofText :(, so we will not be connected to the browser.
+        Questions, check us out at: www.rooftext.com.</string>
 </resources>
