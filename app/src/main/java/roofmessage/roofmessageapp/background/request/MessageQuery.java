@@ -64,25 +64,25 @@ public class MessageQuery {
             cursor.moveToFirst();
             do {
                 JSONObject conversation = new JSONObject();
+                JSONObject conversationInfo = new JSONObject();
                 try {
+                    conversation.put(cursor.getString(1), conversationInfo);
                     //conversation
-                    conversation.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE.name().toLowerCase(),
+                    conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE.name().toLowerCase(),
                             cursor.getString(0));
-                    conversation.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
-                            cursor.getString(1));
-                    conversation.put(JSONBuilder.JSON_KEY_CONVERSATION.MESSAGE_COUNT.name().toLowerCase(),
+                    conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.MESSAGE_COUNT.name().toLowerCase(),
                             cursor.getString(2));
-                    conversation.put(JSONBuilder.JSON_KEY_CONVERSATION.READ.name().toLowerCase(),
+                    conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.READ.name().toLowerCase(),
                             cursor.getString(3));
 
                     //check for found found recipients
                     JSONArray matchRecipients = matchRecipientID(cursor.getString(4).split(" "));
                     if( matchRecipients != null ) {
-                        conversation.put(JSONBuilder.JSON_KEY_CONVERSATION.RECIPIENTS.name().toLowerCase(),
+                        conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.RECIPIENTS.name().toLowerCase(),
                                 matchRecipients);
                     }
 
-                    conversation.put(JSONBuilder.JSON_KEY_CONVERSATION.CONVO_TYPE.name().toLowerCase(),
+                    conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.CONVO_TYPE.name().toLowerCase(),
                             cursor.getString(5));
 
                     jsonArray.put(conversation);
@@ -190,7 +190,7 @@ public class MessageQuery {
                 }
             }
 
-            jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.MESSAGES.name().toLowerCase(),
+            jsonObject.put(thread_id,
                     (Object) jsonArray);
         } catch (JSONException e) {
             Log.e(Tag.MESSAGE_MANAGER,"Could not add array to json.");
@@ -201,10 +201,13 @@ public class MessageQuery {
 
     private JSONObject getMMSJSON(Cursor cursor) throws JSONException {
         JSONObject jsonObject = new JSONObject();
+        JSONObject message = new JSONObject();
+        message.put(cursor.getString(8), jsonObject);
+
         jsonObject.put(JSONBuilder.Message_Type.TYPE.name().toLowerCase(),
                 JSONBuilder.Message_Type.MMS.name().toLowerCase());
-        jsonObject.put("Thread_id",
-                    cursor.getString(0));
+//        jsonObject.put("thread_id",
+//                    cursor.getString(0));
         jsonObject.put("date received",
                 Utils.convertMMStoSMSDate(cursor.getString(1)));
         jsonObject.put("date sent",
@@ -219,14 +222,14 @@ public class MessageQuery {
                     cursor.getString(6));
         jsonObject.put("text_only",
                     cursor.getString(7));
-        jsonObject.put("id",
-                    cursor.getString(8));
         jsonObject.put("parts", getMMSParts(cursor.getString(8)));
-        return jsonObject;
+        return message;
     }
 
     private JSONObject getSMSJSON(Cursor cursor) throws JSONException {
         JSONObject jsonObject = new JSONObject();
+        JSONObject message = new JSONObject();
+        message.put(cursor.getString(8), jsonObject);
         jsonObject.put(JSONBuilder.Message_Type.TYPE.name().toLowerCase(),
                 JSONBuilder.Message_Type.SMS.name().toLowerCase());
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.BODY.name().toLowerCase(),
@@ -243,9 +246,9 @@ public class MessageQuery {
                 cursor.getString(5));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.SUBJECT.name().toLowerCase(),
                 cursor.getString(6));
-        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
-                cursor.getString(7));
-        return jsonObject;
+//        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
+//                cursor.getString(7));
+        return message;
     }
 
     private Cursor getSMSMessages(String thread_id,int limit,int offset){
@@ -471,5 +474,4 @@ public class MessageQuery {
         }
         return jsonArray;
     }
-
 }

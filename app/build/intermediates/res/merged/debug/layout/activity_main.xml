@@ -135,7 +135,7 @@
                         android:layout_height="wrap_content"
                         android:text="Get Messages"
                         android:id="@+id/messages"
-                        android:enabled="false" />
+                        android:enabled="true" />
 
                 <Button
                     android:layout_width="wrap_content"

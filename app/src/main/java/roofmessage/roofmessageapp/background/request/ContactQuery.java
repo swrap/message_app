@@ -105,10 +105,11 @@ public class ContactQuery {
             do {
                 if(!cursor.getString(1).equals(previousName)) {
                     JSONObject contact = new JSONObject();
+                    JSONObject contactInfo = new JSONObject();
                     try {
-                        contact.put(JSONBuilder.JSON_KEY_CONTACT.ANDROID_ID.name().toLowerCase(), cursor.getString(0));
-                        contact.put(JSONBuilder.JSON_KEY_CONTACT.FULL_NAME.name().toLowerCase(), cursor.getString(1));
-                        contact.put(JSONBuilder.JSON_KEY_CONTACT.PHONE_NUMBER.name().toLowerCase(),
+                        contact.put(cursor.getString(0), contactInfo);
+                        contactInfo.put(JSONBuilder.JSON_KEY_CONTACT.FULL_NAME.name().toLowerCase(), cursor.getString(1));
+                        contactInfo.put(JSONBuilder.JSON_KEY_CONTACT.PHONE_NUMBER.name().toLowerCase(),
                                 cursor.getString(2));
                         jsonArray.put(contact);
                     } catch (JSONException e) {

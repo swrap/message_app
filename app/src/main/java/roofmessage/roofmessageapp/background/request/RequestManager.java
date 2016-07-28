@@ -76,10 +76,13 @@ public class RequestManager extends Thread {
         Log.d(Tag.REQUEST_MANAGER, "Starting Thread");
         while(true) {
             try {
-                synchronized (this) {
-                    this.wait();
-                    if(kill){
-                        break;
+
+                if (requests.isEmpty()) {
+                    synchronized (this) {
+                        this.wait();
+                        if (kill) {
+                            break;
+                        }
                     }
                 }
                 Log.d(Tag.REQUEST_MANAGER, "Woken with request length [" + requests.size() + "]");
@@ -91,11 +94,13 @@ public class RequestManager extends Thread {
 
                     Log.d(Tag.REQUEST_MANAGER, "Processing request action [" + action + "]");
                     if(action.equals(JSONBuilder.Action.GET_CONTACTS.name().toLowerCase())) {
+                        Log.d(Tag.REQUEST_MANAGER, "Querying contacts");
                         send = contactQuery.getContacts();
-                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
+//                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
                     } else if(action.equals(JSONBuilder.Action.GET_CONVERSATIONS.name().toLowerCase())) {
+                        Log.d(Tag.REQUEST_MANAGER, "Querying conversations");
                         send = messageQuery.getAllConversations();
-                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
+//                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
                     } else if(action.equals(JSONBuilder.Action.GET_SMS_CONVO.name().toLowerCase())) {
                         send = messageQuery.getSMS("596", 5, 0);
                         Log.d(Tag.REQUEST_MANAGER, send.toString(4));
@@ -134,8 +139,10 @@ public class RequestManager extends Thread {
                     }
 
                     if (send != null) {
+                        Log.d(Tag.REQUEST_MANAGER, "Sending 'send' from action [" + action + "]");
                         Intent intent = new Intent(Tag.ACTION_LOCAL_SEND_MESSAGE);
                         intent.putExtra(Tag.KEY_SEND_JSON_STRING, send.toString());
+                        Log.d(Tag.REQUEST_MANAGER, "Broadcasting 'send' from action [" + action + "]");
                         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
                     }
                 }

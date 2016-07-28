@@ -51,6 +51,7 @@ public class JSONBuilder extends JSONObject{
         ID,
         AMOUNT,
         OFFSET,
+        DATA,
 
         //TYPES
         MMS,
