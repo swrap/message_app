@@ -65,7 +65,8 @@
                 android:text="@string/text_info_display"
                 android:textColorHighlight="@android:color/holo_orange_light"
                 android:autoLink="web"
-                android:gravity="center_horizontal" />
+                android:gravity="center_horizontal"
+                android:textSize="1dp" />
 
         </LinearLayout>
     </ScrollView>
@@ -166,6 +167,18 @@
                     android:id="@+id/received_data"
                     android:allowUndo="true" />
             </ScrollView>
+
+            <EditText
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/connectionIp" />
+
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="fill_parent"
+                android:text="Reset Connection"
+                android:id="@+id/resetConnection" />
+
         </LinearLayout>
     </ScrollView>
 

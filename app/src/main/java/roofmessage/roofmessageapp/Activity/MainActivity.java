@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,6 +37,8 @@ public class MainActivity extends AppCompatActivity{
     // UI references.
     private TextView mStatus;
     private TextView mMessage;
+
+    private EditText mIp;//TODO TEST REMOVE
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,6 +149,21 @@ public class MainActivity extends AppCompatActivity{
                 message.what = BackgroundManager.MSG_REQUEST;
                 Bundle bundle = new Bundle();
                 bundle.putString(BackgroundManager.KEY_ACTION, JSONBuilder.Action.SEND_MESSAGES.name());
+                message.setData(bundle);
+                bindListener.sendMessage(message);
+            }
+        });
+
+        mIp = (EditText) findViewById(R.id.connectionIp);
+        Button resetConnection = (Button) findViewById(R.id.resetConnection);
+        resetConnection.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.e(Tag.MAIN_ACTIVITY, "Resetting connection.");
+                Message message = new Message();
+                message.what = BackgroundManager.MSG_RESET_CONNECTION;
+                Bundle bundle = new Bundle();
+                bundle.putString(BackgroundManager.KEY_CONNECTION_IP, mIp.getText().toString());
                 message.setData(bundle);
                 bindListener.sendMessage(message);
             }

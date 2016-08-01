@@ -123,7 +123,7 @@ public class BackgroundManager extends Service implements Flush {
             Log.d(Tag.BACKGROUND_MANAGER, "SharedPreferences background is false. And started after app closed. Stopping service.");
             stopSelf();
         }
-        return START_STICKY;
+        return START_NOT_STICKY; //TODO TURN OFF FOR MATT TESTING
     }
 
     @Override
@@ -277,9 +277,11 @@ public class BackgroundManager extends Service implements Flush {
     public static final int MSG_REQUEST = 10;
     public static final int MSG_POST_WEBSOCKET_UPDATE = 11;
     public static final int MSG_LOGOUT = 12;
+    public static final int MSG_RESET_CONNECTION = 13;
 
     public static final String KEY_ACTION = "KEY_ACTION"; //TODO REMOVE AFTER TESTING
     public static final String KEY_USERNAME_PASS = "KEY_USERNAME_PASS";
+    public static final String KEY_CONNECTION_IP = "KEY_CONNECTION_IP";
 
     private final Messenger mMessenger = new Messenger(new IncomingHandler());
 
@@ -349,6 +351,15 @@ public class BackgroundManager extends Service implements Flush {
                     sharedPreferenceManager.saveSessionUsernamePass("", "");
                     sharedPreferenceManager.saveBackgroundState(false);
                     webSocketManager.disconnect();
+                    break;
+                case MSG_RESET_CONNECTION:
+                    Tag.BASE_URL = msg.getData().getString(KEY_CONNECTION_IP);
+                    Log.d(Tag.BACKGROUND_MANAGER, "Resetting connection [" + Tag.BASE_URL + "]");
+                    if (webSocketManager.getState() == WebSocketState.CLOSED) {
+                        webSocketManager.createConnection();
+                    } else {
+                        webSocketManager.disconnect();
+                    }
                     break;
                 /**case MSG_SET_VALUE:
                     mValue = msg.arg1;
