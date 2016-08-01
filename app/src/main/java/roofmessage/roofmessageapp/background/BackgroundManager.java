@@ -1,10 +1,12 @@
 package roofmessage.roofmessageapp.background;
 
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -16,6 +18,9 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.neovisionaries.ws.client.WebSocketState;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 
@@ -83,6 +88,7 @@ public class BackgroundManager extends Service implements Flush {
         networkManager = NetworkManager.getInstance(BackgroundManager.this);
         filters.addAction("android.net.wifi.WIFI_STATE_CHANGED");
         filters.addAction("android.net.wifi.STATE_CHANGE");
+        filters.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
         super.registerReceiver(networkManager, filters);
 
         //websocket intent setup
@@ -191,27 +197,29 @@ public class BackgroundManager extends Service implements Flush {
             boolean retval = false;
             Log.d(Tag.BACKGROUND_MANAGER, "Attempting login.");
             while(!retval) {
-                retval = attemptLogin();
-                Log.d(Tag.BACKGROUND_MANAGER, "attempted login retval [" + retval + "], replyTo [" + replyTo + "]");
-                if (replyTo != null) {
-                    Log.d(Tag.BACKGROUND_MANAGER, "Reply to is not null. Breaking.");
+                if (!networkManager.canConnectBackgroundService()) {
+                    Log.d(Tag.BACKGROUND_MANAGER, "No internet service, halting attempt to connect.");
                     break;
-                }
-                if (!retval) {
-                    if (!networkManager.canConnectBackgroundService()) {
-                        Log.d(Tag.BACKGROUND_MANAGER, "No internet service, halting attempt to connect.");
+                } else {
+                    if (sharedPreferenceManager.getSessionUsername().equals("") && sharedPreferenceManager.getSessionPassword().equals("")) {
+                        Log.d(Tag.BACKGROUND_MANAGER, "Got into connection somehow without session values. exiting.");
                         break;
                     } else {
-                        if (sharedPreferenceManager.getSessionUsername().equals("") && sharedPreferenceManager.getSessionPassword().equals("")) {
-                            Log.d(Tag.BACKGROUND_MANAGER, "Got into connection somehow without session values. exiting.");
+                        retval = attemptLogin();
+                        Intent intent = new Intent(Tag.ACTION_WEBSOC_CHANGE);
+                        intent.putExtra("state", webSocketManager.getLocalizeState());
+                        Log.d(Tag.BACKGROUND_MANAGER, "Localized state [" + webSocketManager.getLocalizeState() + "]");
+                        BackgroundManager.this.sendBroadcast(intent);
+                        Log.d(Tag.BACKGROUND_MANAGER, "attempted login retval [" + retval + "], replyTo [" + replyTo + "]");
+                        if (replyTo != null) {
+                            Log.d(Tag.BACKGROUND_MANAGER, "Reply to is not null. Breaking.");
                             break;
-                        } else {
-                            Log.d(Tag.BACKGROUND_MANAGER, "Could not connect, sleeping for [" + sleep_time + "] millis.");
-                            try {
-                                this.sleep(sleep_time);
-                            } catch (InterruptedException e) {
-                                Log.e(Tag.BACKGROUND_MANAGER, "Interrupted sleep. BAD!", e);
-                            }
+                        }
+                        Log.d(Tag.BACKGROUND_MANAGER, "Could not connect, sleeping for [" + sleep_time + "] millis.");
+                        try {
+                            this.sleep(sleep_time);
+                        } catch (InterruptedException e) {
+                            Log.e(Tag.BACKGROUND_MANAGER, "Interrupted sleep. BAD!", e);
                         }
                     }
                 }
@@ -390,6 +398,14 @@ public class BackgroundManager extends Service implements Flush {
                 if (state.equals(webSocketManager.localizeState(WebSocketState.CLOSED))) {
                     attemptThreadLogin(null);
                 }
+                JSONObject jsonObject = new JSONObject();
+                try {
+                    jsonObject.put(JSONBuilder.JSON_KEY_MAIN.ACTION.name().toLowerCase(),
+                            JSONBuilder.Action.DISCONNECTED.name().toLowerCase());
+                } catch (JSONException e) {
+                    Log.e(Tag.BACKGROUND_MANAGER, "Could not create cancelled action to send.");
+                }
+                webSocketManager.sendString(jsonObject.toString());
             }
         }
     }

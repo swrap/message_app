@@ -49,7 +49,7 @@ public class NetworkManager extends BroadcastReceiver{
     }
 
     public boolean isConnectedTypeWifi() {
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        NetworkInfo networkInfo = ((ConnectivityManager) backgroundManager.getSystemService(Context.CONNECTIVITY_SERVICE)).getNetworkInfo(ConnectivityManager.TYPE_WIFI);
         Log.d(Tag.NETWORK_MANAGER, "networkInfo [" + networkInfo + "], isconnected [" + networkInfo.isConnected() + "] getType [" + networkInfo.getType() + "], wifi type [" + ConnectivityManager.TYPE_WIFI + "], all ["
                 + (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI) + "]");
         return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
@@ -127,6 +127,7 @@ public class NetworkManager extends BroadcastReceiver{
         Log.d(Tag.NETWORK_MANAGER, "Changed action [" + action + " ] [" + WifiManager.NETWORK_STATE_CHANGED_ACTION + "]");
         if(action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)){
             NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+            Log.d(Tag.NETWORK_MANAGER, "Inside checking [" + info.getType() + " ] [" + ConnectivityManager.TYPE_WIFI + "]");
             if(info.getType() == ConnectivityManager.TYPE_WIFI){
                 if (isConnectedTypeWifi()) {
                     backgroundManager.attemptThreadLogin(null);

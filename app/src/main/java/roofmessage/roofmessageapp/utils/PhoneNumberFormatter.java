@@ -17,15 +17,10 @@ public class PhoneNumberFormatter {
      * Example:
      *      (123) 456-7891 -> 1234567891
      *
-     * @param unfromattedNumber
+     * @param unformattedNumber
      * @return
      */
-    public static String toSingleNumber(String unfromattedNumber) {
-        Matcher matcher = Pattern.compile("\\d+").matcher(unfromattedNumber);
-        StringBuilder stringBuilder = new StringBuilder();
-        while(matcher.find()) {
-            stringBuilder.append(matcher.group(0));
-        }
-        return stringBuilder.toString();
+    public static String toSingleNumber(String unformattedNumber) {
+        return unformattedNumber.replace("\\D+","");
     }
 }

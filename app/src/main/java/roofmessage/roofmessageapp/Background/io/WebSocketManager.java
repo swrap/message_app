@@ -135,14 +135,6 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
         }
     }
 
-    public void sendBytes(byte[] bytes) {
-        if (webSocket != null) {
-            webSocket.sendBinary(bytes);
-        } else {
-            Log.d(Tag.WEB_SOC_MANAGER, "Unable to send bytes. Websocket is null.");
-        }
-    }
-
     public void disconnect() {
         webSocket.disconnect();
     }
@@ -214,7 +206,7 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
 
         @Override
         public void onConnected(WebSocket websocket, Map<String, List<String>> headers) throws Exception {
-
+            websocket.sendText(new JSONBuilder(JSONBuilder.Action.CONNECTED).toString());
         }
 
         @Override
@@ -264,7 +256,7 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
 
         @Override
         public void onTextMessage(WebSocket websocket, String text) throws Exception {
-            Log.v(Tag.WEB_SOC_MANAGER, "TEXT: " + text);
+            Log.d(Tag.WEB_SOC_MANAGER, "TEXT: " + text);
             Intent intent = new Intent(Tag.ACTION_LOCAL_RECEIVED_MESSAGE);
             intent.putExtra(Tag.KEY_MESSAGE, text);
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent);

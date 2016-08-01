@@ -15,10 +15,14 @@ import android.telephony.PhoneNumberUtils;
 import android.telephony.SmsMessage;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import roofmessage.roofmessageapp.Flush;
+import roofmessage.roofmessageapp.background.request.MessageQuery;
 import roofmessage.roofmessageapp.io.JSONBuilder;
 import roofmessage.roofmessageapp.background.io.WebSocketManager;
 import roofmessage.roofmessageapp.utils.Tag;
@@ -111,7 +115,7 @@ public class SMSObserver extends ContentObserver implements Flush{
                     Log.e(Tag.SMS_OBSERVER, "Could not send: " + temp_message_id);
                     for (MessageWaiting messageWaiting : messagesWaiting) {
                         Log.d(Tag.SMS_OBSERVER, "FAILED found message. Sending return to websocket. temp_message_id [" + temp_message_id + "] message_id [" + messageId + "]");
-                        webSocketManager.sendBytes(messageWaiting.getFailedJSON(messageId).toString().getBytes());
+                        webSocketManager.sendString(messageWaiting.getFailedJSON(messageId).toString());
                         messagesWaiting.remove(messageWaiting);
                         break;
                     }
@@ -158,52 +162,76 @@ public class SMSObserver extends ContentObserver implements Flush{
         Log.d(Tag.SMS_OBSERVER, "Received change from URI-Path [" + uri.getPath() + "] host [" + uri.getHost() + "] concurrent size [" + messagesWaiting.size() + "] self change [" + selfChange + "]"
         + " uri-to-string [" + uri.toString()+ "]");
         synchronized (this) {
-            if (messagesWaiting.size() > 0) {
-                Cursor cursor = null;
-                try {
-                    cursor = context.getContentResolver().query(uri, null, null, null, null);
-                    Log.d(Tag.SMS_OBSERVER, "cursor: " + cursor + " " + cursor.getCount());
-                    if (cursor != null && cursor.getCount() > 0 && cursor.moveToFirst()) {
-                        final int type = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.TYPE));
-                        Log.d(Tag.SMS_OBSERVER, "type [" + type + "] " +
-                                "\ntypes [" + Telephony.Sms.MESSAGE_TYPE_ALL + "] " +
-                                "\ntypes [" + Telephony.Sms.MESSAGE_TYPE_INBOX + "] " +
-                                "\ntypes [" + Telephony.Sms.MESSAGE_TYPE_SENT + "] " +
-                                "\ntypes [" + Telephony.Sms.MESSAGE_TYPE_DRAFT + "] " +
-                                "\ntypes [" + Telephony.Sms.MESSAGE_TYPE_OUTBOX + "] " +
-                                "\ntypes [" + Telephony.Sms.MESSAGE_TYPE_FAILED + "] " +
-                                "\ntypes [" + Telephony.Sms.MESSAGE_TYPE_QUEUED + "] " +
-                                "\ntypes [" + Telephony.Sms.Sent.MESSAGE_TYPE_SENT + "] ");
+            Cursor cursor = null;
+            try {
+                cursor = context.getContentResolver().query(uri, null, null, null, null);
+                Log.d(Tag.SMS_OBSERVER, "cursor: " + cursor + " " + cursor.getCount());
+                if (cursor != null && cursor.getCount() > 0 && cursor.moveToFirst()) {
 
-                        if (type == Telephony.Sms.Sent.MESSAGE_TYPE_SENT) {
-                            final String address = cursor.getString(
-                                    cursor.getColumnIndex(Telephony.Sms.ADDRESS));
-                            final String body = cursor.getString(
-                                    cursor.getColumnIndex(Telephony.Sms.BODY));
-                            final String threadId = cursor.getString(
-                                    cursor.getColumnIndex(Telephony.Sms.THREAD_ID));
-                            final String message_id = cursor.getString(
-                                    cursor.getColumnIndex(Telephony.Sms._ID));
-                            for (MessageWaiting messageWaiting : messagesWaiting) {
-                                if (PhoneNumberUtils.compare(address, messageWaiting.numbers) &&
-                                        body.equals(messageWaiting.body)) {
-                                    Log.d(Tag.SMS_OBSERVER, "Found message. Sending return to websocket. Thread ID [" + threadId + "] id [" + message_id + "] address [" + address + "]");
-                                    webSocketManager.sendBytes(messageWaiting.getJSON(
-                                            threadId, message_id
-                                    ).toString().getBytes());
-                                    messagesWaiting.remove(messageWaiting);
-                                    break;
-                                } else {
-                                    Log.v(Tag.SMS_OBSERVER, "Message not found.");
+                    int type = -1;
+                    if (cursor.getColumnIndex(Telephony.TextBasedSmsColumns.TYPE) >= 0) {
+                        type = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.TYPE));
+                    }
+                    Log.d(Tag.SMS_OBSERVER, "type [" + type + "] " +
+                            "\ntypes [" + Telephony.Sms.MESSAGE_TYPE_ALL + "] " +
+                            "\ntypes [" + Telephony.Sms.MESSAGE_TYPE_INBOX + "] " +
+                            "\ntypes [" + Telephony.Sms.MESSAGE_TYPE_SENT + "] " +
+                            "\ntypes [" + Telephony.Sms.MESSAGE_TYPE_DRAFT + "] " +
+                            "\ntypes [" + Telephony.Sms.MESSAGE_TYPE_OUTBOX + "] " +
+                            "\ntypes [" + Telephony.Sms.MESSAGE_TYPE_FAILED + "] " +
+                            "\ntypes [" + Telephony.Sms.MESSAGE_TYPE_QUEUED + "] " +
+                            "\ntypes [" + Telephony.Sms.Sent.MESSAGE_TYPE_SENT + "] ");
+
+                    if (type == Telephony.Sms.Sent.MESSAGE_TYPE_SENT) {
+                        final String address = cursor.getString(
+                                cursor.getColumnIndex(Telephony.Sms.ADDRESS));
+                        final String body = cursor.getString(
+                                cursor.getColumnIndex(Telephony.Sms.BODY));
+                        final String threadId = cursor.getString(
+                                cursor.getColumnIndex(Telephony.Sms.THREAD_ID));
+                        final String message_id = cursor.getString(
+                                cursor.getColumnIndex(Telephony.Sms._ID));
+                        boolean found = false;
+                        for (MessageWaiting messageWaiting : messagesWaiting) {
+                            if (PhoneNumberUtils.compare(address, messageWaiting.numbers) &&
+                                    body.equals(messageWaiting.body)) {
+                                Log.d(Tag.SMS_OBSERVER, "Found message. Sending return to websocket. Thread ID [" + threadId + "] id [" + message_id + "] address [" + address + "] temp message id [" +
+                                messageWaiting.temp_message_id + "]");
+                                JSONBuilder jsonBuilder = messageWaiting.getJSON(threadId, message_id);
+                                try {
+                                    jsonBuilder.put(cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.THREAD_ID)),
+                                            new JSONArray().put(MessageQuery.getSMSJSON(cursor)));
+                                } catch (JSONException e) {
+                                    Log.d(Tag.SMS_OBSERVER, "Unable to get messages for received successfully sent.");
                                 }
+                                webSocketManager.sendString(jsonBuilder.toString());
+                                messagesWaiting.remove(messageWaiting);
+                                found = true;
+                                break;
+                            } else {
+                                Log.v(Tag.SMS_OBSERVER, "Message not found.");
                             }
                         }
                     } else {
+                        Log.d(Tag.SMS_OBSERVER, "Was not sent. Sending received.");
+                        try {
+                            JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.RECEIVED_MESSAGE);
+                            String thread_id = cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.THREAD_ID));
+                            jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
+                                    thread_id);
+                            jsonBuilder.put(cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.THREAD_ID)),
+                                    new JSONArray().put(MessageQuery.getSMSJSON(cursor)));
+                            Log.d(Tag.SMS_OBSERVER, "Received message, sending away! [" + jsonBuilder.toString() + "]");
+                            webSocketManager.sendString(jsonBuilder.toString());
+                        } catch (JSONException e) {
+                            Log.d(Tag.SMS_OBSERVER, "Unable to query message for incoming message.");
+                        }
+
                     }
-                } finally {
-                    if (cursor != null) {
-                        cursor.close();
-                    }
+                }
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
                 }
             }
         }

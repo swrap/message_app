@@ -23,7 +23,6 @@ public class MessageWaiting {
 
     public JSONBuilder getJSON(String thread_id, String message_id) {
         JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.SEND_MESSAGES);
-
         try {
             jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.ACTION.name().toLowerCase(),
                     JSONBuilder.Action.SENT_MESSAGES.name().toLowerCase());

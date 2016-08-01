@@ -89,6 +89,7 @@ public class RequestManager extends Thread {
 
                 if (!requests.isEmpty()) {
                     JSONBuilder jsonRequest = requests.poll();
+                    Log.d(Tag.REQUEST_MANAGER, "Request to string [" + jsonRequest + "]");
                     String action = jsonRequest.getString(JSONBuilder.JSON_KEY_MAIN.ACTION.name().toLowerCase());
                     JSONBuilder send = null;
 
@@ -113,9 +114,9 @@ public class RequestManager extends Thread {
                                 jsonRequest.getInt(JSONBuilder.JSON_KEY_CONVERSATION.AMOUNT.name().toLowerCase()),
                                 jsonRequest.getInt(JSONBuilder.JSON_KEY_CONVERSATION.OFFSET.name().toLowerCase())
                         );
-                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
+//                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
                     } else if(action.equals(JSONBuilder.Action.SEND_MESSAGES.name().toLowerCase())) {
-                        Log.d(Tag.REQUEST_MANAGER, "Attempting to send message");
+                        Log.d(Tag.REQUEST_MANAGER, "Attempting to send message[" + jsonRequest.toString() + "]");
 //                        String [] temp = {"4848889627"};
 //                        SmsMmsDelivery smsMmsDelivery = new SmsMmsDelivery("hello self!","8573468",temp);
                         JSONArray jsonNumbers = jsonRequest.getJSONArray(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.NUMBERS.name().toLowerCase());
@@ -134,6 +135,9 @@ public class RequestManager extends Thread {
                         }
                         Log.d(Tag.REQUEST_MANAGER, "Added message: " + action);
                         smsMmsDelivery.sendMessage(context, smsObserver);
+                    } else if(action.equals(JSONBuilder.Action.CONNECTED.name().toLowerCase())) {
+                        send = new JSONBuilder(JSONBuilder.Action.CONNECTED);
+                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
                     } else {
                         Log.d(Tag.REQUEST_MANAGER, "Could not find action: " + action);
                     }
@@ -159,10 +163,16 @@ public class RequestManager extends Thread {
         public void onReceive(Context context, Intent intent) {
             if (intent != null) {
                 String action = intent.getAction();
-                Log.d(Tag.REQUEST_MANAGER, "Recieved: " + action + " " + intent.getStringExtra(Tag.KEY_MESSAGE));
                 if (!action.equals("") && action.equals(Tag.ACTION_LOCAL_RECEIVED_MESSAGE)) {
+                    Log.d(Tag.REQUEST_MANAGER, "Recieved from local [" + action + "] " + intent.getStringExtra(Tag.KEY_MESSAGE));
                     try {
-                        addRequest(new JSONBuilder(intent.getStringExtra(Tag.KEY_MESSAGE)));
+                        String message = intent.getStringExtra(Tag.KEY_MESSAGE);
+                        if (message != null && !message.isEmpty()) {
+                            addRequest(new JSONBuilder(message));
+                        } else {
+                            Log.e(Tag.REQUEST_MANAGER, "Received request with action [" + action + "] and message [" +
+                            message + "]");
+                        }
                     } catch (JSONException e) {
                         Log.d(Tag.REQUEST_MANAGER, "Could not create JSON Object.", e);
                     }

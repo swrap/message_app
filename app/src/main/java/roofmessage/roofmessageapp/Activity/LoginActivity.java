@@ -76,7 +76,7 @@ public class LoginActivity extends AppCompatActivity {
         {
             if (procInfos.get(i).processName.equals(this.getString(R.string.background_process)))
             {
-                Toast.makeText(getApplicationContext(), "Browser is running", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "BBackground service is running", Toast.LENGTH_LONG).show();
             }
             if (i == procInfos.size()-1 ) {
                 startService(new Intent(this,BackgroundManager.class));

@@ -28,6 +28,7 @@ public class JSONBuilder extends JSONObject{
     public enum JSON_KEY_CONVERSATION {
         CONVERSATIONS,
         MESSAGES,
+        MESSAGE,
 
         //specific conversation keys
         DATE,
@@ -52,10 +53,14 @@ public class JSONBuilder extends JSONObject{
         AMOUNT,
         OFFSET,
         DATA,
+        CREATOR,
+
+        FULL_NAME,
+        CONTACT_ID,
 
         //TYPES
         MMS,
-        SMS,
+        SMS, TEXT_ONLY, PARTS,
     }
 
     public enum Message_Type{
@@ -97,8 +102,15 @@ public class JSONBuilder extends JSONObject{
         SENT_MESSAGES,
         SENT_MESSAGES_FAILED,
 
+        //UPDATING MESSAGES
+        RECEIVED_MESSAGE,
+
         //CANCEL ACTIONS
         CANCELLED,
+
+        //CONNECTION
+        CONNECTED,
+        DISCONNECTED,
     }
 
     public JSONBuilder( Action action ) {

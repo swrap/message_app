@@ -1,5 +1,6 @@
 package roofmessage.roofmessageapp.activity;
 
+import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -14,6 +15,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.List;
 
 import roofmessage.roofmessageapp.R;
 import roofmessage.roofmessageapp.background.BackgroundManager;
@@ -38,11 +42,29 @@ public class MainActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        connectionReciever = new ConnectionReciever();
+        intent_filter.addAction(Tag.ACTION_RECEIVED_MESSAGE);
+        intent_filter.addAction(Tag.ACTION_WEBSOC_CHANGE);
+        registerReceiver(connectionReciever, intent_filter);
+
         mStatus = (TextView) findViewById(R.id.status);
         mMessage = (TextView) findViewById(R.id.received_data);
         bindListener = new BindListener(this);
         bindListener.doBindService();
         updateConnectionUI();
+
+        ActivityManager activityManager = (ActivityManager) this.getSystemService( ACTIVITY_SERVICE );
+        List<ActivityManager.RunningAppProcessInfo> procInfos = activityManager.getRunningAppProcesses();
+        for (int i = 0; i < procInfos.size(); i++)
+        {
+            if (procInfos.get(i).processName.equals(this.getString(R.string.background_process)))
+            {
+                Toast.makeText(getApplicationContext(), "Background service is running", Toast.LENGTH_LONG).show();
+            }
+            if (i == procInfos.size()-1 ) {
+                startService(new Intent(this,BackgroundManager.class));
+            }
+        }
 
         //TODO FIX ALL THE SINGLETON PATTERNS
 
@@ -130,11 +152,6 @@ public class MainActivity extends AppCompatActivity{
         });
         ////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////
-
-        connectionReciever = new ConnectionReciever();
-        intent_filter.addAction(Tag.ACTION_RECEIVED_MESSAGE);
-        intent_filter.addAction(Tag.ACTION_WEBSOC_CHANGE);
-        registerReceiver(connectionReciever, intent_filter);
     }
 
     private void updateConnectionUI() {
@@ -195,6 +212,12 @@ public class MainActivity extends AppCompatActivity{
     }
 
     @Override
+    protected void onPause() {
+        updateConnectionUI();
+        super.onPause();
+    }
+
+    @Override
     protected void onResume() {
         updateConnectionUI();
         super.onResume();
@@ -203,6 +226,7 @@ public class MainActivity extends AppCompatActivity{
     private class ConnectionReciever extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.d(Tag.MAIN_ACTIVITY, "Changed State Received.");
             String action = intent.getAction();
             if (action.equals(Tag.ACTION_WEBSOC_CHANGE)) {
                 Log.d(Tag.MAIN_ACTIVITY, "State changed received.");

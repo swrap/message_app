@@ -34,52 +34,9 @@ public class ContactQuery {
 
         return contactQuery;
     }
-/**
-    public JSONBuilder getContact(String name) {
-        Uri contentURI = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
-        String [] COLUMN = {
-                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY,
-                ContactsContract.CommonDataKinds.Phone.NUMBER
-        };
-        String WHERE = ContactsContract.CommonDataKinds.Phone.TYPE + " = " +
-            ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE + " AND " +
-                ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?";
-        String [] QUESTIONMARK = {name};
-
-        Cursor cursor = contentResolver.query(contentURI,
-                COLUMN,
-                WHERE,
-                QUESTIONMARK,
-                null
-                );
-
-        JSONBuilder jsonObject = new JSONBuilder( JSONBuilder.Action.post_contacts );
-        if(cursor.getColumnCount() > 0) {
-            cursor.moveToFirst();
-            JSONObject contact = new JSONObject();
-            try {
-                contact.put(JSONBuilder.JSON_KEY_CONTACT.ANDROID_ID.name().toLowerCase(), cursor.getString(0));
-                contact.put(JSONBuilder.JSON_KEY_CONTACT.FULL_NAME.name().toLowerCase(), cursor.getString(1));
-                contact.put(JSONBuilder.JSON_KEY_CONTACT.PHONE_NUMBER.name().toLowerCase(),
-                        PhoneNumberFormatter.toSingleNumber(cursor.getString(2)));
-                jsonObject.put(JSONBuilder.JSON_KEY_CONTACT.CONTACT.name().toLowerCase(),
-                        contact);
-            } catch (JSONException e) {
-                Log.e(Tag.CONTACT_MANAGER,"Could not add contact.");
-                e.printStackTrace();
-            }
-        }
-        try {
-            Log.v(Tag.CONTACT_MANAGER,jsonObject.toString());
-            return jsonObject;
-        } catch (Exception e) {
-            Log.e(Tag.CONTACT_MANAGER,"Could not add array to json.");
-            e.printStackTrace();
-        }
-        return null;
-    }*/
 
     public JSONBuilder getContacts() {
+        MessageQuery.listAllNormalizedNumbers();
         Uri contentURI = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
         String [] COLUMN = {
                 ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
@@ -89,7 +46,7 @@ public class ContactQuery {
         String WHERE = ContactsContract.CommonDataKinds.Phone.TYPE + " = " +
                 ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE;
         String [] QUESTIONMARK = null;
-        String ORDERBY = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY + " DESC";
+        String ORDERBY = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY;
         Cursor cursor = contentResolver.query(contentURI,
                 COLUMN,
                 WHERE,

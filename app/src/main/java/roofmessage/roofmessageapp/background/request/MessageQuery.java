@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.provider.ContactsContract;
 import android.provider.Telephony;
 import android.text.TextUtils;
 import android.util.Log;
@@ -12,6 +13,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -50,7 +52,7 @@ public class MessageQuery {
                 Telephony.ThreadsColumns.TYPE,
             };
 
-        String ORDERBY = "date DESC";
+        String ORDERBY = "date DESC LIMIT 10"; //TODO TEST GET RID OF LIMIT
         Cursor cursor = contentResolver.query(mSMSMMS,
                 SMSMMS_COLUMNS,
                 null,
@@ -69,22 +71,19 @@ public class MessageQuery {
                     conversation.put(cursor.getString(1), conversationInfo);
                     //conversation
                     conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE.name().toLowerCase(),
-                            cursor.getString(0));
+                            cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.DATE)));
                     conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.MESSAGE_COUNT.name().toLowerCase(),
-                            cursor.getString(2));
+                            cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.MESSAGE_COUNT)));
                     conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.READ.name().toLowerCase(),
-                            cursor.getString(3));
-
+                            cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.READ)));
                     //check for found found recipients
-                    JSONArray matchRecipients = matchRecipientID(cursor.getString(4).split(" "));
+                    JSONArray matchRecipients = matchRecipientID(cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.RECIPIENT_IDS)).split(" "));
                     if( matchRecipients != null ) {
                         conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.RECIPIENTS.name().toLowerCase(),
                                 matchRecipients);
                     }
-
                     conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.CONVO_TYPE.name().toLowerCase(),
-                            cursor.getString(5));
-
+                            cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.TYPE)));
                     jsonArray.put(conversation);
                 } catch (JSONException e) {
                     Log.e(Tag.MESSAGE_MANAGER, "Could not add conversation.");
@@ -126,6 +125,8 @@ public class MessageQuery {
         JSONArray jsonArray = new JSONArray();
 
         try {
+            jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
+                    thread_id);
             Log.e(Tag.MESSAGE_MANAGER, smsCursor + " " + smsCursor.getCount() + " " +
                     mmsCursor + " " + mmsCursor.getCount());
 
@@ -189,13 +190,19 @@ public class MessageQuery {
                     } while(mmsCursor.moveToNext());
                 }
             }
-
+            if (mmsCursor != null) {
+                mmsCursor.close();
+            }
+            if (smsCursor != null) {
+                smsCursor.close();
+            }
             jsonObject.put(thread_id,
                     (Object) jsonArray);
         } catch (JSONException e) {
             Log.e(Tag.MESSAGE_MANAGER,"Could not add array to json.");
             e.printStackTrace();
         }
+        Log.e(Tag.MESSAGE_MANAGER, "MessengerQuery: " + jsonObject);
         return jsonObject;
     }
 
@@ -208,46 +215,50 @@ public class MessageQuery {
                 JSONBuilder.Message_Type.MMS.name().toLowerCase());
 //        jsonObject.put("thread_id",
 //                    cursor.getString(0));
-        jsonObject.put("date received",
-                Utils.convertMMStoSMSDate(cursor.getString(1)));
-        jsonObject.put("date sent",
-                    cursor.getString(2));
-        jsonObject.put("locked",
-                    cursor.getString(3));
-        jsonObject.put("seen",
-                    cursor.getString(4));
-        jsonObject.put("read",
-                    cursor.getString(5));
-        jsonObject.put("subject",
-                    cursor.getString(6));
-        jsonObject.put("text_only",
-                    cursor.getString(7));
-        jsonObject.put("parts", getMMSParts(cursor.getString(8)));
+        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE_RECIEVED.name().toLowerCase(),
+                Utils.convertMMStoSMSDate(cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.DATE))));
+        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE_SENT.name().toLowerCase(),
+                    cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.DATE_SENT)));
+        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.LOCKED.name().toLowerCase(),
+                    cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.LOCKED)));
+        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.SEEN.name().toLowerCase(),
+                    cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.SEEN)));
+        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.READ.name().toLowerCase(),
+                    cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.READ)));
+        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.SUBJECT.name().toLowerCase(),
+                    cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.SUBJECT)));
+        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.TEXT_ONLY.name().toLowerCase(),
+                    cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.TEXT_ONLY)));
+        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.MESSAGE_TYPE.name().toLowerCase(),
+                cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.MESSAGE_BOX)));
+        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.PARTS.name().toLowerCase(),
+                getMMSParts(cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns._ID))));
         return message;
     }
 
-    private JSONObject getSMSJSON(Cursor cursor) throws JSONException {
+    public static JSONObject getSMSJSON(Cursor cursor) throws JSONException {
         JSONObject jsonObject = new JSONObject();
         JSONObject message = new JSONObject();
-        message.put(cursor.getString(8), jsonObject);
+        message.put(cursor.getString(cursor.getColumnIndex(Telephony.Sms._ID)), jsonObject);
+
         jsonObject.put(JSONBuilder.Message_Type.TYPE.name().toLowerCase(),
                 JSONBuilder.Message_Type.SMS.name().toLowerCase());
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.BODY.name().toLowerCase(),
-                cursor.getString(0));
+                cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.BODY)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE_RECIEVED.name().toLowerCase(),
-                cursor.getString(1));
+                cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.DATE)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE_SENT.name().toLowerCase(),
-                cursor.getString(2));
+                cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.DATE_SENT)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.LOCKED.name().toLowerCase(),
-                cursor.getString(3));
+                cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.LOCKED)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.SEEN.name().toLowerCase(),
-                cursor.getString(4));
+                cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.SEEN)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.READ.name().toLowerCase(),
-                cursor.getString(5));
+                cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.READ)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.SUBJECT.name().toLowerCase(),
-                cursor.getString(6));
-//        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
-//                cursor.getString(7));
+                cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.SUBJECT)));
+        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.MESSAGE_TYPE.name().toLowerCase(),
+                cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.TYPE)));
         return message;
     }
 
@@ -263,6 +274,7 @@ public class MessageQuery {
                 Telephony.TextBasedSmsColumns.SUBJECT,
                 Telephony.TextBasedSmsColumns.THREAD_ID,
                 Telephony.Sms._ID,
+                Telephony.Sms.TYPE,
         };
         String WHERE = Telephony.Sms.Conversations.THREAD_ID + " = ?";
         String [] QUESTIONMARK = {thread_id};
@@ -385,6 +397,7 @@ public class MessageQuery {
                 Telephony.BaseMmsColumns.SUBJECT,
                 Telephony.BaseMmsColumns.TEXT_ONLY,
                 Telephony.BaseMmsColumns._ID,
+                Telephony.BaseMmsColumns.MESSAGE_BOX,
         };
         String WHERE = Telephony.BaseMmsColumns.THREAD_ID + " = ?";
         String [] QUESTIONMARK = null;
@@ -463,15 +476,92 @@ public class MessageQuery {
             do {
                 JSONObject jsonObjectRecipient = new JSONObject();
                 jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.RECIPIENT_ID.name().toLowerCase(),
-                        cursorCanonical.getString(0));
+                        cursorCanonical.getString(cursorCanonical.getColumnIndex(Telephony.CanonicalAddressesColumns._ID)));
+                String phoneNumber = cursorCanonical.getString(cursorCanonical.getColumnIndex(Telephony.CanonicalAddressesColumns.ADDRESS));
                 jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.PHONE_NUMBER.name().toLowerCase(),
-                        cursorCanonical.getString(1));
+                        phoneNumber);
+                String [] numberContactId = matchPhoneNumberToContactId(phoneNumber);
+                if (numberContactId[0] == null || numberContactId[0].isEmpty() || numberContactId[1] == null || numberContactId[1].isEmpty()) {
+                    Log.d(Tag.MESSAGE_MANAGER, "Oh no! Message query just detected one of these was null. [" + numberContactId[0] + "] [" + numberContactId[1] + "]");
+                }
+                jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.FULL_NAME.name().toLowerCase(),
+                        numberContactId[0]);
+                jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.CONTACT_ID.name().toLowerCase(),
+                        numberContactId[1]);
                 jsonArray.put(jsonObjectRecipient);
             }while (cursorCanonical.moveToNext());
         }
         if(cursorCanonical != null) {
             cursorCanonical.close();
         }
+        Log.d(Tag.MESSAGE_MANAGER, "ThreadId [" + jsonArray + "]");
         return jsonArray;
+    }
+
+    private String [] matchPhoneNumberToContactId(String phoneNumber) {
+        Cursor cursor = null;
+        String [] numberContactId = new String[2];
+        try {
+            Uri contentURI = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+            String[] COLUMN = {
+                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY,
+                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
+                    ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER
+            };
+            String WHERE = ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER + " LIKE ?";
+            String[] QUESTIONMARK = {"%" + phoneNumber + "%",};
+            cursor = contentResolver.query(contentURI,
+                    COLUMN,
+                    WHERE,
+                    QUESTIONMARK,
+                    null
+            );
+            Log.d(Tag.MESSAGE_MANAGER, "Phone number [" + phoneNumber + "] query [" + cursor.toString() + "] mark [" + QUESTIONMARK[0] + "] [" + ContactsContract.CommonDataKinds.Phone.CONTENT_URI + "]");
+            JSONArray jsonArray = new JSONArray();
+            if (cursor.getCount() > 0 && cursor.moveToFirst()) {
+                numberContactId[0] = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY));
+                numberContactId[1] = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID));
+            }
+        } finally {
+            if(cursor != null){
+                cursor.close();
+            }
+        }
+        return numberContactId;
+    }
+
+    public static void listAllNormalizedNumbers() {
+        Cursor cursor = null;
+        try {
+            Uri contentURI = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+            String[] COLUMN = {
+                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY,
+                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
+                    ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER,
+                    ContactsContract.CommonDataKinds.Phone.NUMBER
+            };
+            String WHERE = ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER + " LIKE ?";
+            String[] QUESTIONMARK = {"%484888%",};
+            cursor = contentResolver.query(contentURI,
+                    COLUMN,
+                    WHERE,
+                    QUESTIONMARK,
+                    null
+            );
+            if (cursor.getCount() > 0 && cursor.moveToFirst()) {
+                do{
+                Log.d(Tag.MESSAGE_MANAGER, cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY)) + " " +
+                cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)) + " " +
+                        cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER)) + " " +
+                                cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)));
+                } while (cursor.moveToNext());
+            } else {
+                Log.e(Tag.MESSAGE_MANAGER, "QUERY NOT WORKING GRR [" + cursor.getCount() + "]");
+            }
+        } finally {
+            if(cursor != null){
+                cursor.close();
+            }
+        }
     }
 }

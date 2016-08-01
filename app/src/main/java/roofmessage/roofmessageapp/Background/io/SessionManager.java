@@ -128,7 +128,7 @@ public class SessionManager {
         } catch (ConnectException e) {
             Log.d(Tag.SESSION_MANAGER, "Unable to connect to host.", e);
         } catch (Exception e) {
-            Log.e(Tag.SESSION_MANAGER, "Failed for some reason.", e);
+            Log.d(Tag.SESSION_MANAGER, "Failed for some reason.", e);
             e.printStackTrace();
         }
         return false;
