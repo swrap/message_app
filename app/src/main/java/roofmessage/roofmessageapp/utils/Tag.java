@@ -47,4 +47,7 @@ public class Tag {
 
     //JSONBuilder
     public static final String JSON_BUILDER = BASE_TAG + "JSONBuilder";
+
+    //Main Activity / Login Activity Background manager intents
+    public static final String KEY_INTENT_LOGIN_ACTIVITY = "KEY_INTENT_LOGIN_ACTIVITY";
 }

@@ -54,6 +54,24 @@ public class BindListener {
         sendMessage(message);
     }
 
+    public void getConnectionUpdate() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (mService == null) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        Log.d(Tag.BIND_LISTENER, "Sleeping for connection interrupted.");
+                    }
+                }
+                Message message = new Message();
+                message.what = BackgroundManager.MSG_POST_WEBSOCKET_UPDATE;
+                sendMessage(message);
+            }
+        }).start();
+    }
+
     public boolean sendMessage(Message message) {
         message.replyTo = mMessenger;
         if (mService != null) {
@@ -65,6 +83,12 @@ public class BindListener {
             }
         }
         return false;
+    }
+
+    public void logout() {
+        Message message = new Message();
+        message.what = BackgroundManager.MSG_LOGOUT;
+        sendMessage(message);
     }
 
     private class IncomingHandler extends Handler {

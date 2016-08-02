@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
+import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -22,6 +23,7 @@ public class NetworkManager extends BroadcastReceiver{
     private ConnectivityManager connectivityManager;
     private WifiManager wifiManager;
     private BackgroundManager backgroundManager;
+    private Context context;
 
     //wifi
     private int WIFI_MINIMUM_MBPS = 1;
@@ -35,6 +37,7 @@ public class NetworkManager extends BroadcastReceiver{
         connectivityManager = (ConnectivityManager) backgroundManager.getSystemService(Context.CONNECTIVITY_SERVICE);
         wifiManager = (WifiManager) backgroundManager.getSystemService(Context.WIFI_SERVICE);
         this.backgroundManager = backgroundManager;
+        this.context = backgroundManager.getApplicationContext();
     }
 
     public static NetworkManager getInstance(BackgroundManager backgroundManager) {
@@ -49,10 +52,20 @@ public class NetworkManager extends BroadcastReceiver{
     }
 
     public boolean isConnectedTypeWifi() {
-        NetworkInfo networkInfo = ((ConnectivityManager) backgroundManager.getSystemService(Context.CONNECTIVITY_SERVICE)).getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-        Log.d(Tag.NETWORK_MANAGER, "networkInfo [" + networkInfo + "], isconnected [" + networkInfo.isConnected() + "] getType [" + networkInfo.getType() + "], wifi type [" + ConnectivityManager.TYPE_WIFI + "], all ["
-                + (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI) + "]");
-        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        Network [] networks = connectivityManager.getAllNetworks();
+        for (Network network : networks) {
+            NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
+//            Log.d(Tag.NETWORK_MANAGER, "Type [" + networkInfo.getType() + "] " + ConnectivityManager.TYPE_WIFI );
+            if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+                Log.d(Tag.NETWORK_MANAGER, "networkInfo [" + networkInfo + "], isconnected [" + networkInfo.isConnectedOrConnecting() + "] getType [" + networkInfo.getType() + "], wifi type [" + ConnectivityManager.TYPE_WIFI + "], all ["
+                        + (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI) + "]");
+                if (networkInfo != null && networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public boolean isConnectedTypeMobile() {
@@ -123,16 +136,14 @@ public class NetworkManager extends BroadcastReceiver{
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        String action = intent.getAction();
-        Log.d(Tag.NETWORK_MANAGER, "Changed action [" + action + " ] [" + WifiManager.NETWORK_STATE_CHANGED_ACTION + "]");
-        if(action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)){
-            NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-            Log.d(Tag.NETWORK_MANAGER, "Inside checking [" + info.getType() + " ] [" + ConnectivityManager.TYPE_WIFI + "]");
-            if(info.getType() == ConnectivityManager.TYPE_WIFI){
-                if (isConnectedTypeWifi()) {
-                    backgroundManager.attemptThreadLogin(null);
-                }
-            }
+        this.context = context;
+        ConnectivityManager conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = conMan.getActiveNetworkInfo();
+        if (netInfo != null && netInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+            Log.d(Tag.NETWORK_MANAGER, "Have Wifi Connection");
+            backgroundManager.attemptThreadLogin(null);
+        } else {
+            Log.d(Tag.NETWORK_MANAGER, "Don't have Wifi Connection");
         }
     }
 }

@@ -74,17 +74,20 @@ public class LoginActivity extends AppCompatActivity {
         List<ActivityManager.RunningAppProcessInfo> procInfos = activityManager.getRunningAppProcesses();
         for (int i = 0; i < procInfos.size(); i++)
         {
+            Log.d(Tag.LOGIN_ACTIVITY, "BACKGROUND PROCESS " + i + ": " + procInfos.get(i).processName);
             if (procInfos.get(i).processName.equals(this.getString(R.string.background_process)))
             {
                 Toast.makeText(getApplicationContext(), "BBackground service is running", Toast.LENGTH_LONG).show();
             }
             if (i == procInfos.size()-1 ) {
-                startService(new Intent(this,BackgroundManager.class));
+                Log.d(Tag.LOGIN_ACTIVITY, "Login activity starting background manager.");
+                Intent intent = new Intent(this,BackgroundManager.class);
+                intent.putExtra(Tag.KEY_INTENT_LOGIN_ACTIVITY, true);
+                startService(intent);
             }
         }
-
         //move to next activity if already running
-        if (SharedPreferenceManager.getInstance(this).getBackgroundState()) {
+        if (SharedPreferenceManager.getInstance(this).getBackgroundState()) { //TODO MAY NEED TO CHANGE THIS SHAREDPREFERENCE MANAGER
             Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
             LoginActivity.this.startActivity(mainIntent);
         }

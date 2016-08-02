@@ -4,34 +4,50 @@
     api-level="23"
     density="xxhdpi"
     format="7"
-    timestamp="793409163528040"
+    timestamp="806087600080920"
     token="-3044968186596463802" >
 
     <task
         name="javac"
-        duration="1503" />
+        duration="1956" />
     <task
         name="instant-run-dex"
         duration="0" />
     <task
         name="instant-run-transform"
-        duration="38" />
+        duration="223" />
     <task
         name="verifier"
-        duration="13" />
+        duration="26" />
 
     <artifact
         location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\transforms\dex\debug\folders\1000\5\slice_9\classes.dex"
         type="DEX" />
+    <artifact
+        location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\transforms\dex\debug\folders\1000\5\slice_8\classes.dex"
+        type="DEX" />
 
-    <build timestamp="793280605880680" >
+    <build timestamp="799530760458960" >
         <artifact
             location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\outputs\apk\app-debug.apk"
             type="MAIN" />
     </build>
-    <build timestamp="793409163528040" >
+    <build timestamp="802886759833840" >
+        <artifact
+            location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\transforms\dex\debug\folders\1000\5\slice_6\classes.dex"
+            type="DEX" />
+    </build>
+    <build timestamp="803267989342000" >
+        <artifact
+            location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\transforms\dex\debug\folders\1000\5\slice_3\classes.dex"
+            type="DEX" />
+    </build>
+    <build timestamp="806087600080920" >
         <artifact
             location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\transforms\dex\debug\folders\1000\5\slice_9\classes.dex"
+            type="DEX" />
+        <artifact
+            location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\transforms\dex\debug\folders\1000\5\slice_8\classes.dex"
             type="DEX" />
     </build>
 

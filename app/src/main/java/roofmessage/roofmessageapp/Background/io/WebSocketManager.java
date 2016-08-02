@@ -136,7 +136,12 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
     }
 
     public void disconnect() {
-        webSocket.disconnect();
+        if (webSocket != null) {
+            webSocket.disconnect();
+            Log.d(Tag.WEB_SOC_MANAGER, "Websocket disconnecting.");
+        } else {
+            Log.d(Tag.WEB_SOC_MANAGER, "Websocket tried to disconnect on null.");
+        }
     }
 
     public WebSocketState getState() {
@@ -206,6 +211,13 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
 
         @Override
         public void onConnected(WebSocket websocket, Map<String, List<String>> headers) throws Exception {
+            Intent intent = new Intent(Tag.ACTION_WEBSOC_CHANGE);
+            intent.putExtra("state", getLocalizeState());
+            Log.d(Tag.WEB_SOC_MANAGER, "Connected localized state [" + getLocalizeState() + "]");
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+            Intent intent2 = new Intent(Tag.ACTION_WEBSOC_CHANGE);
+            intent2.putExtra("state", getLocalizeState());
+            context.sendBroadcast(intent2);
             websocket.sendText(new JSONBuilder(JSONBuilder.Action.CONNECTED).toString());
         }
 

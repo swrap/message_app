@@ -53,7 +53,6 @@ public class BackgroundManager extends Service implements Flush {
     private static SharedPreferenceManager sharedPreferenceManager = null;
     private static SessionManager sessionManager = null;
     private UserLoginTask mAuthTask;
-    private final IntentFilter filters = new IntentFilter();
 
     private ConnectionReciever connectionReciever;
 
@@ -86,9 +85,8 @@ public class BackgroundManager extends Service implements Flush {
 
         //network manager to receive intents
         networkManager = NetworkManager.getInstance(BackgroundManager.this);
-        filters.addAction("android.net.wifi.WIFI_STATE_CHANGED");
-        filters.addAction("android.net.wifi.STATE_CHANGE");
-        filters.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
+        IntentFilter filters = new IntentFilter();
+        filters.addAction("android.net.conn.CONNECTIVITY_CHANGE");
         super.registerReceiver(networkManager, filters);
 
         //websocket intent setup
@@ -115,15 +113,30 @@ public class BackgroundManager extends Service implements Flush {
         Log.d(Tag.BACKGROUND_MANAGER, "Background onStartCommand. Received start id [" + startId + "] [" + intent + "] backgroundstate[" + sharedPreferenceManager.getBackgroundState() + "]");
         if (intent == null && sharedPreferenceManager.getBackgroundState() && networkManager.canConnectBackgroundService()) {
             Log.d(Tag.BACKGROUND_MANAGER, "Starting login worker threads");
-            mAuthTask = new UserLoginTask(sharedPreferenceManager.getUsername(),
-                    sharedPreferenceManager.getPassword(),
-                    null /*replyTo*/);
-            mAuthTask.start();
+            if (mAuthTask == null || mAuthTask.getState() == Thread.State.TERMINATED) {
+                mAuthTask = new UserLoginTask(sharedPreferenceManager.getUsername(),
+                        sharedPreferenceManager.getPassword(),
+                        null /*replyTo*/);
+                mAuthTask.start();
+            } else {
+                Log.d(Tag.BACKGROUND_MANAGER, "Thread already running :(... IDK?");
+            }
         } else if (intent == null && !sharedPreferenceManager.getBackgroundState()) {
             Log.d(Tag.BACKGROUND_MANAGER, "SharedPreferences background is false. And started after app closed. Stopping service.");
             stopSelf();
+        } else if (intent != null && intent.getExtras() != null && intent.getExtras().getBoolean(Tag.KEY_INTENT_LOGIN_ACTIVITY)) {
+            Log.e(Tag.BACKGROUND_MANAGER, "Removed these.");
+            //should not start if started at start up of app
+//            if (mAuthTask == null || mAuthTask.getState() == Thread.State.TERMINATED) {
+//                mAuthTask = new UserLoginTask(sharedPreferenceManager.getUsername(),
+//                        sharedPreferenceManager.getPassword(),
+//                        null /*replyTo*/);
+//                mAuthTask.start();
+//            } else {
+//                Log.d(Tag.BACKGROUND_MANAGER, "Thread already running :(... IDK?");
+//            }
         }
-        return START_NOT_STICKY; //TODO TURN OFF FOR MATT TESTING
+        return START_STICKY; //TODO TURN OFF FOR MATT TESTING
     }
 
     @Override
@@ -161,6 +174,11 @@ public class BackgroundManager extends Service implements Flush {
         String password = sharedPreferenceManager.getSessionPassword();
         if (!username.isEmpty() && !password.isEmpty()) {
             if (mAuthTask == null || mAuthTask.getState().equals(Thread.State.TERMINATED)) {
+                mAuthTask = new UserLoginTask(username,password,replyTo);
+            }
+            if (mAuthTask.getState().equals(Thread.State.TIMED_WAITING)) {
+                Log.d(Tag.BACKGROUND_MANAGER, "Thread state is hung in timed waiting and we interrupt!");
+                mAuthTask.interrupt();
                 mAuthTask = new UserLoginTask(username,password,replyTo);
             }
             if (mAuthTask.getState().equals(Thread.State.NEW)) {
@@ -206,10 +224,6 @@ public class BackgroundManager extends Service implements Flush {
                         break;
                     } else {
                         retval = attemptLogin();
-                        Intent intent = new Intent(Tag.ACTION_WEBSOC_CHANGE);
-                        intent.putExtra("state", webSocketManager.getLocalizeState());
-                        Log.d(Tag.BACKGROUND_MANAGER, "Localized state [" + webSocketManager.getLocalizeState() + "]");
-                        BackgroundManager.this.sendBroadcast(intent);
                         Log.d(Tag.BACKGROUND_MANAGER, "attempted login retval [" + retval + "], replyTo [" + replyTo + "]");
                         if (replyTo != null) {
                             Log.d(Tag.BACKGROUND_MANAGER, "Reply to is not null. Breaking.");
@@ -219,7 +233,8 @@ public class BackgroundManager extends Service implements Flush {
                         try {
                             this.sleep(sleep_time);
                         } catch (InterruptedException e) {
-                            Log.e(Tag.BACKGROUND_MANAGER, "Interrupted sleep. BAD!", e);
+                            Log.e(Tag.BACKGROUND_MANAGER, "Interrupted sleep. BAD! Breaking", e);
+                            break;
                         }
                     }
                 }
@@ -278,6 +293,7 @@ public class BackgroundManager extends Service implements Flush {
     public static final int MSG_POST_WEBSOCKET_UPDATE = 11;
     public static final int MSG_LOGOUT = 12;
     public static final int MSG_RESET_CONNECTION = 13;
+    public static final int MSG_CHECK_PERMISSIONS = 14;
 
     public static final String KEY_ACTION = "KEY_ACTION"; //TODO REMOVE AFTER TESTING
     public static final String KEY_USERNAME_PASS = "KEY_USERNAME_PASS";
@@ -325,6 +341,7 @@ public class BackgroundManager extends Service implements Flush {
                     sharedPreferenceManager.saveBackgroundState(msg.arg1 == 0 ? false : true);
                     break;
                 case MSG_ATTEMPT_LOGIN:
+                    Log.d(Tag.BACKGROUND_MANAGER,"MSG_ATTEMPT_LOGIN");
                     attemptThreadLogin(msg.replyTo);
                     break;
                 case MSG_REQUEST: //TODO REMOVE AFTER TESTING
@@ -342,7 +359,8 @@ public class BackgroundManager extends Service implements Flush {
                 case MSG_POST_WEBSOCKET_UPDATE:
                     Intent intent = new Intent(Tag.ACTION_WEBSOC_CHANGE);
                     intent.putExtra("state", webSocketManager.getLocalizeState());
-                    LocalBroadcastManager.getInstance(BackgroundManager.this).sendBroadcast(intent);
+                    Log.d(Tag.BACKGROUND_MANAGER, "POSTING STATE OF WEBSOCKET CHANGE.");
+                    BackgroundManager.this.sendBroadcast(intent);
                     break;
                 case MSG_LOGOUT:
                     Log.d(Tag.BACKGROUND_MANAGER,"Logging out of backMan.");
