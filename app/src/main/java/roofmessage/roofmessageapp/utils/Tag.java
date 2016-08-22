@@ -50,4 +50,7 @@ public class Tag {
 
     //Main Activity / Login Activity Background manager intents
     public static final String KEY_INTENT_LOGIN_ACTIVITY = "KEY_INTENT_LOGIN_ACTIVITY";
+
+    //Utils Tag
+    public static final String UTILS = "Utils:";
 }

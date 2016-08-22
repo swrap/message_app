@@ -26,8 +26,8 @@ public class SessionManager {
 
     private static final CookieManager cookieManager = new CookieManager();
 
-    private final String LOGIN_URL = "http://" + Tag.BASE_URL + "/android_login/";
-    private final String LOGOUT_URL = "http://" + Tag.BASE_URL + "/android_logout/";
+    private String LOGIN_URL = "http://" + Tag.BASE_URL + "/android_login/";
+    private String LOGOUT_URL = "http://" + Tag.BASE_URL + "/android_logout/";
     private final String CSRF_MID_TOKEN = "csrfmiddlewaretoken";
     private final String CSRF_TOKEN = "csrftoken";
     private final int RESPONSE_OKAY = 200;
@@ -52,7 +52,8 @@ public class SessionManager {
     public boolean login(String username, String password) {
         try {
             // get content from URLConnection;
-            // cookies are set by web site
+            // cookies are set by web site //TODO Fix loading in dynamic url
+            LOGIN_URL = "http://" + Tag.BASE_URL + "/android_login/";
             Log.d(Tag.SESSION_MANAGER, "Before attempting to login.");
             URL url = new URL(LOGIN_URL);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -98,6 +99,7 @@ public class SessionManager {
         try {
             // get content from URLConnection;
             // cookies are set by web site
+            LOGOUT_URL = "http://" + Tag.BASE_URL + "/android_logout/";
             URL url = new URL(LOGOUT_URL);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setConnectTimeout(connection_timeout);

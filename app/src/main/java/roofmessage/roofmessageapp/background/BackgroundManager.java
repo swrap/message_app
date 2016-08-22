@@ -35,6 +35,7 @@ import roofmessage.roofmessageapp.background.io.WebSocketManager;
 import roofmessage.roofmessageapp.io.JSONBuilder;
 import roofmessage.roofmessageapp.utils.PermissionsManager;
 import roofmessage.roofmessageapp.utils.Tag;
+import roofmessage.roofmessageapp.utils.Utils;
 
 /**
  * Created by Jesse Saran on 7/17/2016.
@@ -215,6 +216,8 @@ public class BackgroundManager extends Service implements Flush {
             boolean retval = false;
             Log.d(Tag.BACKGROUND_MANAGER, "Attempting login.");
             while(!retval) {
+                Utils.loadIpString();
+                Log.d(Tag.BACKGROUND_MANAGER, "Updated base url to [" + Tag.BASE_URL + "]");
                 if (!networkManager.canConnectBackgroundService()) {
                     Log.d(Tag.BACKGROUND_MANAGER, "No internet service, halting attempt to connect.");
                     break;

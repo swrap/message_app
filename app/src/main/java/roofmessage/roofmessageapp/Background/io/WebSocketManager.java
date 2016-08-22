@@ -42,7 +42,7 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
     private Context context;
 
     private final static String COOKIE = "cookie";
-    private static final String WS_URL = "ws://" + Tag.BASE_URL + "/message_route/";
+    private static String WS_URL = getWebSocketUrl();
 
     private WebSocketManager(Context context) {
         this.context = context;
@@ -58,8 +58,9 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
     }
 
     public boolean createConnection() {
+        WS_URL = getWebSocketUrl();
         String state = webSocket == null ? "" : webSocket.getState().name();
-        Log.d(Tag.WEB_SOC_MANAGER, "Attempting connection, websocket state [" + state + "]");
+        Log.d(Tag.WEB_SOC_MANAGER, "Attempting connection, websocket state [" + state + "] BASE URL [" + Tag.BASE_URL + "]");
 
         if (webSocket == null) {
             webSocketFactory.setConnectionTimeout(5000);
@@ -196,6 +197,10 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
                 webSocket.sendText(jsonString);
             }
         }
+    }
+
+    private static String getWebSocketUrl() {
+        return "ws://" + Tag.BASE_URL + "/message_route/";
     }
 
     private class Listener implements WebSocketListener {
