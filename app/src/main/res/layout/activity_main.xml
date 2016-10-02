@@ -141,9 +141,10 @@
                 <Button
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="MSG_SIN"
+                    android:text="MSG"
                     android:id="@+id/send_msg"
-                    android:enabled="false" />
+                    android:enabled="true"
+                    android:elevation="0dp" />
 
                 <Button
                     android:layout_width="wrap_content"

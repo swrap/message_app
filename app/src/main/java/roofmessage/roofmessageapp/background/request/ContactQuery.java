@@ -36,7 +36,6 @@ public class ContactQuery {
     }
 
     public JSONBuilder getContacts() {
-        MessageQuery.listAllNormalizedNumbers();
         Uri contentURI = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
         String [] COLUMN = {
                 ContactsContract.CommonDataKinds.Phone.CONTACT_ID,

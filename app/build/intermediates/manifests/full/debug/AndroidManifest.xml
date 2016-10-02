@@ -46,6 +46,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name="com.klinker.android.send_message.MmsFileProvider"
+            android:authorities="roofmessage.roofmessageapp.MmsFileProvider"
+            android:enabled="true"
+            android:exported="false"
+            android:grantUriPermissions="true" />
     </application>
 
 </manifest>

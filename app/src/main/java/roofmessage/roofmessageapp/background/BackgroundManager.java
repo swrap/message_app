@@ -137,7 +137,7 @@ public class BackgroundManager extends Service implements Flush {
 //                Log.d(Tag.BACKGROUND_MANAGER, "Thread already running :(... IDK?");
 //            }
         }
-        return START_STICKY; //TODO TURN OFF FOR MATT TESTING
+        return START_NOT_STICKY;// START_STICKY; //TODO TURN OFF FOR MATT TESTING
     }
 
     @Override
@@ -173,21 +173,28 @@ public class BackgroundManager extends Service implements Flush {
         Log.d(Tag.BACKGROUND_MANAGER, "Attempting thread login, replyTo [" + replyTo + "]");
         String username = sharedPreferenceManager.getSessionUsername();
         String password = sharedPreferenceManager.getSessionPassword();
-        if (!username.isEmpty() && !password.isEmpty()) {
-            if (mAuthTask == null || mAuthTask.getState().equals(Thread.State.TERMINATED)) {
-                mAuthTask = new UserLoginTask(username,password,replyTo);
-            }
-            if (mAuthTask.getState().equals(Thread.State.TIMED_WAITING)) {
-                Log.d(Tag.BACKGROUND_MANAGER, "Thread state is hung in timed waiting and we interrupt!");
-                mAuthTask.interrupt();
-                mAuthTask = new UserLoginTask(username,password,replyTo);
-            }
-            if (mAuthTask.getState().equals(Thread.State.NEW)) {
-                mAuthTask.start();
+        if(webSocketManager != null && webSocketManager.getState().equals(WebSocketState.CLOSED)) {
+            if (!username.isEmpty() && !password.isEmpty()) {
+                if (mAuthTask == null || mAuthTask.getState().equals(Thread.State.TERMINATED)) {
+                    if(mAuthTask != null) {
+                        Log.d(Tag.BACKGROUND_MANAGER, "Login thread state [" + mAuthTask.getState() + "]");
+                    }
+                    mAuthTask = new UserLoginTask(username,password,replyTo);
+                }
+                if (mAuthTask.getState().equals(Thread.State.TIMED_WAITING)) {
+                    Log.d(Tag.BACKGROUND_MANAGER, "Thread state is hung in timed waiting and we interrupt!");
+                    mAuthTask.interrupt();
+                    mAuthTask = new UserLoginTask(username,password,replyTo);
+                }
+                if (mAuthTask.getState().equals(Thread.State.NEW)) {
+                    mAuthTask.start();
+                }
+            } else {
+                //TODO REMOVE
+                Log.d(Tag.BACKGROUND_MANAGER, "Session values are empty.");
             }
         } else {
-            //TODO REMOVE
-            Log.d(Tag.BACKGROUND_MANAGER, "Session values are empty.");
+            Log.d(Tag.BACKGROUND_MANAGER, "Background manager is logged in, cancelling attempt to connect.");
         }
         Log.d(Tag.BACKGROUND_MANAGER, "Background state is [" +
                 sharedPreferenceManager.getBackgroundState() + "]");
@@ -216,7 +223,6 @@ public class BackgroundManager extends Service implements Flush {
             boolean retval = false;
             Log.d(Tag.BACKGROUND_MANAGER, "Attempting login.");
             while(!retval) {
-                Utils.loadIpString();
                 Log.d(Tag.BACKGROUND_MANAGER, "Updated base url to [" + Tag.BASE_URL + "]");
                 if (!networkManager.canConnectBackgroundService()) {
                     Log.d(Tag.BACKGROUND_MANAGER, "No internet service, halting attempt to connect.");
@@ -309,7 +315,6 @@ public class BackgroundManager extends Service implements Flush {
         public void handleMessage(Message msg) {
             String [] user_pass;
             Bundle bundle;
-
             switch (msg.what) {
                 case MSG_REGISTER_CLIENT:
                     mClients.add(msg.replyTo);
@@ -348,6 +353,7 @@ public class BackgroundManager extends Service implements Flush {
                     attemptThreadLogin(msg.replyTo);
                     break;
                 case MSG_REQUEST: //TODO REMOVE AFTER TESTING
+                    Log.e(Tag.BACKGROUND_MANAGER, "Action is [" + "hey" + "]");
                     String actionString = msg.getData().getString(KEY_ACTION);
                     JSONBuilder.Action actionRequest = JSONBuilder.Action.GET_CONTACTS;
                     for (JSONBuilder.Action act : JSONBuilder.Action.values()) {
@@ -356,6 +362,7 @@ public class BackgroundManager extends Service implements Flush {
                             break;
                         }
                     }
+                    Log.e(Tag.BACKGROUND_MANAGER, "Action is [" + actionRequest + "]");
                     JSONBuilder jsonBuilder = new JSONBuilder(actionRequest);
                     requestManager.addRequest(jsonBuilder);
                     break;
@@ -374,7 +381,6 @@ public class BackgroundManager extends Service implements Flush {
                     webSocketManager.disconnect();
                     break;
                 case MSG_RESET_CONNECTION:
-                    Tag.BASE_URL = msg.getData().getString(KEY_CONNECTION_IP);
                     Log.d(Tag.BACKGROUND_MANAGER, "Resetting connection [" + Tag.BASE_URL + "]");
                     if (webSocketManager.getState() == WebSocketState.CLOSED) {
                         webSocketManager.createConnection();

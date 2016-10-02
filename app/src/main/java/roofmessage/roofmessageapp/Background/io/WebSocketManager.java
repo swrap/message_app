@@ -70,6 +70,7 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
                 Log.e(Tag.WEB_SOC_MANAGER, "Factory failed to create websocket: " + e.getMessage(), e);
                 return false;
             }
+            webSocket.setPongInterval(1000);
             webSocket.addHeader(COOKIE, getCookies());
             webSocket.addListener(new Listener());
         }
@@ -146,7 +147,10 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
     }
 
     public WebSocketState getState() {
-        return webSocket.getState();
+        if (webSocket != null) {
+            return webSocket.getState();
+        }
+        return WebSocketState.CLOSED;
     }
 
     public String getLocalizeState() {
@@ -200,7 +204,7 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
     }
 
     private static String getWebSocketUrl() {
-        return "ws://" + Tag.BASE_URL + "/message_route/";
+        return "wss://" + Tag.BASE_URL + "/message_route/";
     }
 
     private class Listener implements WebSocketListener {

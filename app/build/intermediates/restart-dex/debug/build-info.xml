@@ -1,38 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <instant-run
-    abi="armeabi-v7a,armeabi"
     api-level="23"
     density="xxhdpi"
-    format="7"
-    timestamp="16216572878600"
-    token="-3044968186596463802" >
+    format="8"
+    plugin-version="2.2.0"
+    timestamp="245890671318320"
+    token="-3044968186596463802"
+    verifier="COLD_SWAP_REQUESTED" >
 
     <task
         name="javac"
-        duration="488" />
+        duration="0" />
     <task
         name="instant-run-dex"
         duration="0" />
     <task
         name="instant-run-transform"
-        duration="13" />
+        duration="0" />
     <task
         name="verifier"
-        duration="3" />
+        duration="0" />
 
-    <artifact
-        location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\transforms\dex\debug\folders\1000\5\slice_3\classes.dex"
-        type="DEX" />
-
-    <build timestamp="15857509216960" >
+    <build
+        timestamp="244800580520120"
+        verifier="FULL_BUILD_REQUESTED" >
         <artifact
             location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\outputs\apk\app-debug.apk"
             type="MAIN" />
     </build>
-    <build timestamp="16216572878600" >
+    <build
+        timestamp="245181406590720"
+        verifier="COLD_SWAP_REQUESTED" >
         <artifact
             location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\transforms\dex\debug\folders\1000\5\slice_3\classes.dex"
             type="DEX" />
     </build>
+    <build
+        timestamp="245890671318320"
+        verifier="COLD_SWAP_REQUESTED" />
 
 </instant-run>

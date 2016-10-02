@@ -32,7 +32,7 @@ public class Utils {
         return date.substring(0,date.length()-3);
     }
 
-    public static void loadIpString() {
+    public static void loadIpStringNot() { //TODO remove from release
         Properties properties = new Properties();
         File file = new File(Environment.getExternalStorageDirectory(), "/RoofText");
         boolean created = false;
@@ -71,7 +71,7 @@ public class Utils {
             try {
                 InputStream inputStream = new FileInputStream(file);
                 properties.load(inputStream);
-                Tag.BASE_URL = properties.getProperty(KEY);
+//                Tag.BASE_URL = properties.getProperty(KEY);
             } catch (FileNotFoundException e) {
                 Log.d(Tag.UTILS, "Could not load config file.");
             } catch (IOException e) {

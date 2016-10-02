@@ -52,7 +52,7 @@ public class MessageQuery {
                 Telephony.ThreadsColumns.TYPE,
             };
 
-        String ORDERBY = "date DESC LIMIT 10"; //TODO TEST GET RID OF LIMIT
+        String ORDERBY = "date DESC LIMIT 20"; //TODO TEST GET RID OF LIMIT
         Cursor cursor = contentResolver.query(mSMSMMS,
                 SMSMMS_COLUMNS,
                 null,
@@ -206,10 +206,10 @@ public class MessageQuery {
         return jsonObject;
     }
 
-    private JSONObject getMMSJSON(Cursor cursor) throws JSONException {
+    public static JSONObject getMMSJSON(Cursor cursor) throws JSONException {
         JSONObject jsonObject = new JSONObject();
         JSONObject message = new JSONObject();
-        message.put(cursor.getString(8), jsonObject);
+        message.put(cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns._ID)), jsonObject);
 
         jsonObject.put(JSONBuilder.Message_Type.TYPE.name().toLowerCase(),
                 JSONBuilder.Message_Type.MMS.name().toLowerCase());
@@ -423,7 +423,7 @@ public class MessageQuery {
         return cursor;
     }
 
-    private JSONArray getMMSParts(String message_id) throws JSONException {
+    public static JSONArray getMMSParts(String message_id) throws JSONException {
         Uri contentURI = Uri.parse("content://mms/part");
         String [] COLUMN = {
                 Telephony.Mms.Part.CONTENT_TYPE,
@@ -530,7 +530,7 @@ public class MessageQuery {
         return numberContactId;
     }
 
-    public static void listAllNormalizedNumbers() {
+    public static void listAllNormalizedNumber() {
         Cursor cursor = null;
         try {
             Uri contentURI = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;

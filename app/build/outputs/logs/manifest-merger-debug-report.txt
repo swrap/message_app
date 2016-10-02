@@ -55,23 +55,12 @@ ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\mai
 		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:17:22-77
 application
 ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:19:5-43:19
-MERGED from [com.android.support:appcompat-v7:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\appcompat-v7\24.0.0\AndroidManifest.xml:25:5-20
-MERGED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:25:5-20
-MERGED from [com.android.support:support-vector-drawable:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-vector-drawable\24.0.0\AndroidManifest.xml:23:5-20
-MERGED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:25:5-20
-MERGED from [com.android.support:animated-vector-drawable:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\animated-vector-drawable\24.0.0\AndroidManifest.xml:22:5-20
-MERGED from [com.android.support:support-vector-drawable:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-vector-drawable\24.0.0\AndroidManifest.xml:23:5-20
-MERGED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:25:5-20
 MERGED from [com.android.support:design:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\design\24.0.0\AndroidManifest.xml:22:5-20
 MERGED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:25:5-20
-MERGED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:25:5-20
 MERGED from [com.android.support:appcompat-v7:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\appcompat-v7\24.0.0\AndroidManifest.xml:25:5-20
-MERGED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:25:5-20
 MERGED from [com.android.support:support-vector-drawable:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-vector-drawable\24.0.0\AndroidManifest.xml:23:5-20
-MERGED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:25:5-20
 MERGED from [com.android.support:animated-vector-drawable:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\animated-vector-drawable\24.0.0\AndroidManifest.xml:22:5-20
-MERGED from [com.android.support:support-vector-drawable:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-vector-drawable\24.0.0\AndroidManifest.xml:23:5-20
-MERGED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:25:5-20
+MERGED from [RoofMessageApp:library:unspecified] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\RoofMessageApp\library\unspecified\AndroidManifest.xml:9:5-16:19
 	android:label
 		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:22:9-41
 	android:supportsRtl
@@ -114,29 +103,30 @@ ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\mai
 		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:40:27-74
 uses-sdk
 INJECTED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
-MERGED from [com.android.support:appcompat-v7:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\appcompat-v7\24.0.0\AndroidManifest.xml:21:5-23:78
-MERGED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:21:5-23:54
-MERGED from [com.android.support:support-vector-drawable:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-vector-drawable\24.0.0\AndroidManifest.xml:21:5-43
-MERGED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:21:5-23:54
-MERGED from [com.android.support:animated-vector-drawable:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\animated-vector-drawable\24.0.0\AndroidManifest.xml:20:5-44
-MERGED from [com.android.support:support-vector-drawable:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-vector-drawable\24.0.0\AndroidManifest.xml:21:5-43
-MERGED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:21:5-23:54
 MERGED from [com.android.support:design:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\design\24.0.0\AndroidManifest.xml:20:5-43
 MERGED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:21:5-23:54
 MERGED from [com.android.support:recyclerview-v7:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\recyclerview-v7\24.0.0\AndroidManifest.xml:20:5-43
-MERGED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:21:5-23:54
 MERGED from [com.android.support:appcompat-v7:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\appcompat-v7\24.0.0\AndroidManifest.xml:21:5-23:78
-MERGED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:21:5-23:54
 MERGED from [com.android.support:support-vector-drawable:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-vector-drawable\24.0.0\AndroidManifest.xml:21:5-43
-MERGED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:21:5-23:54
 MERGED from [com.android.support:animated-vector-drawable:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\animated-vector-drawable\24.0.0\AndroidManifest.xml:20:5-44
-MERGED from [com.android.support:support-vector-drawable:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-vector-drawable\24.0.0\AndroidManifest.xml:21:5-43
-MERGED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:21:5-23:54
+MERGED from [RoofMessageApp:library:unspecified] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\RoofMessageApp\library\unspecified\AndroidManifest.xml:5:5-7:41
 	tools:overrideLibrary
-		ADDED from [com.android.support:appcompat-v7:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\appcompat-v7\24.0.0\AndroidManifest.xml:23:9-75
+		ADDED from [com.android.support:support-v4:24.0.0] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.0.0\AndroidManifest.xml:23:9-51
 	android:targetSdkVersion
 		INJECTED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml
 		INJECTED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml
 	android:minSdkVersion
 		INJECTED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml
 		INJECTED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml
+provider#com.klinker.android.send_message.MmsFileProvider
+ADDED from [RoofMessageApp:library:unspecified] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\RoofMessageApp\library\unspecified\AndroidManifest.xml:10:9-15:50
+	android:authorities
+		ADDED from [RoofMessageApp:library:unspecified] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\RoofMessageApp\library\unspecified\AndroidManifest.xml:12:13-67
+	android:enabled
+		ADDED from [RoofMessageApp:library:unspecified] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\RoofMessageApp\library\unspecified\AndroidManifest.xml:13:13-35
+	android:grantUriPermissions
+		ADDED from [RoofMessageApp:library:unspecified] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\RoofMessageApp\library\unspecified\AndroidManifest.xml:15:13-47
+	android:exported
+		ADDED from [RoofMessageApp:library:unspecified] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\RoofMessageApp\library\unspecified\AndroidManifest.xml:14:13-37
+	android:name
+		ADDED from [RoofMessageApp:library:unspecified] C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\exploded-aar\RoofMessageApp\library\unspecified\AndroidManifest.xml:11:13-76
