@@ -3,16 +3,23 @@ package roofmessage.roofmessageapp.background.request;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.provider.Telephony;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -528,6 +535,74 @@ public class MessageQuery {
             }
         }
         return numberContactId;
+    }
+
+    public JSONBuilder queryData(String message_id) {
+        JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.RETURN_DATA);
+        Uri contentURI = Uri.parse("content://mms/part");
+        String [] COLUMN = {
+                Telephony.Mms.Part.CONTENT_TYPE,
+                Telephony.Mms.Part._DATA,
+        };
+        String WHERE = Telephony.Mms.Part.MSG_ID + " = ?";
+        String [] QUESTIONMARK = {message_id};
+        Cursor cursor = contentResolver.query(contentURI,
+                COLUMN,
+                WHERE,
+                QUESTIONMARK,
+                null
+        );
+
+        if(cursor != null) {
+            if (cursor.getCount() > 0) {
+                cursor.moveToFirst();
+                do {
+                    String id = cursor.getString(cursor.getColumnIndex(Telephony.Mms.Part._DATA));
+                    String type = cursor.getString(cursor.getColumnIndex(Telephony.Mms.Part.CONTENT_TYPE));
+                    if ("image/jpeg".equals(type) || "image/bmp".equals(type) ||
+                            "image/gif".equals(type) || "image/jpg".equals(type) ||
+                            "image/png".equals(type)) {
+                        Bitmap bmp = getMmsImage(id);
+                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                        bmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                        try {
+                            jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
+                                    message_id);
+                            jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.DATA.name().toLowerCase(),
+                                    stream.toString("UTF-8"));
+                        } catch (JSONException e) {
+                            Log.d(Tag.MESSAGE_MANAGER, "Unable to add data", e);
+                        } catch (UnsupportedEncodingException e) {
+                            Log.d(Tag.MESSAGE_MANAGER, "Unable to add data unsopported encoding", e);
+                        }
+
+                    }
+                } while (cursor.moveToNext());
+                cursor.close();
+            }
+        }
+        return jsonBuilder;
+    }
+
+    private Bitmap getMmsImage(String id) {
+        Uri partURI = Uri.parse("content://mms/part/" + id);
+        InputStream is = null;
+        Bitmap bitmap = null;
+        try {
+            is = contentResolver.openInputStream(partURI);
+            bitmap = BitmapFactory.decodeStream(is);
+        } catch (IOException e) {
+            Log.e(Tag.MESSAGE_MANAGER, "Unable to OPEN input stream for data.", e);
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    Log.e(Tag.MESSAGE_MANAGER, "Unable to CLOSE input stream for data.", e);
+                }
+            }
+        }
+        return bitmap;
     }
 
     public static void listAllNormalizedNumber() {

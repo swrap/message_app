@@ -52,7 +52,6 @@ public class JSONBuilder extends JSONObject{
         ID,
         AMOUNT,
         OFFSET,
-        DATA,
         CREATOR,
 
         FULL_NAME,
@@ -61,6 +60,8 @@ public class JSONBuilder extends JSONObject{
         //TYPES
         MMS,
         SMS, TEXT_ONLY, PARTS,
+
+        DATA,
     }
 
     public enum Message_Type{
@@ -111,6 +112,10 @@ public class JSONBuilder extends JSONObject{
         //CONNECTION
         CONNECTED,
         DISCONNECTED,
+
+        //data actions
+        GET_DATA,
+        RETURN_DATA,
     }
 
     public JSONBuilder( Action action ) {
