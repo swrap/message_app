@@ -210,10 +210,10 @@ public class SMSObserver extends ContentObserver implements Flush{
                         Log.d(Tag.SMS_OBSERVER, "Was not sent. Sending received.");
                         try {
                             JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.RECEIVED_MESSAGE);
-                            String thread_id = cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.THREAD_ID));
+                            String thread_id = cursor.getString(cursor.getColumnIndex(Telephony.Sms.THREAD_ID));
                             jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
                                     thread_id);
-                            jsonBuilder.put(cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.THREAD_ID)),
+                            jsonBuilder.put(thread_id,
                                     new JSONArray().put(MessageQuery.getSMSJSON(cursor)));
                             Log.d(Tag.SMS_OBSERVER, "Received message, sending away! [" + jsonBuilder.toString() + "]");
                             webSocketManager.sendString(jsonBuilder.toString());

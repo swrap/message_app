@@ -131,10 +131,11 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
     }
 
     public void sendString(String string) {
-
+        Log.d(Tag.WEB_SOC_MANAGER, "SENDING FRAME");
         if (webSocket != null) {
             webSocket.sendText(string);
         }
+        Log.d(Tag.WEB_SOC_MANAGER, "SENT SUCCESFULLY");
     }
 
     public void disconnect() {
@@ -203,8 +204,9 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
         }
     }
 
+    //TODO CHANGE BACK TO wws also in session manager make sure to use https
     private static String getWebSocketUrl() {
-        return "wss://" + Tag.BASE_URL + "/message_route/";
+        return "ws://" + Tag.BASE_URL + "/message_route/";
     }
 
     private class Listener implements WebSocketListener {

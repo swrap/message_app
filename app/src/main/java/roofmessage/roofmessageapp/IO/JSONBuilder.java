@@ -115,7 +115,7 @@ public class JSONBuilder extends JSONObject{
 
         //data actions
         GET_DATA,
-        RETURN_DATA,
+        POST_DATA,
     }
 
     public JSONBuilder( Action action ) {

@@ -30,7 +30,7 @@ public class Tag {
     //IO Package
     public static final String WEB_SOC_MANAGER = BASE_TAG + "WebSocMan";
     public static final String SESSION_MANAGER = BASE_TAG + "SessionMan";
-    public static final String BASE_URL = "rooftext.com";
+    public static final String BASE_URL = "192.168.1.17:8000";
 
     //LocalBroadCastReceivers and Broadcast receivers
     public static final String ACTION_WEBSOC_CHANGE = "roofmessage.roofmessageapp.WEBSOCEKT_STATE_CHANGE";

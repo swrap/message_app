@@ -151,8 +151,12 @@ public class RequestManager extends Thread {
                         send = new JSONBuilder(JSONBuilder.Action.CONNECTED);
                         Log.d(Tag.REQUEST_MANAGER, send.toString(4));
                     } else if (action.equals(JSONBuilder.Action.GET_DATA.name().toLowerCase())) {
-                        send = messageQuery.queryData(jsonRequest.getString(
-                                        JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase()));
+                        //SPECIAL CASE RUN WITH NON BLOCKING FOR QUERYING DATA
+                        Intent intent = new Intent(Tag.ACTION_LOCAL_SEND_MESSAGE);
+                        messageQuery.queryDataAndSendAsync(jsonRequest.getString(
+                                JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase()),
+                                context,
+                                intent);
                     } else {
                         Log.d(Tag.REQUEST_MANAGER, "Could not find action: " + action);
                     }

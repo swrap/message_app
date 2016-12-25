@@ -4,9 +4,9 @@
     density="xxhdpi"
     format="8"
     plugin-version="2.2.0"
-    timestamp="245890671318320"
+    timestamp="205123169616800"
     token="-3044968186596463802"
-    verifier="COLD_SWAP_REQUESTED" >
+    verifier="FULL_BUILD_REQUESTED" >
 
     <task
         name="javac"
@@ -16,27 +16,21 @@
         duration="0" />
     <task
         name="instant-run-transform"
-        duration="0" />
+        duration="3020" />
     <task
         name="verifier"
-        duration="0" />
+        duration="78" />
+
+    <artifact
+        location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\outputs\apk\app-debug.apk"
+        type="MAIN" />
 
     <build
-        timestamp="244800580520120"
+        timestamp="205123169616800"
         verifier="FULL_BUILD_REQUESTED" >
         <artifact
             location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\outputs\apk\app-debug.apk"
             type="MAIN" />
     </build>
-    <build
-        timestamp="245181406590720"
-        verifier="COLD_SWAP_REQUESTED" >
-        <artifact
-            location="C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\build\intermediates\transforms\dex\debug\folders\1000\5\slice_3\classes.dex"
-            type="DEX" />
-    </build>
-    <build
-        timestamp="245890671318320"
-        verifier="COLD_SWAP_REQUESTED" />
 
 </instant-run>

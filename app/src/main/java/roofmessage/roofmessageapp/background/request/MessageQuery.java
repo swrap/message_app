@@ -2,12 +2,15 @@ package roofmessage.roofmessageapp.background.request;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.provider.ContactsContract;
 import android.provider.Telephony;
+import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -17,10 +20,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -113,7 +116,7 @@ public class MessageQuery {
         return null;
     }
 
-    public JSONBuilder getConversationMessages(String thread_id, int limit, int offset){
+    public JSONBuilder getConversationMessages(String thread_id, int limit, int offset) {
         Cursor smsCursor = getSMSMessages(thread_id, limit, offset);
         String start_date = "0";
         String end_date = "0";
@@ -435,6 +438,7 @@ public class MessageQuery {
         String [] COLUMN = {
                 Telephony.Mms.Part.CONTENT_TYPE,
                 Telephony.Mms.Part.TEXT,
+                Telephony.Mms.Part.CONTENT_LOCATION,
         };
         String WHERE = Telephony.Mms.Part.MSG_ID + " = ?";
         String [] QUESTIONMARK = {message_id};
@@ -455,6 +459,8 @@ public class MessageQuery {
                             cursor.getString(0));
                     jsonObject.put("TEXT",
                             cursor.getString(1));
+                    jsonObject.put("CONTENT_LOC",
+                            cursor.getString(2));
                     jsonArray.put(jsonObject);
                 } while (cursor.moveToNext());
                 cursor.close();
@@ -537,55 +543,167 @@ public class MessageQuery {
         return numberContactId;
     }
 
-    public JSONBuilder queryData(String message_id) {
-        JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.RETURN_DATA);
+    public void queryDataAndSendAsync(final String message_id, final Context context, final Intent intent) {
+
+//        JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.POST_DATA);
         Uri contentURI = Uri.parse("content://mms/part");
         String [] COLUMN = {
+                Telephony.Mms.Part._ID,
                 Telephony.Mms.Part.CONTENT_TYPE,
                 Telephony.Mms.Part._DATA,
         };
         String WHERE = Telephony.Mms.Part.MSG_ID + " = ?";
         String [] QUESTIONMARK = {message_id};
-        Cursor cursor = contentResolver.query(contentURI,
+        new AsyncTask<Cursor, Void, Void>() {
+
+            @Override
+            protected Void doInBackground(Cursor... params) {
+                Cursor cursor = params[0];
+                try {
+                    if(cursor != null) {
+                        if (cursor.getCount() > 0) {
+                            cursor.moveToFirst();
+//                            do {
+                            String id = cursor.getString(cursor.getColumnIndex(Telephony.Mms.Part._ID));
+                            String type = cursor.getString(cursor.getColumnIndex(Telephony.Mms.Part.CONTENT_TYPE));
+                            if ("image/jpeg".equals(type) || "image/bmp".equals(type) ||
+                                    "image/gif".equals(type) || "image/jpg".equals(type) ||
+                                    "image/png".equals(type)) {
+                                Uri uri = Uri.parse("content://mms/part/" + id);
+                                Log.e(Tag.MESSAGE_MANAGER, "TAG DATA [" + uri.getPath() + "]");
+                                InputStream is = contentResolver.openInputStream(uri);
+//                                Bitmap bmp = BitmapFactory.decodeStream(is);
+//                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+//                                bmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                                Log.d(Tag.MESSAGE_MANAGER, "DATA Finished compressing");
+                                try {
+                                    final int CHUNK_SIZE = 200000;
+                                    final int size = is.available()/CHUNK_SIZE;
+                                    byte [] isB = new byte[CHUNK_SIZE];
+
+                                    Bitmap bmp = BitmapFactory.decodeStream(is);
+                                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                                    bmp.compress(Bitmap.CompressFormat.JPEG, 50, stream);
+
+                                    JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.POST_DATA);
+                                    jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
+                                            message_id);
+                                    jsonBuilder.put("finish", "true");
+                                    jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.DATA.name().toLowerCase(),
+                                            Base64.encodeToString(stream.toByteArray(),Base64.DEFAULT));
+
+//                                    Log.d(Tag.MESSAGE_MANAGER, "Chunk size " + CHUNK_SIZE
+//                                            + " INPUTSTREAM size: " + is.available()
+//                                            + " size: " + size);
+//                                    //send beginning
+//                                    for(int i = 0; i < size-1; i++) {
+//                                        Log.d(Tag.MESSAGE_MANAGER, "Reading byte: " + i + " of: " + size);
+//                                        is.read(isB,0,CHUNK_SIZE);
+//                                        JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.POST_DATA);
+//                                        jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
+//                                                message_id);
+//                                        jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.DATA.name().toLowerCase(),
+//                                                Base64.encode(isB, Base64.DEFAULT));
+//                                        intent.putExtra(Tag.KEY_SEND_JSON_STRING, jsonBuilder.toString());
+//                                        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+//                                    }
+//                                    //send remainder
+//                                    isB = new byte[is.available()];
+//                                    Log.d(Tag.MESSAGE_MANAGER, "Reading last byte of: " + size);
+//                                    is.read(isB,0,CHUNK_SIZE);
+//                                    JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.POST_DATA);
+//                                    jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
+//                                            message_id);
+//                                    jsonBuilder.put("finish", "true");
+//                                    jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.DATA.name().toLowerCase(),
+//                                            Base64.encode(isB, Base64.DEFAULT));
+                                    intent.putExtra(Tag.KEY_SEND_JSON_STRING, jsonBuilder.toString());
+                                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                                } catch (JSONException e) {
+                                    Log.d(Tag.MESSAGE_MANAGER, "Unable to add data", e);
+                                } catch (UnsupportedEncodingException e) {
+                                    Log.d(Tag.MESSAGE_MANAGER, "Unable to add data unsopported encoding", e);
+                                } catch (IOException e) {
+                                    Log.d(Tag.MESSAGE_MANAGER, "Unable to add data ioexception", e);
+                                }
+                            } else {
+                                //data is not image return fail
+                                try{
+                                    Log.d(Tag.MESSAGE_MANAGER, "About to send failed");
+                                    JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.POST_DATA);
+                                    jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
+                                            message_id);
+                                    jsonBuilder.put("fail", "true");
+                                    intent.putExtra(Tag.KEY_SEND_JSON_STRING, jsonBuilder.toString());
+                                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                                    Log.d(Tag.MESSAGE_MANAGER, "Sent failed");
+                                } catch (JSONException e) {
+                                    Log.d(Tag.MESSAGE_MANAGER, "Unable to finish json failed context", e);
+                                }
+                            }
+//                            } while (cursor.moveToNext());
+                            cursor.close();
+                        }
+                    }
+                } catch (FileNotFoundException e) {
+                    Log.e(Tag.MESSAGE_MANAGER, "ERROR READNG DATA!!", e);
+                }
+                return null;
+            }
+        }.execute(contentResolver.query(contentURI,
                 COLUMN,
                 WHERE,
                 QUESTIONMARK,
                 null
-        );
-
-        if(cursor != null) {
-            if (cursor.getCount() > 0) {
-                cursor.moveToFirst();
-                do {
-                    String id = cursor.getString(cursor.getColumnIndex(Telephony.Mms.Part._DATA));
-                    String type = cursor.getString(cursor.getColumnIndex(Telephony.Mms.Part.CONTENT_TYPE));
-                    if ("image/jpeg".equals(type) || "image/bmp".equals(type) ||
-                            "image/gif".equals(type) || "image/jpg".equals(type) ||
-                            "image/png".equals(type)) {
-                        Bitmap bmp = getMmsImage(id);
-                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                        bmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
-                        try {
-                            jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
-                                    message_id);
-                            jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.DATA.name().toLowerCase(),
-                                    stream.toString("UTF-8"));
-                        } catch (JSONException e) {
-                            Log.d(Tag.MESSAGE_MANAGER, "Unable to add data", e);
-                        } catch (UnsupportedEncodingException e) {
-                            Log.d(Tag.MESSAGE_MANAGER, "Unable to add data unsopported encoding", e);
-                        }
-
-                    }
-                } while (cursor.moveToNext());
-                cursor.close();
-            }
-        }
-        return jsonBuilder;
+        ));
+//        Cursor cursor = contentResolver.query(contentURI,
+//                COLUMN,
+//                WHERE,
+//                QUESTIONMARK,
+//                null
+//        );
+//
+//        try {
+//            if(cursor != null) {
+//                if (cursor.getCount() > 0) {
+//                    cursor.moveToFirst();
+//                    do {
+//                        String id = cursor.getString(cursor.getColumnIndex(Telephony.Mms.Part._ID));
+//                        String type = cursor.getString(cursor.getColumnIndex(Telephony.Mms.Part.CONTENT_TYPE));
+//                        if ("image/jpeg".equals(type) || "image/bmp".equals(type) ||
+//                                "image/gif".equals(type) || "image/jpg".equals(type) ||
+//                                "image/png".equals(type)) {
+//                            Uri uri = Uri.parse("content://mms/part/" + id);
+//                            Log.e(Tag.MESSAGE_MANAGER, "TAG DATA [" + uri.getPath() + "]");
+//                            InputStream is = contentResolver.openInputStream(uri);
+//                            Bitmap bmp = BitmapFactory.decodeStream(is);
+//                            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+//                            bmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
+//                            try {
+//                                jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
+//                                        message_id);
+////                                jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.DATA.name().toLowerCase(),
+////                                        stream.toString("UTF-8"));
+//                            } catch (JSONException e) {
+//                                Log.d(Tag.MESSAGE_MANAGER, "Unable to add data", e);
+//                            }
+////                            } catch (UnsupportedEncodingException e) {
+////                                Log.d(Tag.MESSAGE_MANAGER, "Unable to add data unsopported encoding", e);
+////                            }
+//
+//                        }
+//                    } while (cursor.moveToNext());
+//                    cursor.close();
+//                }
+//            }
+//        } catch (FileNotFoundException e) {
+//            Log.e(Tag.MESSAGE_MANAGER, "ERROR READNG DATA!!", e);
+//        }
+//        return jsonBuilder;
     }
 
     private Bitmap getMmsImage(String id) {
-        Uri partURI = Uri.parse("content://mms/part/" + id);
+        Uri partURI = Uri.parse(id);//"content://mms/part/" + id);
         InputStream is = null;
         Bitmap bitmap = null;
         try {

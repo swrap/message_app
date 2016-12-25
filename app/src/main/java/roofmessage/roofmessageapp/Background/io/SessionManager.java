@@ -58,10 +58,10 @@ public class SessionManager {
         try {
             // get content from URLConnection;
             // cookies are set by web site //TODO Fix loading in dynamic url
-            LOGIN_URL = "https://" + Tag.BASE_URL + "/android_login/";
+            LOGIN_URL = "http://" + Tag.BASE_URL + "/android_login/";
             Log.d(Tag.SESSION_MANAGER, "Before attempting to login. [" + LOGIN_URL + "]");
             URL url = new URL(LOGIN_URL);
-            HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setConnectTimeout(connection_timeout);
             connection.getContent();
             String COOKIES_HEADER = "Set-Cookie";
@@ -81,7 +81,7 @@ public class SessionManager {
                 String csrf = getCSRFToken();
 
                 url = new URL(LOGIN_URL);
-                connection = (HttpsURLConnection) url.openConnection();
+                connection = (HttpURLConnection) url.openConnection();
 //                if (msCookieManager.getCookieStore().getCookies().size() > 0) {
                     // While joining the Cookies, use ',' or ';' as needed. Most of the servers are using ';'
 //                    Log.e(Tag.SESSION_MANAGER, TextUtils.join(";",  msCookieManager.getCookieStore().getCookies()));
@@ -128,6 +128,7 @@ public class SessionManager {
         try {
             // get content from URLConnection;
             // cookies are set by web site
+            // TODO MAKE SURE ALL ARE HTTPS
             LOGOUT_URL = "http://" + Tag.BASE_URL + "/android_logout/";
             URL url = new URL(LOGOUT_URL);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
