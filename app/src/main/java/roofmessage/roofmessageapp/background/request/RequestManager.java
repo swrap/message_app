@@ -108,7 +108,7 @@ public class RequestManager extends Thread {
                         send = messageQuery.getAllConversations();
 //                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
                     } else if(action.equals(JSONBuilder.Action.GET_SMS_CONVO.name().toLowerCase())) {
-                        send = messageQuery.getSMS("596", 5, 0);
+                        send = messageQuery.getSMS("596", 5, "0", 1);
                         Log.d(Tag.REQUEST_MANAGER, send.toString(4));
                     } else if(action.equals(JSONBuilder.Action.GET_MMS_CONVO.name().toLowerCase())) {
                         send = messageQuery.getMMS("596", 5, "0", "0");
@@ -117,7 +117,8 @@ public class RequestManager extends Thread {
                         send = messageQuery.getConversationMessages(
                                 jsonRequest.getString(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase()),
                                 jsonRequest.getInt(JSONBuilder.JSON_KEY_CONVERSATION.AMOUNT.name().toLowerCase()),
-                                jsonRequest.getInt(JSONBuilder.JSON_KEY_CONVERSATION.OFFSET.name().toLowerCase())
+                                jsonRequest.getString(JSONBuilder.JSON_KEY_CONVERSATION.OFFSET.name().toLowerCase()),
+                                jsonRequest.getInt(JSONBuilder.JSON_KEY_CONVERSATION.PERIOD.name().toLowerCase())
                         );
 //                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
                     } else if(action.equals(JSONBuilder.Action.SEND_MESSAGES.name().toLowerCase())) {

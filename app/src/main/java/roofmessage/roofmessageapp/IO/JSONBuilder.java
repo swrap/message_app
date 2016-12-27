@@ -61,7 +61,7 @@ public class JSONBuilder extends JSONObject{
         MMS,
         SMS, TEXT_ONLY, PARTS,
 
-        DATA,
+        DATA, PERIOD,
     }
 
     public enum Message_Type{

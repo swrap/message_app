@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.ContactsContract;
 import android.provider.Telephony;
+import android.support.annotation.IntegerRes;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Base64;
@@ -116,19 +117,11 @@ public class MessageQuery {
         return null;
     }
 
-    public JSONBuilder getConversationMessages(String thread_id, int limit, int offset) {
-        Cursor smsCursor = getSMSMessages(thread_id, limit, offset);
-        String start_date = "0";
-        String end_date = "0";
-        if(smsCursor.getCount() > 0){
-            smsCursor.moveToFirst();
-            end_date = smsCursor.getString(smsCursor.getColumnIndex(Telephony.TextBasedSmsColumns.DATE));
-            smsCursor.moveToLast();
-            start_date = smsCursor.getString(smsCursor.getColumnIndex(Telephony.TextBasedSmsColumns.DATE));
-        }
+    public JSONBuilder getConversationMessages(String thread_id, int limit, String offset, int period) {
+        Cursor smsCursor = getSMSMessages(thread_id,limit,offset,period);
         Cursor mmsCursor = getMMSMessages(thread_id, limit,
-                (start_date.length() > 3 ? Utils.convertSMStoMMSDate(start_date) : start_date),
-                (end_date.length() > 3 ? Utils.convertSMStoMMSDate(end_date) : end_date)
+                Utils.convertSMStoMMSDate(offset),
+                period
         );
 
         JSONBuilder jsonObject = new JSONBuilder( JSONBuilder.Action.POST_MESSAGES );
@@ -149,7 +142,7 @@ public class MessageQuery {
                 for (int i = 0; i < limit; i++) {
                     Log.e(Tag.MESSAGE_MANAGER, "date: " + smsDate + " " + mmsDate);
                     if (smsDate != null && mmsDate != null) {
-                        int compare = smsDate.compareTo(Utils.convertMMStoSMSDate(mmsDate));
+                        int compare = smsDate.compareTo(mmsDate);
                         Log.e(Tag.MESSAGE_MANAGER, "COMPARE: " + compare);
                         if (compare > 0) {
                             jsonArray.put(getSMSJSON(smsCursor));
@@ -228,17 +221,17 @@ public class MessageQuery {
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE_RECIEVED.name().toLowerCase(),
                 Utils.convertMMStoSMSDate(cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.DATE))));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE_SENT.name().toLowerCase(),
-                    cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.DATE_SENT)));
+                cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.DATE_SENT)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.LOCKED.name().toLowerCase(),
-                    cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.LOCKED)));
+                cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.LOCKED)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.SEEN.name().toLowerCase(),
-                    cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.SEEN)));
+                cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.SEEN)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.READ.name().toLowerCase(),
-                    cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.READ)));
+                cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.READ)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.SUBJECT.name().toLowerCase(),
-                    cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.SUBJECT)));
+                cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.SUBJECT)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.TEXT_ONLY.name().toLowerCase(),
-                    cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.TEXT_ONLY)));
+                cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.TEXT_ONLY)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.MESSAGE_TYPE.name().toLowerCase(),
                 cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.MESSAGE_BOX)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.PARTS.name().toLowerCase(),
@@ -272,7 +265,7 @@ public class MessageQuery {
         return message;
     }
 
-    private Cursor getSMSMessages(String thread_id,int limit,int offset){
+    private Cursor getSMSMessages(String thread_id, int limit, String offset, int period){
         Uri contentURI = Telephony.Sms.CONTENT_URI;
         String [] COLUMN = {
                 Telephony.TextBasedSmsColumns.BODY,
@@ -286,21 +279,30 @@ public class MessageQuery {
                 Telephony.Sms._ID,
                 Telephony.Sms.TYPE,
         };
-        String WHERE = Telephony.Sms.Conversations.THREAD_ID + " = ?";
-        String [] QUESTIONMARK = {thread_id};
-        String ORDERBY =Telephony.Sms.Conversations.DEFAULT_SORT_ORDER + " limit " + limit +
-                " offset " + offset;
-        Cursor cursor = contentResolver.query(contentURI,
+        String WHERE = Telephony.Sms.Conversations.THREAD_ID + " = ? ";
+        if(!offset.equals("-1")) {
+            WHERE += " AND " + Telephony.TextBasedSmsColumns.DATE + " " + (period == 0 ? "<" : ">") + " ? ";
+        }
+        String [] QUESTIONMARK;
+        if(offset.equals("-1")) {
+            QUESTIONMARK = new String[1];
+            QUESTIONMARK[0] = thread_id;
+        } else {
+            QUESTIONMARK = new String[2];
+            QUESTIONMARK[0] = thread_id;
+            QUESTIONMARK[1] = offset;
+        }
+        String ORDERBY = Telephony.Sms.Conversations.DEFAULT_SORT_ORDER + " limit " + limit;
+        return contentResolver.query(contentURI,
                 COLUMN,
                 WHERE,
                 QUESTIONMARK,
                 ORDERBY
         );
-        return cursor;
     }
 
-    public JSONBuilder getSMS(String thread_id, int limit, int offset){
-        Cursor cursor = getSMSMessages(thread_id, limit, offset);
+    public JSONBuilder getSMS(String thread_id, int limit, String offset, int period){
+        Cursor cursor = getSMSMessages(thread_id, limit, offset, period);
         JSONBuilder jsonObject = new JSONBuilder( JSONBuilder.Action.POST_MESSAGES );
         JSONArray jsonArray = new JSONArray();
         if(cursor.getCount() > 0) {
@@ -350,7 +352,7 @@ public class MessageQuery {
     public JSONBuilder getMMS(String thread_id, int limit, String start_date, String end_date){
         JSONBuilder jsonObject = new JSONBuilder( JSONBuilder.Action.POST_MESSAGES );
         JSONArray jsonArray = new JSONArray();
-        Cursor cursor = getMMSMessages(thread_id, limit, start_date, end_date);
+        Cursor cursor = getMMSMessages(thread_id, limit, "0", 0);
         if(cursor.getCount() > 0) {
             cursor.moveToFirst();
             do {
@@ -395,7 +397,7 @@ public class MessageQuery {
         return jsonObject;
     }
 
-    private Cursor getMMSMessages(String thread_id, int limit, String start_date, String end_date){
+    private Cursor getMMSMessages(String thread_id, int limit, String offset, int period) {
         Uri contentURI = Telephony.Mms.CONTENT_URI;
         String [] COLUMN = {
                 Telephony.BaseMmsColumns.THREAD_ID,
@@ -412,18 +414,20 @@ public class MessageQuery {
         String WHERE = Telephony.BaseMmsColumns.THREAD_ID + " = ?";
         String [] QUESTIONMARK = null;
         String ORDERBY = "";
-        Log.e(Tag.MESSAGE_MANAGER, "LIMIT: " + limit + " DATE: " + start_date + " Date: " + end_date);
-        if(start_date.equals("0") && end_date.equals("0")) {
-            ORDERBY = Telephony.Mms.DEFAULT_SORT_ORDER + " limit " + limit;
-            QUESTIONMARK = new String[]{thread_id};
-        } else {
-            ORDERBY = Telephony.Mms.DEFAULT_SORT_ORDER;
-            QUESTIONMARK = new String[]{thread_id, start_date, end_date};
-            WHERE += " AND " + Telephony.BaseMmsColumns.DATE + " BETWEEN ? AND ?";
-        }
 
-//        Log.e(Tag.MESSAGE_MANAGER, "LIMIT: " + limit + " \n" + ORDERBY +
-//        " \n" + QUESTIONMARK[0] + " " + QUESTIONMARK[1] + " \n" + WHERE);
+        if(!offset.equals("-1")) {
+            WHERE += " AND " + Telephony.BaseMmsColumns.DATE + " " + (period == 0 ? "<" : ">") + " ? ";
+        }
+        if(offset.equals("-1")) {
+            QUESTIONMARK = new String[1];
+            QUESTIONMARK[0] = thread_id;
+        } else {
+            QUESTIONMARK = new String[2];
+            QUESTIONMARK[0] = thread_id;
+            QUESTIONMARK[1] = offset;
+        }
+        ORDERBY = Telephony.Mms.DEFAULT_SORT_ORDER + " limit " + limit;
+
         Cursor cursor = contentResolver.query(contentURI,
                 COLUMN,
                 WHERE,

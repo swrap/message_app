@@ -30,8 +30,7 @@
         android:theme="@style/AppTheme" >
         <service
             android:name="roofmessage.roofmessageapp.background.BackgroundManager"
-            android:exported="false"
-            android:process="@string/background_process" />
+            android:exported="false" />
 
         <activity
             android:name="roofmessage.roofmessageapp.activity.MainActivity"

@@ -29,7 +29,10 @@ public class Utils {
     }
 
     public static String convertSMStoMMSDate(String date) {
-        return date.substring(0,date.length()-3);
+        if(date.length() > 2) {
+            date = date.substring(0,date.length()-3);
+        }
+        return date;
     }
 
     public static void loadIpStringNot() { //TODO remove from release
