@@ -48,7 +48,9 @@ public class SmsMmsDelivery {
             if (this.bodyArrList.size() == 1) {
                 messageType = MessageType.SMS_SINGLE;
             } else if (this.bodyArrList.size() > 1) {
-                messageType = MessageType.SMS_MULTI;
+                //TODO: changuing to mms multi recipient for now
+//                messageType = MessageType.SMS_MULTI;
+                messageType = MessageType.MMS_MULTI_RECIPIENT;
             }
         } else if (numbers.length > 1) {
             if (this.bodyArrList.size() > 0) {
