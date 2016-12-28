@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
-//allprojects {
-//    repositories {
-//        mavenCentral()
-//        maven {
-//            url 'https://oss.sonatype.org/content/repositories/snapshots/'
-//        }
-//    }
-//}
+allprojects {
+    repositories {
+        mavenCentral()
+        maven {
+            url 'https://oss.sonatype.org/content/repositories/snapshots/'
+        }
+    }
+}
 
 android {
     compileSdkVersion 24
@@ -35,5 +35,7 @@ dependencies {
     compile 'com.android.support:design:24.0.0'
     //custom dependencies
     compile 'com.neovisionaries:nv-websocket-client:+'
+//    compile files('libs/android-5.1.1_r1.jar')
 //    compile 'com.klinkerapps:android-smsmms:3.1.0'
+    compile project(path: ':library')
 }

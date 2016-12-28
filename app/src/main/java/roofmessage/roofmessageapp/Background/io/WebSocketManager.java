@@ -42,7 +42,7 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
     private Context context;
 
     private final static String COOKIE = "cookie";
-    private static final String WS_URL = "ws://" + Tag.BASE_URL + "/message_route/";
+    private static String WS_URL = getWebSocketUrl();
 
     private WebSocketManager(Context context) {
         this.context = context;
@@ -58,8 +58,9 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
     }
 
     public boolean createConnection() {
+        WS_URL = getWebSocketUrl();
         String state = webSocket == null ? "" : webSocket.getState().name();
-        Log.d(Tag.WEB_SOC_MANAGER, "Attempting connection, websocket state [" + state + "]");
+        Log.d(Tag.WEB_SOC_MANAGER, "Attempting connection, websocket state [" + state + "] BASE URL [" + Tag.BASE_URL + "]");
 
         if (webSocket == null) {
             webSocketFactory.setConnectionTimeout(5000);
@@ -69,6 +70,7 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
                 Log.e(Tag.WEB_SOC_MANAGER, "Factory failed to create websocket: " + e.getMessage(), e);
                 return false;
             }
+            webSocket.setPongInterval(1000);
             webSocket.addHeader(COOKIE, getCookies());
             webSocket.addListener(new Listener());
         }
@@ -129,10 +131,11 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
     }
 
     public void sendString(String string) {
-
+        Log.d(Tag.WEB_SOC_MANAGER, "SENDING FRAME");
         if (webSocket != null) {
             webSocket.sendText(string);
         }
+        Log.d(Tag.WEB_SOC_MANAGER, "SENT SUCCESFULLY");
     }
 
     public void disconnect() {
@@ -145,7 +148,10 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
     }
 
     public WebSocketState getState() {
-        return webSocket.getState();
+        if (webSocket != null) {
+            return webSocket.getState();
+        }
+        return WebSocketState.CLOSED;
     }
 
     public String getLocalizeState() {
@@ -196,6 +202,11 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
                 webSocket.sendText(jsonString);
             }
         }
+    }
+
+    //TODO CHANGE BACK TO wws also in session manager make sure to use https
+    private static String getWebSocketUrl() {
+        return "ws://" + Tag.BASE_URL + "/message_route/";
     }
 
     private class Listener implements WebSocketListener {

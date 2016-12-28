@@ -13,6 +13,7 @@ import org.json.JSONException;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import roofmessage.roofmessageapp.background.request.MessageObservers.MMSObserver;
 import roofmessage.roofmessageapp.background.request.MessageObservers.MessageWaiting;
 import roofmessage.roofmessageapp.io.JSONBuilder;
 import roofmessage.roofmessageapp.background.request.MessageObservers.SMSObserver;
@@ -27,10 +28,13 @@ public class RequestManager extends Thread {
     private static RequestManager requestManager;
     private static MessageQuery messageQuery = null;
     private static SMSObserver smsObserver = null;
+    private static MMSObserver mmsObserver = null;
     //Todo make these not static
     private boolean kill = false;
     private static Context context;
     private ActionReceiver actionReceiver = new ActionReceiver();
+
+    public static ConcurrentLinkedQueue<MessageWaiting> messagesWaiting = new ConcurrentLinkedQueue<MessageWaiting>();
 
     protected RequestManager(Context context) {
         this.context = context;
@@ -45,6 +49,7 @@ public class RequestManager extends Thread {
             messageQuery = new MessageQuery(context);
             smsObserver = SMSObserver.getInstance(context);
             requestManager = new RequestManager(context);
+            mmsObserver = MMSObserver.getInstance(context);
         }
 
         return requestManager;
@@ -103,7 +108,7 @@ public class RequestManager extends Thread {
                         send = messageQuery.getAllConversations();
 //                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
                     } else if(action.equals(JSONBuilder.Action.GET_SMS_CONVO.name().toLowerCase())) {
-                        send = messageQuery.getSMS("596", 5, 0);
+                        send = messageQuery.getSMS("596", 5, "0", 1);
                         Log.d(Tag.REQUEST_MANAGER, send.toString(4));
                     } else if(action.equals(JSONBuilder.Action.GET_MMS_CONVO.name().toLowerCase())) {
                         send = messageQuery.getMMS("596", 5, "0", "0");
@@ -112,13 +117,19 @@ public class RequestManager extends Thread {
                         send = messageQuery.getConversationMessages(
                                 jsonRequest.getString(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase()),
                                 jsonRequest.getInt(JSONBuilder.JSON_KEY_CONVERSATION.AMOUNT.name().toLowerCase()),
-                                jsonRequest.getInt(JSONBuilder.JSON_KEY_CONVERSATION.OFFSET.name().toLowerCase())
+                                jsonRequest.getString(JSONBuilder.JSON_KEY_CONVERSATION.OFFSET.name().toLowerCase()),
+                                jsonRequest.getInt(JSONBuilder.JSON_KEY_CONVERSATION.PERIOD.name().toLowerCase())
                         );
 //                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
                     } else if(action.equals(JSONBuilder.Action.SEND_MESSAGES.name().toLowerCase())) {
                         Log.d(Tag.REQUEST_MANAGER, "Attempting to send message[" + jsonRequest.toString() + "]");
-//                        String [] temp = {"4848889627"};
-//                        SmsMmsDelivery smsMmsDelivery = new SmsMmsDelivery("hello self!","8573468",temp);
+//                        String [] arrNumbers = {"9146108631","8143238900"};
+//                        SmsMmsDelivery smsMmsDelivery = new SmsMmsDelivery(
+//                                "How is it going?",
+//                                "5",
+//                                arrNumbers,
+//                                smsObserver,
+//                                mmsObserver);
                         JSONArray jsonNumbers = jsonRequest.getJSONArray(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.NUMBERS.name().toLowerCase());
                         String [] arrNumbers = new String[jsonNumbers.length()];
                         for (int i = 0; i < jsonNumbers.length(); i++) {
@@ -127,17 +138,26 @@ public class RequestManager extends Thread {
                         SmsMmsDelivery smsMmsDelivery = new SmsMmsDelivery(
                                 jsonRequest.getString(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.BODY.name().toLowerCase()),
                                 jsonRequest.getString(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.TEMP_MESSAGE_ID.name().toLowerCase()),
-                                arrNumbers);
+                                arrNumbers,
+                                smsObserver,
+                                mmsObserver);
                         ArrayList<MessageWaiting> messageWaitings = smsMmsDelivery.prepareMessage();
-                        Log.d(Tag.REQUEST_MANAGER, "Preparing message: " + action);
+                        Log.d(Tag.REQUEST_MANAGER, "Preparing message: " + action + " " + messageWaitings.size());
                         for (MessageWaiting message : messageWaitings) {
-                            smsObserver.addMessage(message);
+                            this.messagesWaiting.add(message);
                         }
                         Log.d(Tag.REQUEST_MANAGER, "Added message: " + action);
-                        smsMmsDelivery.sendMessage(context, smsObserver);
+                        smsMmsDelivery.sendMessage(context);
                     } else if(action.equals(JSONBuilder.Action.CONNECTED.name().toLowerCase())) {
                         send = new JSONBuilder(JSONBuilder.Action.CONNECTED);
                         Log.d(Tag.REQUEST_MANAGER, send.toString(4));
+                    } else if (action.equals(JSONBuilder.Action.GET_DATA.name().toLowerCase())) {
+                        //SPECIAL CASE RUN WITH NON BLOCKING FOR QUERYING DATA
+                        Intent intent = new Intent(Tag.ACTION_LOCAL_SEND_MESSAGE);
+                        messageQuery.queryDataAndSendAsync(jsonRequest.getString(
+                                JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase()),
+                                context,
+                                intent);
                     } else {
                         Log.d(Tag.REQUEST_MANAGER, "Could not find action: " + action);
                     }

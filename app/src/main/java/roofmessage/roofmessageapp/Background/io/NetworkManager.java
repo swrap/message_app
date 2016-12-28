@@ -57,7 +57,7 @@ public class NetworkManager extends BroadcastReceiver{
         for (Network network : networks) {
             NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
 //            Log.d(Tag.NETWORK_MANAGER, "Type [" + networkInfo.getType() + "] " + ConnectivityManager.TYPE_WIFI );
-            if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+            if (networkInfo != null && networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
                 Log.d(Tag.NETWORK_MANAGER, "networkInfo [" + networkInfo + "], isconnected [" + networkInfo.isConnectedOrConnecting() + "] getType [" + networkInfo.getType() + "], wifi type [" + ConnectivityManager.TYPE_WIFI + "], all ["
                         + (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI) + "]");
                 if (networkInfo != null && networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {

@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import roofmessage.roofmessageapp.Flush;
 import roofmessage.roofmessageapp.background.request.MessageQuery;
+import roofmessage.roofmessageapp.background.request.RequestManager;
 import roofmessage.roofmessageapp.io.JSONBuilder;
 import roofmessage.roofmessageapp.background.io.WebSocketManager;
 import roofmessage.roofmessageapp.utils.Tag;
@@ -31,6 +32,7 @@ import roofmessage.roofmessageapp.utils.Tag;
  * Created by Jesse Saran on 7/19/2016.
  */
 public class SMSObserver extends ContentObserver implements Flush{
+
     private static final Handler handler = new Handler();
     protected Uri uri = Uri.parse("content://sms/");
     private static SMSObserver smsObserver;
@@ -41,9 +43,6 @@ public class SMSObserver extends ContentObserver implements Flush{
 
     private final String MESSAGE_SENT_FAILED = "MESSAGE_SENT_FAILED";
     private final String MESSAGE_SENT = "MESSAGE_SENT";
-
-    private static ConcurrentLinkedQueue<MessageWaiting> messagesWaiting =
-            new ConcurrentLinkedQueue<MessageWaiting>();
 
     private SMSObserver(Context context) {
         super(handler);
@@ -58,10 +57,6 @@ public class SMSObserver extends ContentObserver implements Flush{
             smsObserver = new SMSObserver(context);
         }
         return smsObserver;
-    }
-
-    public void addMessage(MessageWaiting messageWaiting) {
-        messagesWaiting.add(messageWaiting);
     }
 
     public Intent getMessageSentIntent() {
@@ -113,10 +108,10 @@ public class SMSObserver extends ContentObserver implements Flush{
                     break;
                 default:
                     Log.e(Tag.SMS_OBSERVER, "Could not send: " + temp_message_id);
-                    for (MessageWaiting messageWaiting : messagesWaiting) {
+                    for (MessageWaiting messageWaiting : RequestManager.messagesWaiting) {
                         Log.d(Tag.SMS_OBSERVER, "FAILED found message. Sending return to websocket. temp_message_id [" + temp_message_id + "] message_id [" + messageId + "]");
                         webSocketManager.sendString(messageWaiting.getFailedJSON(messageId).toString());
-                        messagesWaiting.remove(messageWaiting);
+                        RequestManager.messagesWaiting.remove(messageWaiting);
                         break;
                     }
                     break;
@@ -159,7 +154,7 @@ public class SMSObserver extends ContentObserver implements Flush{
 
     @Override
     public void onChange(boolean selfChange, Uri uri) {
-        Log.d(Tag.SMS_OBSERVER, "Received change from URI-Path [" + uri.getPath() + "] host [" + uri.getHost() + "] concurrent size [" + messagesWaiting.size() + "] self change [" + selfChange + "]"
+        Log.d(Tag.SMS_OBSERVER, "Received change from URI-Path [" + uri.getPath() + "] host [" + uri.getHost() + "] self change [" + selfChange + "]"
         + " uri-to-string [" + uri.toString()+ "]");
         synchronized (this) {
             Cursor cursor = null;
@@ -191,8 +186,8 @@ public class SMSObserver extends ContentObserver implements Flush{
                                 cursor.getColumnIndex(Telephony.Sms.THREAD_ID));
                         final String message_id = cursor.getString(
                                 cursor.getColumnIndex(Telephony.Sms._ID));
-                        boolean found = false;
-                        for (MessageWaiting messageWaiting : messagesWaiting) {
+                        for (MessageWaiting messageWaiting : RequestManager.messagesWaiting) {
+                            Log.d(Tag.SMS_OBSERVER, "Length [" + RequestManager.messagesWaiting.size()  + "]");
                             if (PhoneNumberUtils.compare(address, messageWaiting.numbers) &&
                                     body.equals(messageWaiting.body)) {
                                 Log.d(Tag.SMS_OBSERVER, "Found message. Sending return to websocket. Thread ID [" + threadId + "] id [" + message_id + "] address [" + address + "] temp message id [" +
@@ -205,8 +200,7 @@ public class SMSObserver extends ContentObserver implements Flush{
                                     Log.d(Tag.SMS_OBSERVER, "Unable to get messages for received successfully sent.");
                                 }
                                 webSocketManager.sendString(jsonBuilder.toString());
-                                messagesWaiting.remove(messageWaiting);
-                                found = true;
+                                RequestManager.messagesWaiting.remove(messageWaiting);
                                 break;
                             } else {
                                 Log.v(Tag.SMS_OBSERVER, "Message not found.");
@@ -216,10 +210,10 @@ public class SMSObserver extends ContentObserver implements Flush{
                         Log.d(Tag.SMS_OBSERVER, "Was not sent. Sending received.");
                         try {
                             JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.RECEIVED_MESSAGE);
-                            String thread_id = cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.THREAD_ID));
+                            String thread_id = cursor.getString(cursor.getColumnIndex(Telephony.Sms.THREAD_ID));
                             jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
                                     thread_id);
-                            jsonBuilder.put(cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.THREAD_ID)),
+                            jsonBuilder.put(thread_id,
                                     new JSONArray().put(MessageQuery.getSMSJSON(cursor)));
                             Log.d(Tag.SMS_OBSERVER, "Received message, sending away! [" + jsonBuilder.toString() + "]");
                             webSocketManager.sendString(jsonBuilder.toString());
