@@ -1,0 +1,33 @@
+TASK roofmessage.roofmessageapp id=1302
+  ACTIVITY roofmessage.roofmessageapp/.activity.LoginActivity 5224562 pid=31584
+    Local FragmentActivity c349e1f State:
+      mCreated=truemResumed=true mStopped=false mReallyStopped=false
+      mLoadersStarted=true
+    FragmentManager misc state:
+      mHost=android.support.v4.app.FragmentActivity$HostCallbacks@38ac9ea
+      mContainer=android.support.v4.app.FragmentActivity$HostCallbacks@38ac9ea
+      mCurState=5 mStateSaved=false mDestroyed=false
+    View Hierarchy:
+      com.android.internal.policy.PhoneWindow$DecorView{81bb51b V.E..... ... 0,0-1080,1920}
+        android.widget.LinearLayout{9974db V.E..... ... 0,0-1080,1920}
+          android.view.ViewStub{f53ab78 G.E..... ... 0,0-0,0 #102047c android:id/action_mode_bar_stub}
+          android.widget.FrameLayout{baec251 V.E..... ... 0,72-1080,1920}
+            android.support.v7.widget.ActionBarOverlayLayout{4439ab6 V.E..... ... 0,0-1080,1848 #7f0c005b app:id/decor_content_parent}
+              android.support.v7.widget.ContentFrameLayout{8b083b7 V.E..... ... 0,168-1080,1848 #1020002 android:id/content}
+                android.widget.LinearLayout{1d40724 V.E..... ... 0,0-1080,1680}
+                  android.widget.ProgressBar{b4c328d G.ED.... ... 426,48-654,1608 #7f0c006c app:id/login_progress}
+                  android.widget.ScrollView{ce6ac42 VFED.V.. ... 48,48-1032,1632 #7f0c006d app:id/login_form}
+                    android.widget.LinearLayout{3bfa453 V.E..... ... 0,0-984,723 #7f0c006e app:id/email_login_form}
+                      android.support.design.widget.TextInputLayout{7dc7190 V.ED.... ... 0,0-984,169}
+                        android.support.v7.widget.AppCompatAutoCompleteTextView{8d66a89 VFED..CL F.. 0,33-984,169 #7f0c006f app:id/username}
+                      android.support.design.widget.TextInputLayout{6b74a8e V.ED.... ... 0,169-984,338}
+                        android.support.v7.widget.AppCompatEditText{c9632af VFED..CL ... 0,33-984,169 #7f0c0070 app:id/password}
+                      android.support.v7.widget.AppCompatButton{1bf16bc VFED..C. ... 0,386-984,530 #7f0c0072 app:id/sign_in_button}
+                      android.support.v7.widget.AppCompatTextView{8b22645 VFED..CL ... 0,530-984,723 #7f0c0073 app:id/textView2}
+                      android.support.v7.widget.AppCompatTextView{9e1819a G..D.... ... 0,0-0,0 #7f0c0074 app:id/textView}
+              android.support.v7.widget.ActionBarContainer{19d4acb V.ED.... ... 0,0-1080,168 #7f0c005c app:id/action_bar_container}
+                android.support.v7.widget.Toolbar{c4e2a8 V.E..... ... 0,0-1080,168 #7f0c005d app:id/action_bar}
+                  android.widget.TextView{6d3e1c1 V.ED.... ... 48,43-633,124}
+                  android.support.v7.widget.ActionMenuView{3461d66 V.E..... ... 1080,0-1080,168}
+                android.support.v7.widget.ActionBarContextView{4b3c8a7 G.E..... ... 0,0-0,0 #7f0c005e app:id/action_context_bar}
+        android.view.View{fd98154 V.ED.... ... 0,0-1080,72 #102002f android:id/statusBarBackground}

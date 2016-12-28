@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "C:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\res\\merged\\debug\\xml\\mms_config.xml",
+        "source": "C:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\exploded-aar\\RoofMessageApp\\library\\unspecified\\res\\xml\\mms_config.xml"
+    },
+    {
+        "merged": "C:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\res\\merged\\debug\\xml\\apns.xml",
+        "source": "C:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\exploded-aar\\RoofMessageApp\\library\\unspecified\\res\\xml\\apns.xml"
+    }
+]
