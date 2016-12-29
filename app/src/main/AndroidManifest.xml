@@ -24,7 +24,8 @@
         android:theme="@style/AppTheme">
 
         <service android:name=".background.BackgroundManager"
-            android:exported="false"/>
+            android:exported="false"
+            android:process="@string/background_process"/>
 
         <activity android:name=".activity.MainActivity"
             android:label="@string/title_activity_main">

@@ -529,6 +529,7 @@
     <string name="error_login">"Failed to login:("</string>
     <string name="error_permissions">Can not connect without the minimum permissions required for this app.</string>
     <string name="invalid_destination">Invalid destination address.</string>
+    <string name="invalid_version">Your app is at version XXs, in order to connect to our servers you need the most up to date version XXs</string>
     <string name="message_delivered">Message Delivered</string>
     <string name="message_not_delivered">Message Not Delivered</string>
     <string name="message_queued">Currently can\'t send your message. It will be sent when the service becomes available.</string>
@@ -574,6 +575,7 @@
     <string name="title_activity_login">RoofMessage: Sign In</string>
     <string name="title_activity_main">RoofMessage</string>
     <string name="unknown_sender">Unknown sender</string>
+    <string name="update">Update App</string>
     <string name="write_settings_permission">Starting with Android Marshmallow, multimedia messaging applications can no longer directly request
         to send messages over your mobile data, which is a requirement for sending things like pictures.\n\nTo be able to send messages, the app
         will need the write settings permission, which must be explicitly granted. Without this, multimedia messages will fail to send.</string>

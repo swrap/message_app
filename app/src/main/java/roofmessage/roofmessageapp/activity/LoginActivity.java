@@ -5,11 +5,15 @@ import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Message;
 import android.os.StrictMode;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 
 import android.os.AsyncTask;
@@ -35,6 +39,7 @@ import android.widget.Toast;
 import java.util.List;
 
 import roofmessage.roofmessageapp.background.BackgroundManager;
+import roofmessage.roofmessageapp.background.io.SessionManager;
 import roofmessage.roofmessageapp.io.BindListener;
 import roofmessage.roofmessageapp.R;
 import roofmessage.roofmessageapp.background.io.SharedPreferenceManager;
@@ -74,10 +79,13 @@ public class LoginActivity extends AppCompatActivity {
         List<ActivityManager.RunningAppProcessInfo> procInfos = activityManager.getRunningAppProcesses();
         for (int i = 0; i < procInfos.size(); i++)
         {
-            Log.d(Tag.LOGIN_ACTIVITY, "BACKGROUND PROCESS " + i + ": " + procInfos.get(i).processName);
-            if (procInfos.get(i).processName.equals(this.getString(R.string.background_process)))
+            Log.d(Tag.LOGIN_ACTIVITY, "Searching for Process Name [" + procInfos.get(i).processName + "] ["
+                    + "roofmessage.roofmessageapp" + this.getString(R.string.background_process) + "]");
+            if (procInfos.get(i).processName.equals("roofmessage.roofmessageapp" + this.getString(R.string.background_process)))
             {
-                Toast.makeText(getApplicationContext(), "BBackground service is running", Toast.LENGTH_LONG).show();
+                Log.d(Tag.LOGIN_ACTIVITY, "Matched Background Service");
+                Toast.makeText(getApplicationContext(), "Background service is running", Toast.LENGTH_LONG).show();
+                break;
             }
             if (i == procInfos.size()-1 ) {
                 Log.d(Tag.LOGIN_ACTIVITY, "Login activity starting background manager.");
@@ -86,10 +94,13 @@ public class LoginActivity extends AppCompatActivity {
                 startService(intent);
             }
         }
+
+        Log.d(Tag.LOGIN_ACTIVITY, "Shared Preference Manager background state["
+                + SharedPreferenceManager.getInstance(this).getBackgroundState() + "]");
         //move to next activity if already running
         if (SharedPreferenceManager.getInstance(this).getBackgroundState()) { //TODO MAY NEED TO CHANGE THIS SHAREDPREFERENCE MANAGER
             Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
-            LoginActivity.this.startActivity(mainIntent);
+            LoginActivity.this.startActivityForResult(mainIntent, 55);
         }
         bindListener = new BindListener(this);
         bindListener.doBindService();
@@ -216,6 +227,23 @@ public class LoginActivity extends AppCompatActivity {
         //not used on main page
     }
 
+    /**
+     * Callback for on activity Result
+     *
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //HARD CODED VALUE FOR REQUEST CODE
+        Log.d(Tag.LOGIN_ACTIVITY, "resultCode [" + resultCode + "]");
+        if (resultCode == 57) {
+            //Finish this activity because invalid version
+            finishAndRemoveTask();
+        }
+    }
+
 
     /**
      * Attempts to sign in or register the account specified by the login form.
@@ -321,6 +349,7 @@ public class LoginActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         showProgress(false);
+        Log.d(Tag.LOGIN_ACTIVITY, "Resuming");
     }
 
     @Override
@@ -339,6 +368,7 @@ public class LoginActivity extends AppCompatActivity {
         private final String mUsername;
         private final String mPassword;
         private String mErrorMessage = "";
+        private String displayMessage = "";
 
         UserLoginTask(String username, String password) {
             mUsername = username;
@@ -378,12 +408,29 @@ public class LoginActivity extends AppCompatActivity {
                 bindListener.sendMessage(message);
                 Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
                 mainIntent.setAction(BackgroundManager.LOGIN_START);
-                LoginActivity.this.startActivity(mainIntent);
+                //HARD coded value for value of 56 for fine return
+                LoginActivity.this.startActivityForResult(mainIntent, 56);
+                Log.d(Tag.MAIN_ACTIVITY, "Coming back from Login Activity");
             } else {
                 showProgress(false);
                 Toast toast = Toast.makeText(LoginActivity.this, mErrorMessage, Toast.LENGTH_LONG);
                 toast.setGravity(Gravity.CENTER | Gravity.TOP, 0, 250);
                 toast.show();
+                if (displayMessage != null && !displayMessage.equals("")) {
+                    Log.d(Tag.LOGIN_ACTIVITY, "Adding alert for correct version");
+                    AlertDialog.Builder correctVersionAlert = new AlertDialog.Builder(LoginActivity.this);
+                    correctVersionAlert.setMessage(displayMessage)
+                            .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                                @TargetApi(16)
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    LoginActivity.this.finishAndRemoveTask();
+                                    System.exit(0);
+                                }
+                            });
+                    correctVersionAlert.create();
+                    correctVersionAlert.show();
+                }
             }
             mUsernameView.requestFocus();
             showKeyboard(true, mUsernameView);
@@ -393,6 +440,10 @@ public class LoginActivity extends AppCompatActivity {
         protected void onCancelled() {
             mAuthTask = null;
             showProgress(false);
+        }
+
+        public void setDisplayMessage(String s) {
+            displayMessage = s;
         }
     }
 }

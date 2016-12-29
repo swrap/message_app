@@ -61,4 +61,8 @@
         hit the back button on your device. When you logout, the background service will not
         run in, therefore you wont be connected to RoofText :(, so we will not be connected to the browser.
         Questions, check us out at: www.rooftext.com.</string>
+
+    <!-- Version -->
+    <string name="invalid_version">Your app is at version XXs, in order to connect to our servers you need the most up to date version XXs</string>
+    <string name="update">Update App</string>
 </resources>

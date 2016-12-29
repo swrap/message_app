@@ -4,6 +4,9 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.ConnectException;
 import java.net.CookieHandler;
@@ -12,6 +15,7 @@ import java.net.CookiePolicy;
 import java.net.CookieStore;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.List;
@@ -31,12 +35,14 @@ public class SessionManager {
 
     private static final CookieManager cookieManager = new CookieManager();
 
+    private String VERSION_URL = "http://" + Tag.BASE_URL + "/android_version/";
     private String LOGIN_URL = "http://" + Tag.BASE_URL + "/android_login/";
     private String LOGOUT_URL = "http://" + Tag.BASE_URL + "/android_logout/";
     private final String CSRF_MID_TOKEN = "csrfmiddlewaretoken";
     private final String CSRF_TOKEN = "csrftoken";
     private final int RESPONSE_OKAY = 200;
     private final int connection_timeout = 4000;
+    private String version;
 
     private SessionManager(Context context) {
         this.context = context;
@@ -54,6 +60,40 @@ public class SessionManager {
         return sessionManager;
     }
 
+    public boolean correctVersion() {
+        //TODO HTTPS
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(VERSION_URL);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(connection_timeout);
+            BufferedReader in = new BufferedReader(new InputStreamReader(
+                    connection.getInputStream()));
+            String content = in.readLine();
+            Log.d(Tag.SESSION_MANAGER, "content [" + content + "] Tag.Version [" + Tag.VERSION + "]");
+            if(content != null && content.equals(Tag.VERSION)) {
+                return true;
+            }
+            version = content;
+            Log.d(Tag.SESSION_MANAGER, "INCORRECT VERSION [" + version + "]");
+        } catch (MalformedURLException e) {
+            Log.d(Tag.SESSION_MANAGER, "Unable to check version URL Exception", e);
+        } catch (IOException e) {
+            Log.d(Tag.SESSION_MANAGER, "Unable to check version IO EXCEPTION", e);
+            //important used in callback of background manager
+            version = null;
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+        return false;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
     public boolean login(String username, String password) {
         try {
             // get content from URLConnection;
@@ -61,7 +101,7 @@ public class SessionManager {
             LOGIN_URL = "http://" + Tag.BASE_URL + "/android_login/";
             Log.d(Tag.SESSION_MANAGER, "Before attempting to login. [" + LOGIN_URL + "]");
             URL url = new URL(LOGIN_URL);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection(); //TODO HTTPS
             connection.setConnectTimeout(connection_timeout);
             connection.getContent();
             String COOKIES_HEADER = "Set-Cookie";

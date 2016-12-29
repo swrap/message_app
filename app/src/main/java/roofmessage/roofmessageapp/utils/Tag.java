@@ -7,6 +7,8 @@ import android.content.IntentFilter;
  */
 public class Tag {
 
+    public static String VERSION = "1.0";
+
     public static final boolean DEV_MODE = false;
     public static final boolean DEV_MODE_SKIP_AUTH = DEV_MODE ? true : false;
 
@@ -33,10 +35,14 @@ public class Tag {
     public static final String BASE_URL = "192.168.1.17:8000";
 
     //LocalBroadCastReceivers and Broadcast receivers
+    //TODO GET THESE LOCAL AND NON_LOCAL ACTIONS FIGURED THE FUCK OUT
     public static final String ACTION_WEBSOC_CHANGE = "roofmessage.roofmessageapp.WEBSOCEKT_STATE_CHANGE";
     public static final String ACTION_RECEIVED_MESSAGE = "roofmessage.roofmessageapp.WEBSOCKET_RECEIVED_MESSAGE";
     public static final String ACTION_LOCAL_RECEIVED_MESSAGE = "LOCAL_WEBSOCKET_RECEIVED_MESSAGE";
     public static final String ACTION_LOCAL_SEND_MESSAGE = "ACTION_LOCAL_SEND_MESSAGE";
+    public static final String ACTION_LOCAL_INVALID_VERSION = "ACTION_LOCAL_INVALID_VERSION";
+    public static final String ACTION_LOCAL_WEBSOC_CHANGE = "ACTION_LOCAL_WEBSOC_CHANGE";
+    public static final String ACTION_LOCAL_NETWORK_CHANGE = "ACTION_LOCAL_NETWORK_CHANGE";
         //used by websocket manager to send a jso
         public static final String KEY_SEND_JSON_STRING = "KEY_SEND_JSON_STRING";
     public static final String ACTION_LOCAL_MMS_SEND_RECEIVER = "LOCAL_MMS_SEND_RECEIVER";

@@ -8,6 +8,7 @@ import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -141,7 +142,9 @@ public class NetworkManager extends BroadcastReceiver{
         NetworkInfo netInfo = conMan.getActiveNetworkInfo();
         if (netInfo != null && netInfo.getType() == ConnectivityManager.TYPE_WIFI) {
             Log.d(Tag.NETWORK_MANAGER, "Have Wifi Connection");
-            backgroundManager.attemptThreadLogin(null);
+            Intent webIntent = new Intent(Tag.ACTION_LOCAL_NETWORK_CHANGE);
+            //add empty state
+            LocalBroadcastManager.getInstance(context).sendBroadcast(webIntent);
         } else {
             Log.d(Tag.NETWORK_MANAGER, "Don't have Wifi Connection");
         }

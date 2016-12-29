@@ -18,17 +18,17 @@ public final class R {
 		public static final int download_later = 0x7f070031;
 		public static final int error = 0x7f070033;
 		public static final int invalid_destination = 0x7f070038;
-		public static final int message_delivered = 0x7f070039;
-		public static final int message_not_delivered = 0x7f07003a;
-		public static final int message_queued = 0x7f07003b;
-		public static final int no_apn = 0x7f07003c;
-		public static final int no_subject = 0x7f07003d;
-		public static final int ok = 0x7f07003e;
-		public static final int service_message_not_found = 0x7f07004f;
-		public static final int service_network_problem = 0x7f070050;
-		public static final int service_not_activated = 0x7f070051;
-		public static final int unknown_sender = 0x7f07005e;
-		public static final int write_settings_permission = 0x7f07005f;
+		public static final int message_delivered = 0x7f07003a;
+		public static final int message_not_delivered = 0x7f07003b;
+		public static final int message_queued = 0x7f07003c;
+		public static final int no_apn = 0x7f07003d;
+		public static final int no_subject = 0x7f07003e;
+		public static final int ok = 0x7f07003f;
+		public static final int service_message_not_found = 0x7f070050;
+		public static final int service_network_problem = 0x7f070051;
+		public static final int service_not_activated = 0x7f070052;
+		public static final int unknown_sender = 0x7f07005f;
+		public static final int write_settings_permission = 0x7f070061;
 	}
 	public static final class xml {
 		public static final int apns = 0x7f060000;

@@ -209,6 +209,12 @@ public class SMSObserver extends ContentObserver implements Flush{
                     } else {
                         Log.d(Tag.SMS_OBSERVER, "Was not sent. Sending received.");
                         try {
+                            String cols = "";
+                            for (int i = 0; i < cursor.getColumnCount(); i++) {
+                                cols += cursor.getColumnName(i) + ",";
+                            }
+                            Log.d(Tag.SMS_OBSERVER, "Columns [" + cols + "] col count ["
+                                    + cursor.getColumnCount() + "]");
                             JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.RECEIVED_MESSAGE);
                             String thread_id = cursor.getString(cursor.getColumnIndex(Telephony.Sms.THREAD_ID));
                             jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
@@ -220,7 +226,6 @@ public class SMSObserver extends ContentObserver implements Flush{
                         } catch (JSONException e) {
                             Log.d(Tag.SMS_OBSERVER, "Unable to query message for incoming message.");
                         }
-
                     }
                 }
             } finally {

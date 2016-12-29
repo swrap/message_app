@@ -1,5 +1,6 @@
 package roofmessage.roofmessageapp.activity;
 
+import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -48,6 +49,7 @@ public class MainActivity extends AppCompatActivity{
         connectionReciever = new ConnectionReciever();
         intent_filter.addAction(Tag.ACTION_RECEIVED_MESSAGE);
         intent_filter.addAction(Tag.ACTION_WEBSOC_CHANGE);
+        intent_filter.addAction(Tag.ACTION_LOCAL_INVALID_VERSION);
         registerReceiver(connectionReciever, intent_filter);
 
         mStatus = (TextView) findViewById(R.id.status);
@@ -60,11 +62,16 @@ public class MainActivity extends AppCompatActivity{
         List<ActivityManager.RunningAppProcessInfo> procInfos = activityManager.getRunningAppProcesses();
         for (int i = 0; i < procInfos.size(); i++)
         {
-            if (procInfos.get(i).processName.equals(this.getString(R.string.background_process)))
+            Log.d(Tag.MAIN_ACTIVITY, "Searching for Process Name [" + procInfos.get(i).processName + "] ["
+                + "roofmessage.roofmessageapp" + this.getString(R.string.background_process) + "]");
+            if (procInfos.get(i).processName.equals("roofmessage.roofmessageapp" + this.getString(R.string.background_process)))
             {
+                Log.d(Tag.MAIN_ACTIVITY, "Matched Background Service");
                 Toast.makeText(getApplicationContext(), "Background service is running", Toast.LENGTH_LONG).show();
+                break;
             }
             if (i == procInfos.size()-1 ) {
+                Log.d(Tag.MAIN_ACTIVITY, "Starting Background manager");
                 startService(new Intent(this,BackgroundManager.class));
             }
         }
@@ -182,6 +189,8 @@ public class MainActivity extends AppCompatActivity{
                     Message message = new Message();
                     message.what = BackgroundManager.MSG_POST_WEBSOCKET_UPDATE;
                     retval = bindListener.sendMessage(message);
+                    Log.d(Tag.MAIN_ACTIVITY, "Asking for update ui websocket state update ["
+                        + retval + "]");
                     if (!retval) {
                         try {
                             Thread.sleep(100);
@@ -191,7 +200,7 @@ public class MainActivity extends AppCompatActivity{
                     }
                 }
             }
-        });
+        }).start();
     }
 
     @Override
@@ -264,7 +273,32 @@ public class MainActivity extends AppCompatActivity{
                         mMessage.setText(message);
                     }
                 });
-            }
+            } else if (action.equals(Tag.ACTION_LOCAL_INVALID_VERSION)) {
+                    Log.d(Tag.MAIN_ACTIVITY, "Recevied invalid version.");
+                    final String message = intent.getStringExtra(BackgroundManager.KEY_DISPLAY_MESSAGE);
+                    MainActivity.this.mStatus.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            android.support.v7.app.AlertDialog.Builder correctVersionAlert =
+                                    new android.support.v7.app.AlertDialog.Builder(MainActivity.this);
+                            correctVersionAlert.setMessage(message)
+                                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                                        @TargetApi(16)
+                                        @Override
+                                        public void onClick(DialogInterface dialogInterface, int i) {
+                                            //HARD coded value for value of 57 for invalid version
+                                            MainActivity.this.setResult(57);
+                                            MainActivity.this.finishAndRemoveTask();
+                                            Log.d(Tag.MAIN_ACTIVITY, "EXITING APP");
+                                            //TODO MAKE THIS FINISH MORE CLEANELY. Right now it goes to login when finished
+//                                            System.exit(0);
+                                        }
+                                    });
+                            correctVersionAlert.create();
+                            correctVersionAlert.show();
+                        }
+                    });
+                }
         }
     }
 }

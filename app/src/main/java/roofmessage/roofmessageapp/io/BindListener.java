@@ -18,6 +18,7 @@ import roofmessage.roofmessageapp.utils.Tag;
 
 /**
  * Created by Jesse Saran on 7/22/2016.
+ * Created by Jesse Saran on 7/22/2016.
  */
 public class BindListener {
     private final Messenger mMessenger = new Messenger(new IncomingHandler());
@@ -102,8 +103,10 @@ public class BindListener {
                     Log.d(Tag.BIND_LISTENER, "Login response [" + msg.arg1 +
                             "] userLoginTask [" + userLoginTask + "]");
                     if (userLoginTask != null) {
-                        loginResponse = msg.arg1 == 0 ? false : true;
+                        loginResponse = (msg.arg1 != 0);
                         synchronized (userLoginTask) {
+                            userLoginTask.setDisplayMessage(msg.getData()
+                                    .getString(BackgroundManager.KEY_DISPLAY_MESSAGE));
                             userLoginTask.notifyAll();
                         }
                         userLoginTask = null;
