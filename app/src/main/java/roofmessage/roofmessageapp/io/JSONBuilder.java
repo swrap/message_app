@@ -55,7 +55,7 @@ public class JSONBuilder extends JSONObject{
         CREATOR,
 
         FULL_NAME,
-        CONTACT_ID,
+        ADDRESS,
 
         //TYPES
         MMS,

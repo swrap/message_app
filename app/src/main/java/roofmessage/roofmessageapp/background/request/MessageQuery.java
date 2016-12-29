@@ -10,7 +10,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.ContactsContract;
 import android.provider.Telephony;
-import android.support.annotation.IntegerRes;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Base64;
@@ -236,6 +235,9 @@ public class MessageQuery {
                 cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.MESSAGE_BOX)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.PARTS.name().toLowerCase(),
                 getMMSParts(cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns._ID))));
+        Log.d(Tag.MESSAGE_MANAGER, "PUTTING IN CONTACT ID");
+        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.ADDRESS.name().toLowerCase(),
+                getMMSAddress(cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns._ID))));
         return message;
     }
 
@@ -397,6 +399,31 @@ public class MessageQuery {
         return jsonObject;
     }
 
+    private static String getMMSAddress(String messageId) {
+        final String[] COLUMN =  new String[] {
+                Telephony.Mms.Addr.ADDRESS,
+        };
+        //FROM PDU HEADER
+        final String WHERE = "TYPE = 151";
+
+        Uri.Builder builder = Uri.parse("content://mms").buildUpon();
+        builder.appendPath(String.valueOf(messageId)).appendPath("addr");
+
+        Cursor cursor = contentResolver.query(
+                builder.build(),
+                COLUMN,
+                WHERE,
+                null, null);
+        String id = "";
+        if (cursor.moveToFirst()) {
+            id = cursor.getString(0);
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
+        return id;
+    }
+
     private Cursor getMMSMessages(String thread_id, int limit, String offset, int period) {
         Uri contentURI = Telephony.Mms.CONTENT_URI;
         String [] COLUMN = {
@@ -503,7 +530,7 @@ public class MessageQuery {
                 }
                 jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.FULL_NAME.name().toLowerCase(),
                         numberContactId[0]);
-                jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.CONTACT_ID.name().toLowerCase(),
+                jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.ADDRESS.name().toLowerCase(),
                         numberContactId[1]);
                 jsonArray.put(jsonObjectRecipient);
             }while (cursorCanonical.moveToNext());
