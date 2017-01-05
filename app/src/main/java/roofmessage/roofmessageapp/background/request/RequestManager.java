@@ -56,15 +56,37 @@ public class RequestManager extends Thread {
     }
 
     public void addRequest(JSONBuilder jsonBuilder){
-        requests.add(jsonBuilder);
-        synchronized (this) {
-            this.notify();
-        }
-        Log.e(Tag.REQUEST_MANAGER, "STATE: " + this.getState());
+        //check if Async, if async, create request here do not notify
         try {
-            Log.d(Tag.REQUEST_MANAGER, "Added request [" + jsonBuilder.getString(JSONBuilder.JSON_KEY_MAIN.ACTION.name().toLowerCase()) + "] and notified");
+            String action = jsonBuilder.getString(JSONBuilder.JSON_KEY_MAIN.ACTION.name().toLowerCase());
+            if (action.equals(JSONBuilder.Action.GET_DATA.name().toLowerCase())) {
+                    //SPECIAL CASE RUN WITH NON BLOCKING FOR QUERYING DATA
+                    Intent intent = new Intent(Tag.ACTION_LOCAL_SEND_MESSAGE);
+                    messageQuery.queryDataAndSendAsync(jsonBuilder.getString(
+                            JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.PART_ID.name().toLowerCase()),
+                            jsonBuilder.getString(
+                                    JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.CONTENT_TYPE.name().toLowerCase()),
+                            jsonBuilder.getString(
+                                    JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase()),
+                            context,
+                            intent);
+            } else if(action.equals(JSONBuilder.Action.GET_CONVERSATIONS.name().toLowerCase())) {
+                Log.d(Tag.REQUEST_MANAGER, "Querying conversations async");
+                messageQuery.sendAllConversationsAsync(context);
+            } else {
+                //Synchronous request
+                requests.add(jsonBuilder);
+                synchronized (this) {
+                    this.notify();
+                }
+                try {
+                    Log.d(Tag.REQUEST_MANAGER, "Added request [" + jsonBuilder.getString(JSONBuilder.JSON_KEY_MAIN.ACTION.name().toLowerCase()) + "] and notified");
+                } catch (JSONException e) {
+                    Log.d(Tag.REQUEST_MANAGER, "Could not find action key-value pair.");
+                }
+            }
         } catch (JSONException e) {
-            Log.d(Tag.REQUEST_MANAGER, "Could not find action key-value pair.");
+            Log.e(Tag.REQUEST_MANAGER, "Could not find action :(.");
         }
     }
 
@@ -102,10 +124,6 @@ public class RequestManager extends Thread {
                     if(action.equals(JSONBuilder.Action.GET_CONTACTS.name().toLowerCase())) {
                         Log.d(Tag.REQUEST_MANAGER, "Querying contacts");
                         send = contactQuery.getContacts();
-//                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
-                    } else if(action.equals(JSONBuilder.Action.GET_CONVERSATIONS.name().toLowerCase())) {
-                        Log.d(Tag.REQUEST_MANAGER, "Querying conversations");
-                        send = messageQuery.getAllConversations();
 //                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
                     } else if(action.equals(JSONBuilder.Action.GET_SMS_CONVO.name().toLowerCase())) {
                         send = messageQuery.getSMS("596", 5, "0", 1);
@@ -151,13 +169,6 @@ public class RequestManager extends Thread {
                     } else if(action.equals(JSONBuilder.Action.CONNECTED.name().toLowerCase())) {
                         send = new JSONBuilder(JSONBuilder.Action.CONNECTED);
                         Log.d(Tag.REQUEST_MANAGER, send.toString(4));
-                    } else if (action.equals(JSONBuilder.Action.GET_DATA.name().toLowerCase())) {
-                        //SPECIAL CASE RUN WITH NON BLOCKING FOR QUERYING DATA
-                        Intent intent = new Intent(Tag.ACTION_LOCAL_SEND_MESSAGE);
-                        messageQuery.queryDataAndSendAsync(jsonRequest.getString(
-                                JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase()),
-                                context,
-                                intent);
                     } else {
                         Log.d(Tag.REQUEST_MANAGER, "Could not find action: " + action);
                     }

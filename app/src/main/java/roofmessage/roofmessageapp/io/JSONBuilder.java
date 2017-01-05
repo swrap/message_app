@@ -79,7 +79,7 @@ public class JSONBuilder extends JSONObject{
         NUMBERS,
         TEMP_MESSAGE_ID,
         THREAD_ID,
-        MESSAGE_ID,
+        MESSAGE_ID, PART_ID, CONTENT_TYPE,
     }
 
     public enum Action {

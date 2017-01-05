@@ -150,7 +150,7 @@ public class BackgroundManager extends Service implements Flush {
 //                Log.d(Tag.BACKGROUND_MANAGER, "Thread already running :(... IDK?");
 //            }
         }
-        return START_STICKY;//START_NOT_STICKY;// START_STICKY; //TODO TURN OFF FOR MATT TESTING
+        return START_NOT_STICKY;// START_STICKY; //TODO TURN OFF FOR MATT TESTING
     }
 
     @Override

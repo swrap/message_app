@@ -1,5 +1,5 @@
 #Internal package file, do not edit.
-#Thu Dec 29 15:46:10 EST 2016
+#Thu Dec 29 17:16:56 EST 2016
 210.set=ANDROID_RESOURCE
 282.file=C\:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\res\\resources-debug.ap_\\res\\xml-mcc334-mnc20\\mms_config.xml
 14.set=ANDROID_RESOURCE

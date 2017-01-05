@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.CursorJoiner;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -50,7 +51,7 @@ public class MessageQuery {
         return messageQuery;
     }
 
-    public JSONBuilder getAllConversations() {
+    public void sendAllConversationsAsync(final Context context) {
         Uri mSMSMMS = Uri.parse("content://mms-sms/conversations?simple=true");
 
         String [] SMSMMS_COLUMNS = new String[]{
@@ -62,58 +63,67 @@ public class MessageQuery {
                 Telephony.ThreadsColumns.TYPE,
             };
 
-        String ORDERBY = "date DESC LIMIT 20"; //TODO TEST GET RID OF LIMIT
-        Cursor cursor = contentResolver.query(mSMSMMS,
+        String ORDERBY = "date DESC LIMIT 30"; //TODO TEST GET RID OF LIMIT
+        final Cursor cursor = contentResolver.query(mSMSMMS,
                 SMSMMS_COLUMNS,
                 null,
                 null,
                 ORDERBY
         );
 
-        JSONBuilder jsonObject = new JSONBuilder( JSONBuilder.Action.POST_CONVERSATIONS );
-        JSONArray jsonArray = new JSONArray();
-        if(cursor.getCount() > 0) {
-            cursor.moveToFirst();
-            do {
-                JSONObject conversation = new JSONObject();
-                JSONObject conversationInfo = new JSONObject();
+        new AsyncTask<Cursor,Void,Void>() {
+
+            @Override
+            protected Void doInBackground(Cursor... params) {
+                Cursor cursor = params[0];
+                JSONBuilder jsonObject = new JSONBuilder( JSONBuilder.Action.POST_CONVERSATIONS );
+                JSONArray jsonArray = new JSONArray();
+                if(cursor.getCount() > 0) {
+                    cursor.moveToFirst();
+                    do {
+                        JSONObject conversation = new JSONObject();
+                        JSONObject conversationInfo = new JSONObject();
+                        try {
+                            conversation.put(cursor.getString(1), conversationInfo);
+                            //conversation
+                            conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE.name().toLowerCase(),
+                                    cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.DATE)));
+                            conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.MESSAGE_COUNT.name().toLowerCase(),
+                                    cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.MESSAGE_COUNT)));
+                            conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.READ.name().toLowerCase(),
+                                    cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.READ)));
+                            //check for found found recipients
+                            JSONArray matchRecipients = matchRecipientID(cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.RECIPIENT_IDS)).split(" "));
+                            if( matchRecipients != null ) {
+                                conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.RECIPIENTS.name().toLowerCase(),
+                                        matchRecipients);
+                            }
+                            conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.CONVO_TYPE.name().toLowerCase(),
+                                    cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.TYPE)));
+                            jsonArray.put(conversation);
+                        } catch (JSONException e) {
+                            Log.e(Tag.MESSAGE_MANAGER, "Could not add conversation.");
+                            e.printStackTrace();
+                        }
+
+                    } while(cursor.moveToNext());
+                }
+                if(cursor != null){
+                    cursor.close();
+                }
                 try {
-                    conversation.put(cursor.getString(1), conversationInfo);
-                    //conversation
-                    conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE.name().toLowerCase(),
-                            cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.DATE)));
-                    conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.MESSAGE_COUNT.name().toLowerCase(),
-                            cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.MESSAGE_COUNT)));
-                    conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.READ.name().toLowerCase(),
-                            cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.READ)));
-                    //check for found found recipients
-                    JSONArray matchRecipients = matchRecipientID(cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.RECIPIENT_IDS)).split(" "));
-                    if( matchRecipients != null ) {
-                        conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.RECIPIENTS.name().toLowerCase(),
-                                matchRecipients);
-                    }
-                    conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.CONVO_TYPE.name().toLowerCase(),
-                            cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.TYPE)));
-                    jsonArray.put(conversation);
+                    jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.CONVERSATIONS.name().toLowerCase(),
+                            (Object) jsonArray);
+                    Intent intent = new Intent(Tag.ACTION_LOCAL_SEND_MESSAGE);
+                    intent.putExtra(Tag.KEY_SEND_JSON_STRING, jsonObject.toString());
+                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
                 } catch (JSONException e) {
-                    Log.e(Tag.MESSAGE_MANAGER, "Could not add conversation.");
+                    Log.e(Tag.MESSAGE_MANAGER,"Could not add array to json.");
                     e.printStackTrace();
                 }
-
-            } while(cursor.moveToNext());
-        }
-        if(cursor != null){
-            cursor.close();
-        }
-        try {
-            jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.CONVERSATIONS.name().toLowerCase(),
-                    (Object) jsonArray);
-            return jsonObject;
-        } catch (JSONException e) {
-            Log.e(Tag.MESSAGE_MANAGER,"Could not add array to json.");
-            e.printStackTrace();
-        }
-        return null;
+                return null;
+            }
+        }.execute(cursor);
     }
 
     public JSONBuilder getConversationMessages(String thread_id, int limit, String offset, int period) {
@@ -267,6 +277,31 @@ public class MessageQuery {
         return message;
     }
 
+    public static Cursor getSMSMessage(String messageId) {
+        Uri contentURI = Telephony.Sms.CONTENT_URI;
+        String [] COLUMN = {
+                Telephony.TextBasedSmsColumns.BODY,
+                Telephony.TextBasedSmsColumns.DATE,
+                Telephony.TextBasedSmsColumns.DATE_SENT,
+                Telephony.TextBasedSmsColumns.LOCKED,
+                Telephony.TextBasedSmsColumns.SEEN,
+                Telephony.TextBasedSmsColumns.READ,
+                Telephony.TextBasedSmsColumns.SUBJECT,
+                Telephony.TextBasedSmsColumns.THREAD_ID,
+                Telephony.Sms._ID,
+                Telephony.Sms.TYPE,
+        };
+        String WHERE = Telephony.Sms._ID + " = ? ";
+        String [] QUESTIONMARK = {messageId};
+        String ORDERBY = Telephony.Sms.Conversations.DEFAULT_SORT_ORDER + " limit " + 1;
+        return contentResolver.query(contentURI,
+                COLUMN,
+                WHERE,
+                QUESTIONMARK,
+                ORDERBY
+        );
+    }
+
     private Cursor getSMSMessages(String thread_id, int limit, String offset, int period){
         Uri contentURI = Telephony.Sms.CONTENT_URI;
         String [] COLUMN = {
@@ -404,7 +439,7 @@ public class MessageQuery {
                 Telephony.Mms.Addr.ADDRESS,
         };
         //FROM PDU HEADER
-        final String WHERE = "TYPE = 151";
+        final String WHERE = "TYPE = 137";
 
         Uri.Builder builder = Uri.parse("content://mms").buildUpon();
         builder.appendPath(String.valueOf(messageId)).appendPath("addr");
@@ -469,7 +504,7 @@ public class MessageQuery {
         String [] COLUMN = {
                 Telephony.Mms.Part.CONTENT_TYPE,
                 Telephony.Mms.Part.TEXT,
-                Telephony.Mms.Part.CONTENT_LOCATION,
+                Telephony.Mms.Part._ID,
         };
         String WHERE = Telephony.Mms.Part.MSG_ID + " = ?";
         String [] QUESTIONMARK = {message_id};
@@ -490,8 +525,10 @@ public class MessageQuery {
                             cursor.getString(0));
                     jsonObject.put("TEXT",
                             cursor.getString(1));
-                    jsonObject.put("CONTENT_LOC",
+                    jsonObject.put("id",
                             cursor.getString(2));
+                    jsonObject.put("message_id",
+                            message_id);
                     jsonArray.put(jsonObject);
                 } while (cursor.moveToNext());
                 cursor.close();
@@ -574,55 +611,42 @@ public class MessageQuery {
         return numberContactId;
     }
 
-    public void queryDataAndSendAsync(final String message_id, final Context context, final Intent intent) {
+    public void queryDataAndSendAsync(final String partId, final String type,
+                                      final String messageId,
+                                      final Context context, final Intent intent) {
 
-//        JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.POST_DATA);
-        Uri contentURI = Uri.parse("content://mms/part");
-        String [] COLUMN = {
-                Telephony.Mms.Part._ID,
-                Telephony.Mms.Part.CONTENT_TYPE,
-                Telephony.Mms.Part._DATA,
-        };
-        String WHERE = Telephony.Mms.Part.MSG_ID + " = ?";
-        String [] QUESTIONMARK = {message_id};
-        new AsyncTask<Cursor, Void, Void>() {
+        new AsyncTask<Integer, Void, Void>() {
 
             @Override
-            protected Void doInBackground(Cursor... params) {
-                Cursor cursor = params[0];
+            protected Void doInBackground(Integer ... params) {
                 try {
-                    if(cursor != null) {
-                        if (cursor.getCount() > 0) {
-                            cursor.moveToFirst();
-//                            do {
-                            String id = cursor.getString(cursor.getColumnIndex(Telephony.Mms.Part._ID));
-                            String type = cursor.getString(cursor.getColumnIndex(Telephony.Mms.Part.CONTENT_TYPE));
-                            if ("image/jpeg".equals(type) || "image/bmp".equals(type) ||
-                                    "image/gif".equals(type) || "image/jpg".equals(type) ||
-                                    "image/png".equals(type)) {
-                                Uri uri = Uri.parse("content://mms/part/" + id);
-                                Log.e(Tag.MESSAGE_MANAGER, "TAG DATA [" + uri.getPath() + "]");
-                                InputStream is = contentResolver.openInputStream(uri);
+                    if ("image/jpeg".equals(type) || "image/bmp".equals(type) ||
+                            "image/gif".equals(type) || "image/jpg".equals(type) ||
+                            "image/png".equals(type)) {
+                        Uri uri = Uri.parse("content://mms/part/" + partId);
+                        Log.e(Tag.MESSAGE_MANAGER, "TAG DATA [" + uri.getPath() + "]");
+                        InputStream is = contentResolver.openInputStream(uri);
 //                                Bitmap bmp = BitmapFactory.decodeStream(is);
 //                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
 //                                bmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
-                                Log.d(Tag.MESSAGE_MANAGER, "DATA Finished compressing");
-                                try {
-                                    final int CHUNK_SIZE = 200000;
-                                    final int size = is.available()/CHUNK_SIZE;
-                                    byte [] isB = new byte[CHUNK_SIZE];
+                        try {
+                            final int CHUNK_SIZE = 200000;
+                            final int size = is.available()/CHUNK_SIZE;
+                            byte [] isB = new byte[CHUNK_SIZE];
 
-                                    Bitmap bmp = BitmapFactory.decodeStream(is);
-                                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                                    bmp.compress(Bitmap.CompressFormat.JPEG, 50, stream);
+                            Bitmap bmp = BitmapFactory.decodeStream(is);
+                            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                            bmp.compress(Bitmap.CompressFormat.JPEG, 45, stream);
 
-                                    JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.POST_DATA);
-                                    jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
-                                            message_id);
-                                    jsonBuilder.put("finish", "true");
-                                    jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.DATA.name().toLowerCase(),
-                                            Base64.encodeToString(stream.toByteArray(),Base64.DEFAULT));
-
+                            JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.POST_DATA);
+                            jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.PART_ID.name().toLowerCase(),
+                                    partId);
+                            jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
+                                    messageId);
+                            jsonBuilder.put("finish", "true");
+                            jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.DATA.name().toLowerCase(),
+                                    Base64.encodeToString(stream.toByteArray(),Base64.DEFAULT));
+                            Log.d(Tag.MESSAGE_MANAGER, "DATA Finished compressing");
 //                                    Log.d(Tag.MESSAGE_MANAGER, "Chunk size " + CHUNK_SIZE
 //                                            + " INPUTSTREAM size: " + is.available()
 //                                            + " size: " + size);
@@ -648,32 +672,28 @@ public class MessageQuery {
 //                                    jsonBuilder.put("finish", "true");
 //                                    jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.DATA.name().toLowerCase(),
 //                                            Base64.encode(isB, Base64.DEFAULT));
-                                    intent.putExtra(Tag.KEY_SEND_JSON_STRING, jsonBuilder.toString());
-                                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-                                } catch (JSONException e) {
-                                    Log.d(Tag.MESSAGE_MANAGER, "Unable to add data", e);
-                                } catch (UnsupportedEncodingException e) {
-                                    Log.d(Tag.MESSAGE_MANAGER, "Unable to add data unsopported encoding", e);
-                                } catch (IOException e) {
-                                    Log.d(Tag.MESSAGE_MANAGER, "Unable to add data ioexception", e);
-                                }
-                            } else {
-                                //data is not image return fail
-                                try{
-                                    Log.d(Tag.MESSAGE_MANAGER, "About to send failed");
-                                    JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.POST_DATA);
-                                    jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
-                                            message_id);
-                                    jsonBuilder.put("fail", "true");
-                                    intent.putExtra(Tag.KEY_SEND_JSON_STRING, jsonBuilder.toString());
-                                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-                                    Log.d(Tag.MESSAGE_MANAGER, "Sent failed");
-                                } catch (JSONException e) {
-                                    Log.d(Tag.MESSAGE_MANAGER, "Unable to finish json failed context", e);
-                                }
-                            }
-//                            } while (cursor.moveToNext());
-                            cursor.close();
+                            intent.putExtra(Tag.KEY_SEND_JSON_STRING, jsonBuilder.toString());
+                            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                        } catch (JSONException e) {
+                            Log.d(Tag.MESSAGE_MANAGER, "Unable to add data", e);
+                        } catch (UnsupportedEncodingException e) {
+                            Log.d(Tag.MESSAGE_MANAGER, "Unable to add data unsopported encoding", e);
+                        } catch (IOException e) {
+                            Log.d(Tag.MESSAGE_MANAGER, "Unable to add data ioexception", e);
+                        }
+                    } else {
+                        //data is not image return fail
+                        try{
+                            Log.d(Tag.MESSAGE_MANAGER, "About to send failed");
+                            JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.POST_DATA);
+                            jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
+                                    partId);
+                            jsonBuilder.put("fail", "true");
+                            intent.putExtra(Tag.KEY_SEND_JSON_STRING, jsonBuilder.toString());
+                            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                            Log.d(Tag.MESSAGE_MANAGER, "Sent failed");
+                        } catch (JSONException e) {
+                            Log.d(Tag.MESSAGE_MANAGER, "Unable to finish json failed context", e);
                         }
                     }
                 } catch (FileNotFoundException e) {
@@ -681,12 +701,7 @@ public class MessageQuery {
                 }
                 return null;
             }
-        }.execute(contentResolver.query(contentURI,
-                COLUMN,
-                WHERE,
-                QUESTIONMARK,
-                null
-        ));
+        }.execute();
 //        Cursor cursor = contentResolver.query(contentURI,
 //                COLUMN,
 //                WHERE,

@@ -32,7 +32,7 @@ public class Tag {
     //IO Package
     public static final String WEB_SOC_MANAGER = BASE_TAG + "WebSocMan";
     public static final String SESSION_MANAGER = BASE_TAG + "SessionMan";
-    public static final String BASE_URL = "192.168.1.17:8000";
+    public static final String BASE_URL = "192.168.1.16:8000";
 
     //LocalBroadCastReceivers and Broadcast receivers
     //TODO GET THESE LOCAL AND NON_LOCAL ACTIONS FIGURED THE FUCK OUT
