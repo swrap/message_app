@@ -1,10 +1,10 @@
 <resources>
-    <string name="app_name">RoofMessage</string>
+    <string name="app_name">RoofText</string>
 
     <!-- BackgroundManager-->
-    <string name="background_process">:RoofMessageBackground</string>
-    <string name="remote_service_started">Roof Message Service Started</string>
-    <string name="remote_service_stopped">Roof Message Service Stopped</string>
+    <string name="background_process">:RoofTextBackground</string>
+    <string name="remote_service_started">Roof Text Service Started</string>
+    <string name="remote_service_stopped">Roof Text Service Stopped</string>
 
     <!-- Strings related to login -->
     <string name="prompt_username">Username</string>
@@ -16,17 +16,17 @@
     <string name="contact_rationale">"We need to access your contacts in order to sync with your account."</string>
     <string name="sms_rationale">"We need to access your messages in order to sync with your account."</string>
     <string name="error_login">"Failed to login:("</string>
-    <string name="title_activity_login">RoofMessage: Sign In</string>
+    <string name="title_activity_login">RoofText: Sign In</string>
     <string name="error_permissions">Can not connect without the minimum permissions required for this app.</string>
     <string name="enable_permissions">Go to Permissions Page</string>
     <string name="cancel">Cancel</string>
     <string name="remember_checkbox">Remember Me</string>
-    <string name="register_online_at_roofmessage_com">Register Online at www.rooftext.com</string>
+    <string name="register_online_at_rooftext_com">Register Online at www.rooftext.com</string>
 
 
     <!-- Strings related to main page -->
-    <string name="roofmessage_hour_minute_sec">HH:MM:SS</string>
-    <string name="title_activity_main">RoofMessage</string>
+    <string name="rooftext_hour_minute_sec">HH:MM:SS</string>
+    <string name="title_activity_main">RoofText</string>
     <string name="status_created">Status: Created</string>
     <string name="status_connecting">Status: Connecting</string>
     <string name="status_open">Status: Connected</string>
@@ -51,7 +51,7 @@
     <string name="roof_permissions_unknown">UNKNOWN</string>
 
     <!--Shared Preferences: ***********DO NOT CHANGE************* -->
-    <string name="shared_preferences">roof_message_app</string>
+    <string name="shared_preferences">roof_text_app</string>
     <string name="remote_service_connected">Remote Service Connected</string>
     <string name="remote_service_disconnected">Remote Service Disconnected</string>
     <string name="text_info_display">Thanks for choosing RoofText. This app keeps in contact

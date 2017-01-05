@@ -2765,7 +2765,7 @@ containing a value of this type.
         public static final int prompt_password=0x7f070041;
         public static final int prompt_username=0x7f070042;
         public static final int refuse_connect=0x7f070043;
-        public static final int register_online_at_roofmessage_com=0x7f070044;
+        public static final int register_online_at_rooftext_com=0x7f070044;
         public static final int remember_checkbox=0x7f070045;
         public static final int remote_service_connected=0x7f070046;
         public static final int remote_service_disconnected=0x7f070047;
@@ -2776,7 +2776,7 @@ containing a value of this type.
         public static final int roof_permissions_read_sms=0x7f07004c;
         public static final int roof_permissions_send_sms=0x7f07004d;
         public static final int roof_permissions_unknown=0x7f07004e;
-        public static final int roofmessage_hour_minute_sec=0x7f07004f;
+        public static final int rooftext_hour_minute_sec=0x7f07004f;
         public static final int service_message_not_found=0x7f070050;
         public static final int service_network_problem=0x7f070051;
         public static final int service_not_activated=0x7f070052;

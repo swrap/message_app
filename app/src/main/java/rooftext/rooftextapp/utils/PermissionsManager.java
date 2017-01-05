@@ -12,6 +12,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -35,12 +36,13 @@ public class PermissionsManager {
         ArrayList<RoofPermissions> requestDeniedPermanetly = new ArrayList<RoofPermissions>();
         ArrayList<RoofPermissions> requestNormal = new ArrayList<RoofPermissions>();
         for (RoofPermissions roofPermission : permissionArrayList) {
-            if(ActivityCompat.shouldShowRequestPermissionRationale(activity, roofPermission.getAndroidCode()) ) {
+            if(!ActivityCompat.shouldShowRequestPermissionRationale(activity, roofPermission.getAndroidCode()) ) {
                 requestNormal.add(roofPermission);
             } else {
                 requestDeniedPermanetly.add(roofPermission);
             }
         }
+        Log.d("Permission Manage", "Size [" + requestNormal.size() + "] [" + requestDeniedPermanetly.size() + "]");
         if (!requestNormal.isEmpty()) {
             ActivityCompat.requestPermissions(activity,
                     PermissionsManager.androidCodeStringArray(activity, requestNormal),
