@@ -2,7 +2,7 @@
 manifest
 ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:2:1-45:12
 	package
-		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:3:5-41
+		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:3:5-35
 		INJECTED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml
 		INJECTED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml
 	android:versionName
@@ -71,26 +71,26 @@ MERGED from [RoofMessageApp:library:unspecified] C:\Users\Jesse Saran\AndroidStu
 		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:21:9-43
 	android:theme
 		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:24:9-40
-service#roofmessage.roofmessageapp.background.BackgroundManager
+service#rooftext.rooftextapp.background.BackgroundManager
 ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:26:9-28:59
 	android:process
 		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:28:13-57
 	android:exported
 		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:27:13-37
 	android:name
-		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:26:18-62
-activity#roofmessage.roofmessageapp.activity.MainActivity
+		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:26:18-82
+activity#rooftext.rooftextapp.activity.MainActivity
 ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:30:9-32:20
 	android:label
 		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:31:13-56
 	android:name
-		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:30:19-56
-activity#roofmessage.roofmessageapp.activity.LoginActivity
+		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:30:19-76
+activity#rooftext.rooftextapp.activity.LoginActivity
 ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:34:9-42:20
 	android:label
 		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:35:13-57
 	android:name
-		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:34:19-57
+		ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:34:19-77
 intent-filter#android.intent.action.MAIN+android.intent.category.LAUNCHER
 ADDED from C:\Users\Jesse Saran\AndroidStudioProjects\RoofMessageApp\app\src\main\AndroidManifest.xml:37:13-41:29
 action#android.intent.action.MAIN

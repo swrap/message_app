@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="roofmessage.roofmessageapp">
+    package="rooftext.rooftextapp">
 
     <!-- To auto-complete the email text field in the login form with the user's emails -->
     <uses-permission android:name="android.permission.READ_PROFILE" />
@@ -23,15 +23,15 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <service android:name=".background.BackgroundManager"
+        <service android:name="rooftext.rooftextapp.background.BackgroundManager"
             android:exported="false"
             android:process="@string/background_process"/>
 
-        <activity android:name=".activity.MainActivity"
+        <activity android:name="rooftext.rooftextapp.activity.MainActivity"
             android:label="@string/title_activity_main">
         </activity>
 
-        <activity android:name=".activity.LoginActivity"
+        <activity android:name="rooftext.rooftextapp.activity.LoginActivity"
             android:label="@string/title_activity_login">
 
             <intent-filter>

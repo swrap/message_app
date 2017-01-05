@@ -14,7 +14,7 @@ android {
     buildToolsVersion "24.0.0"
 
     defaultConfig {
-        applicationId "roofmessage.roofmessageapp"
+        applicationId "rooftext.rooftextapp"
         minSdkVersion 21
         targetSdkVersion 24
         versionCode 1

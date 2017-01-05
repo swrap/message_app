@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="roofmessage.roofmessageapp"
+    package="rooftext.rooftextapp"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -30,16 +30,16 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
         <service
-            android:name="roofmessage.roofmessageapp.background.BackgroundManager"
+            android:name="rooftext.rooftextapp.background.BackgroundManager"
             android:exported="false"
             android:process="@string/background_process" />
 
         <activity
-            android:name="roofmessage.roofmessageapp.activity.MainActivity"
+            android:name="rooftext.rooftextapp.activity.MainActivity"
             android:label="@string/title_activity_main" >
         </activity>
         <activity
-            android:name="roofmessage.roofmessageapp.activity.LoginActivity"
+            android:name="rooftext.rooftextapp.activity.LoginActivity"
             android:label="@string/title_activity_login" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -50,7 +50,7 @@
 
         <provider
             android:name="com.klinker.android.send_message.MmsFileProvider"
-            android:authorities="roofmessage.roofmessageapp.MmsFileProvider"
+            android:authorities="rooftext.rooftextapp.MmsFileProvider"
             android:enabled="true"
             android:exported="false"
             android:grantUriPermissions="true" />
