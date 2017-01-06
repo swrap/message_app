@@ -202,7 +202,11 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
 
     //TODO CHANGE BACK TO wws also in session manager make sure to use https
     private static String getWebSocketUrl() {
-        return "ws://" + Tag.BASE_URL + "/message_route/";
+        if (Tag.LOCAL_HOST) {
+            return "ws://" + Tag.BASE_URL + "/message_route/";
+        } else {
+            return "wss://" + Tag.BASE_URL + "/message_route/";
+        }
     }
 
     private class Listener implements WebSocketListener {

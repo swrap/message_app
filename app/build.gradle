@@ -11,18 +11,19 @@ allprojects {
 
 android {
     compileSdkVersion 24
-    buildToolsVersion "24.0.0"
+    buildToolsVersion "24.0.2"
 
     defaultConfig {
         applicationId "rooftext.rooftextapp"
         minSdkVersion 21
         targetSdkVersion 24
         versionCode 1
-        versionName "1.0"
+        versionName "alpha1.0"
     }
     buildTypes {
         release {
-            minifyEnabled false
+            shrinkResources true
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -31,10 +32,10 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:24.0.0'
-    compile 'com.android.support:design:24.0.0'
+    compile 'com.android.support:appcompat-v7:24.2.1'
+    compile 'com.android.support:design:24.2.1'
     //custom dependencies
-    compile 'com.neovisionaries:nv-websocket-client:+'
+    compile 'com.neovisionaries:nv-websocket-client:1.31'
 //    compile files('libs/android-5.1.1_r1.jar')
 //    compile 'com.klinkerapps:android-smsmms:3.1.0'
     compile project(path: ':library')

@@ -62,14 +62,14 @@ public class MessageQuery {
                 Telephony.ThreadsColumns.TYPE,
             };
 
-        String ORDERBY = "date DESC LIMIT 30"; //TODO TEST GET RID OF LIMIT
+        String ORDERBY = "date DESC LIMIT 20"; //TODO TEST GET RID OF LIMIT
         final Cursor cursor = contentResolver.query(mSMSMMS,
                 SMSMMS_COLUMNS,
                 null,
                 null,
                 ORDERBY
         );
-
+        Log.d(Tag.MESSAGE_MANAGER, "ASYNC CONVERSATION START");
         new AsyncTask<Cursor,Void,Void>() {
 
             @Override
@@ -115,7 +115,9 @@ public class MessageQuery {
                             (Object) jsonArray);
                     Intent intent = new Intent(Tag.ACTION_LOCAL_SEND_MESSAGE);
                     intent.putExtra(Tag.KEY_SEND_JSON_STRING, jsonObject.toString());
+                    Log.d(Tag.MESSAGE_MANAGER, "ASYNC CONVERSATION ABOUT TO SEND");
                     LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                    Log.d(Tag.MESSAGE_MANAGER, "ASYNC CONVERSATION SENT");
                 } catch (JSONException e) {
                     Log.e(Tag.MESSAGE_MANAGER,"Could not add array to json.");
                     e.printStackTrace();

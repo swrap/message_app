@@ -39,8 +39,6 @@ public class MainActivity extends AppCompatActivity{
     private TextView mStatus;
     private TextView mMessage;
 
-    private EditText mIp;//TODO TEST REMOVE
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,7 +51,6 @@ public class MainActivity extends AppCompatActivity{
         registerReceiver(connectionReciever, intent_filter);
 
         mStatus = (TextView) findViewById(R.id.status);
-        mMessage = (TextView) findViewById(R.id.received_data);
         bindListener = new BindListener(this);
         bindListener.doBindService();
         updateConnectionUI();
@@ -75,108 +72,6 @@ public class MainActivity extends AppCompatActivity{
                 startService(new Intent(this,BackgroundManager.class));
             }
         }
-
-        //TODO FIX ALL THE SINGLETON PATTERNS
-
-        ////////////////////////////////////////////////////////////////////////////////
-        //TODO REMOVE ALL BELOW AFTER TESTING///////////////////////////////////////////
-        ////////////////////////////////////////////////////////////////////////////////
-        Button mContact = (Button) findViewById(R.id.post_contact);
-        mContact.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Message message = new Message();
-                message.what = BackgroundManager.MSG_REQUEST;
-                Bundle bundle = new Bundle();
-                bundle.putString(BackgroundManager.KEY_ACTION, JSONBuilder.Action.GET_CONTACTS.name());
-                message.setData(bundle);
-                bindListener.sendMessage(message);
-            }
-        });
-
-        Button mConvo = (Button) findViewById(R.id.convo);
-        mConvo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.GET_CONVERSATIONS);
-                Message message = new Message();
-                message.what = BackgroundManager.MSG_REQUEST;
-                Bundle bundle = new Bundle();
-                bundle.putString(BackgroundManager.KEY_ACTION, JSONBuilder.Action.GET_CONVERSATIONS.name());
-                message.setData(bundle);
-                bindListener.sendMessage(message);
-            }
-        });
-
-        Button mSMSConvo = (Button) findViewById(R.id.sms_convo);
-        mSMSConvo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Message message = new Message();
-                message.what = BackgroundManager.MSG_REQUEST;
-                Bundle bundle = new Bundle();
-                bundle.putString(BackgroundManager.KEY_ACTION, JSONBuilder.Action.GET_SMS_CONVO.name());
-                message.setData(bundle);
-                bindListener.sendMessage(message);
-            }
-        });
-
-        Button mMMSConvo = (Button) findViewById(R.id.mms_convo);
-        mMMSConvo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Message message = new Message();
-                message.what = BackgroundManager.MSG_REQUEST;
-                Bundle bundle = new Bundle();
-                bundle.putString(BackgroundManager.KEY_ACTION, JSONBuilder.Action.GET_MMS_CONVO.name());
-                message.setData(bundle);
-                bindListener.sendMessage(message);
-            }
-        });
-
-        Button getMessages = (Button) findViewById(R.id.messages);
-        getMessages.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Message message = new Message();
-                message.what = BackgroundManager.MSG_REQUEST;
-                Bundle bundle = new Bundle();
-                bundle.putString(BackgroundManager.KEY_ACTION, JSONBuilder.Action.GET_MESSAGES.name());
-                message.setData(bundle);
-                bindListener.sendMessage(message);
-            }
-        });
-
-        Button sendMessage = (Button) findViewById(R.id.send_msg);
-        sendMessage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.e(Tag.MAIN_ACTIVITY, "Sending message.");
-                Message message = new Message();
-                message.what = BackgroundManager.MSG_REQUEST;
-                Bundle bundle = new Bundle();
-                bundle.putString(BackgroundManager.KEY_ACTION, JSONBuilder.Action.SEND_MESSAGES.name());
-                message.setData(bundle);
-                bindListener.sendMessage(message);
-            }
-        });
-
-        mIp = (EditText) findViewById(R.id.connectionIp);
-        Button resetConnection = (Button) findViewById(R.id.resetConnection);
-        resetConnection.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.e(Tag.MAIN_ACTIVITY, "Resetting connection.");
-                Message message = new Message();
-                message.what = BackgroundManager.MSG_RESET_CONNECTION;
-                Bundle bundle = new Bundle();
-                bundle.putString(BackgroundManager.KEY_CONNECTION_IP, mIp.getText().toString());
-                message.setData(bundle);
-                bindListener.sendMessage(message);
-            }
-        });
-        ////////////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////////////////////////////////////////////////
     }
 
     private void updateConnectionUI() {

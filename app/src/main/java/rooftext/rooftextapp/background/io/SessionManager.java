@@ -20,6 +20,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
+import javax.net.ssl.HttpsURLConnection;
+
 import rooftext.rooftextapp.utils.Tag;
 
 /**
@@ -31,9 +33,9 @@ public class SessionManager {
 
     private static final CookieManager cookieManager = new CookieManager();
 
-    private String VERSION_URL = "http://" + Tag.BASE_URL + "/android_version/";
-    private String LOGIN_URL = "http://" + Tag.BASE_URL + "/android_login/";
-    private String LOGOUT_URL = "http://" + Tag.BASE_URL + "/android_logout/";
+    private String VERSION_URL = (Tag.LOCAL_HOST ? "http://" : "https://") + Tag.BASE_URL + "/android_version/";
+    private String LOGOUT_URL = (Tag.LOCAL_HOST ? "http://" : "https://") + Tag.BASE_URL + "/android_logout/";
+    private String LOGIN_URL = (Tag.LOCAL_HOST ? "http://" : "https://") + Tag.BASE_URL + "/android_login/";
     private final String CSRF_MID_TOKEN = "csrfmiddlewaretoken";
     private final String CSRF_TOKEN = "csrftoken";
     private final int RESPONSE_OKAY = 200;
@@ -57,11 +59,14 @@ public class SessionManager {
     }
 
     public boolean correctVersion() {
-        //TODO HTTPS
         HttpURLConnection connection = null;
         try {
             URL url = new URL(VERSION_URL);
-            connection = (HttpURLConnection) url.openConnection();
+            if (Tag.LOCAL_HOST) {
+                connection = (HttpURLConnection) url.openConnection();
+            } else {
+                connection = (HttpsURLConnection) url.openConnection();
+            }
             connection.setConnectTimeout(connection_timeout);
             BufferedReader in = new BufferedReader(new InputStreamReader(
                     connection.getInputStream()));
@@ -94,10 +99,14 @@ public class SessionManager {
         try {
             // get content from URLConnection;
             // cookies are set by web site //TODO Fix loading in dynamic url
-            LOGIN_URL = "http://" + Tag.BASE_URL + "/android_login/";
             Log.d(Tag.SESSION_MANAGER, "Before attempting to login. [" + LOGIN_URL + "]");
             URL url = new URL(LOGIN_URL);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection(); //TODO HTTPS
+            HttpURLConnection connection;
+            if (Tag.LOCAL_HOST) {
+                connection = (HttpURLConnection) url.openConnection();
+            } else {
+                connection = (HttpsURLConnection) url.openConnection();
+            }
             connection.setConnectTimeout(connection_timeout);
             connection.getContent();
             String COOKIES_HEADER = "Set-Cookie";
@@ -117,7 +126,12 @@ public class SessionManager {
                 String csrf = getCSRFToken();
 
                 url = new URL(LOGIN_URL);
-                connection = (HttpURLConnection) url.openConnection();
+                Log.d(Tag.SESSION_MANAGER, "Attempting login to [" + LOGIN_URL + "]");
+                if (Tag.LOCAL_HOST) {
+                    connection = (HttpURLConnection) url.openConnection();
+                } else {
+                    connection = (HttpsURLConnection) url.openConnection();
+                }
 //                if (msCookieManager.getCookieStore().getCookies().size() > 0) {
                     // While joining the Cookies, use ',' or ';' as needed. Most of the servers are using ';'
 //                    Log.e(Tag.SESSION_MANAGER, TextUtils.join(";",  msCookieManager.getCookieStore().getCookies()));
@@ -143,6 +157,8 @@ public class SessionManager {
                 Log.d(Tag.SESSION_MANAGER, "Response on post: " + connection.getResponseCode());
                 if (connection.getResponseCode() == RESPONSE_OKAY) {
                     return true;
+                } else {
+                    Log.d(Tag.SESSION_MANAGER, "Response reason for failing: " + connection.getResponseMessage());
                 }
             }
         } catch (SocketTimeoutException e) {
@@ -164,10 +180,13 @@ public class SessionManager {
         try {
             // get content from URLConnection;
             // cookies are set by web site
-            // TODO MAKE SURE ALL ARE HTTPS
-            LOGOUT_URL = "http://" + Tag.BASE_URL + "/android_logout/";
             URL url = new URL(LOGOUT_URL);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            HttpURLConnection connection;
+            if (Tag.LOCAL_HOST) {
+                connection = (HttpURLConnection) url.openConnection();
+            } else {
+                connection = (HttpsURLConnection) url.openConnection();
+            }
             connection.setConnectTimeout(connection_timeout);
             connection.getContent();
             int responseCode = connection.getResponseCode();
@@ -176,7 +195,11 @@ public class SessionManager {
                 String csrf = getCSRFToken();
 
                 url = new URL(LOGOUT_URL);
-                connection = (HttpURLConnection) url.openConnection();
+                if (Tag.LOCAL_HOST) {
+                    connection = (HttpURLConnection) url.openConnection();
+                } else {
+                    connection = (HttpsURLConnection) url.openConnection();
+                }
                 connection.setRequestMethod("POST");
                 connection.setDoOutput(true);
 

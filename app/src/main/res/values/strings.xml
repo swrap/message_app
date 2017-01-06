@@ -55,9 +55,9 @@
     <string name="remote_service_connected">Remote Service Connected</string>
     <string name="remote_service_disconnected">Remote Service Disconnected</string>
     <string name="text_info_display">Thanks for choosing RoofText. This app keeps in contact
-        with our servers to provide the connection between your phone and the web browser. Please just
-        close this app and it will run in the background. We make it run as efficiently as possible and only
-        connect while on wifi and its up to you whether it uses mobile data. If you want to logout
+        with our servers to provide the connection between your phone and the web browser. The current
+        verions must have the app open. We make it run as efficiently as possible and only
+        connect while on wifi. If you want to logout
         hit the back button on your device. When you logout, the background service will not
         run in, therefore you wont be connected to RoofText :(, so we will not be connected to the browser.
         Questions, check us out at: www.rooftext.com.</string>
@@ -65,4 +65,5 @@
     <!-- Version -->
     <string name="invalid_version">Your app is at version XXs, in order to connect to our servers you need the most up to date version XXs</string>
     <string name="update">Update App</string>
+    <string name="invalid_user_pass">Invalid username or password</string>
 </resources>

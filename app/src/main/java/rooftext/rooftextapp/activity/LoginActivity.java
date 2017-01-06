@@ -409,10 +409,9 @@ public class LoginActivity extends AppCompatActivity {
                 Log.d(Tag.MAIN_ACTIVITY, "Coming back from Login Activity");
             } else {
                 showProgress(false);
-                Toast toast = Toast.makeText(LoginActivity.this, mErrorMessage, Toast.LENGTH_LONG);
-                toast.setGravity(Gravity.CENTER | Gravity.TOP, 0, 250);
-                toast.show();
-                if (displayMessage != null && !displayMessage.equals("")) {
+
+                if (displayMessage != null &&
+                        displayMessage.equals(LoginActivity.this.getString(R.string.invalid_version))) {
                     Log.d(Tag.LOGIN_ACTIVITY, "Adding alert for correct version");
                     AlertDialog.Builder correctVersionAlert = new AlertDialog.Builder(LoginActivity.this);
                     correctVersionAlert.setMessage(displayMessage)
@@ -426,7 +425,13 @@ public class LoginActivity extends AppCompatActivity {
                             });
                     correctVersionAlert.create();
                     correctVersionAlert.show();
+                } else if (displayMessage != null &&
+                        displayMessage.equals(LoginActivity.this.getString(R.string.invalid_user_pass))) {
+                    mErrorMessage = displayMessage;
                 }
+                Toast toast = Toast.makeText(LoginActivity.this, mErrorMessage, Toast.LENGTH_LONG);
+                toast.setGravity(Gravity.CENTER | Gravity.TOP, 0, 250);
+                toast.show();
             }
             mUsernameView.requestFocus();
             showKeyboard(true, mUsernameView);

@@ -253,6 +253,11 @@ public class BackgroundManager extends Service implements Flush {
                                     Log.d(Tag.BACKGROUND_MANAGER, "Reply to is not null.");
                                 }
                             } else {
+                                //if reply to has something than quit tring
+                                if(replyTo != null) {
+                                    Log.d(Tag.BACKGROUND_MANAGER, "Reply to is not null, quitting attempts to connect.");
+                                    break;
+                                }
                                 Log.d(Tag.BACKGROUND_MANAGER, "Could not connect, sleeping for [" + sleep_time + "] millis.");
                                 try {
                                     sleep(sleep_time);
@@ -277,8 +282,8 @@ public class BackgroundManager extends Service implements Flush {
                 Message message = new Message();
                 message.what = MSG_ATTEMPT_LOGIN;
                 message.arg1 = retval ? 1 : 0;
+                Bundle bundle = new Bundle();
                 if (versionProblems && sessionManager.getVersion() != null) {
-                    Bundle bundle = new Bundle();
                     bundle.putString(KEY_DISPLAY_MESSAGE,
                             String.format(BackgroundManager.this.getString(R.string.invalid_version)
                                     .replaceAll("XX","%"), Tag.VERSION, sessionManager.getVersion()));
@@ -287,6 +292,11 @@ public class BackgroundManager extends Service implements Flush {
                     showNotificationAboutVersion();
                     sharedPreferenceManager.saveBackgroundState(false);
                     BackgroundManager.this.stopSelf();
+                } else if (!retval) {
+                    //add in message that invalid user or pass
+                    bundle.putString(KEY_DISPLAY_MESSAGE,
+                            BackgroundManager.this.getString(R.string.invalid_user_pass));
+                    message.setData(bundle);
                 }
                 try {
                     Log.d(Tag.BACKGROUND_MANAGER, "Sending response in message about login [" + retval + "]");
@@ -318,7 +328,7 @@ public class BackgroundManager extends Service implements Flush {
             NotificationCompat.Builder mBuilder =
                     new NotificationCompat.Builder(BackgroundManager.this)
                             //TODO ADD IMAGE FOR NOTIFICATION
-                            .setSmallIcon(R.drawable.ic_alert)
+                            .setSmallIcon(R.mipmap.ic_launcher)
                             .setContentTitle("RoofText: Invalid Version")
                             .setContentText("Update Version of App")
                             .setSubText("The app will fail to connect without update.");
@@ -362,11 +372,9 @@ public class BackgroundManager extends Service implements Flush {
     public static final int MSG_SAVE_REMEMBERME = 7;
     public static final int MSG_SAVE_BACKGROUND_STATE = 8;
     public static final int MSG_ATTEMPT_LOGIN = 9;
-    public static final int MSG_REQUEST = 10;
     public static final int MSG_POST_WEBSOCKET_UPDATE = 11;
     public static final int MSG_LOGOUT = 12;
     public static final int MSG_RESET_CONNECTION = 13;
-    public static final int MSG_CHECK_PERMISSIONS = 14;
 
     public static final String KEY_ACTION = "KEY_ACTION"; //TODO REMOVE AFTER TESTING
     public static final String KEY_USERNAME_PASS = "KEY_USERNAME_PASS";
@@ -387,10 +395,6 @@ public class BackgroundManager extends Service implements Flush {
                     break;
                 case MSG_UNREGISTER_CLIENT:
                     mClients.remove(msg.replyTo);
-                    break;
-                case MSG_ACTION_BUTTON:
-                    JSONBuilder action = (JSONBuilder) msg.obj;
-                    BackgroundManager.this.requestManager.addRequest(action);
                     break;
                 case MSG_SAVE_USERNAME_PASS:
                     bundle = msg.getData();
@@ -418,20 +422,6 @@ public class BackgroundManager extends Service implements Flush {
                     Log.d(Tag.BACKGROUND_MANAGER,"MSG_ATTEMPT_LOGIN");
                     attemptThreadLogin(msg.replyTo);
                     break;
-                case MSG_REQUEST: //TODO REMOVE AFTER TESTING
-                    Log.e(Tag.BACKGROUND_MANAGER, "Action is [" + "hey" + "]");
-                    String actionString = msg.getData().getString(KEY_ACTION);
-                    JSONBuilder.Action actionRequest = JSONBuilder.Action.GET_CONTACTS;
-                    for (JSONBuilder.Action act : JSONBuilder.Action.values()) {
-                        if (act.name().equals(actionString)) {
-                            actionRequest = act;
-                            break;
-                        }
-                    }
-                    Log.e(Tag.BACKGROUND_MANAGER, "Action is [" + actionRequest + "]");
-                    JSONBuilder jsonBuilder = new JSONBuilder(actionRequest);
-                    requestManager.addRequest(jsonBuilder);
-                    break;
                 case MSG_POST_WEBSOCKET_UPDATE:
                     Intent intent = new Intent(Tag.ACTION_WEBSOC_CHANGE);
                     intent.putExtra("state", webSocketManager.getLocalizeState());
@@ -454,19 +444,6 @@ public class BackgroundManager extends Service implements Flush {
                         webSocketManager.disconnect();
                     }
                     break;
-                /**case MSG_SET_VALUE:
-                    mValue = msg.arg1;
-                    for (int i=mClients.size()-1; i>=0; i--) {
-                        try {
-                            mClients.get(i).send(Message.obtain(null, MSG_SET_VALUE, mValue, 0));
-                        } catch (RemoteException e) {
-                            // The client is dead.  Remove it from the list;
-                            // we are going through the list from back to front
-                            // so this is safe to do inside the loop.
-                            mClients.remove(i);
-                        }
-                    }
-                    break;*/
                 default:
                     super.handleMessage(msg);
             }
