@@ -373,23 +373,19 @@ public class LoginActivity extends AppCompatActivity {
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            if (Tag.DEV_MODE_SKIP_AUTH) {
-                return true;
-            } else {
-                mErrorMessage = getString(R.string.error_login);
-                Log.d(Tag.LOGIN_ACTIVITY, "About to send message to login.");
-                //set session use pass and then attempt login
-                bindListener.sendUserPass(mUsername, mPassword, true);
-                bindListener.attemptLogin(UserLoginTask.this);
-                try {
-                    synchronized (this) {
-                        this.wait();
-                    }
-                } catch (InterruptedException e) {
-                    Log.d(Tag.LOGIN_ACTIVITY, "Waiting to login interrupted");
+            mErrorMessage = getString(R.string.error_login);
+            Log.d(Tag.LOGIN_ACTIVITY, "About to send message to login.");
+            //set session use pass and then attempt login
+            bindListener.sendUserPass(mUsername, mPassword, true);
+            bindListener.attemptLogin(UserLoginTask.this);
+            try {
+                synchronized (this) {
+                    this.wait();
                 }
-                return bindListener.getLoginResponse();
+            } catch (InterruptedException e) {
+                Log.d(Tag.LOGIN_ACTIVITY, "Waiting to login interrupted");
             }
+            return bindListener.getLoginResponse();
         }
 
         @Override

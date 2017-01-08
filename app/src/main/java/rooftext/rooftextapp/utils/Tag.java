@@ -7,10 +7,7 @@ public class Tag {
 
     public static String VERSION = "1.0";
 
-    public static final boolean DEV_MODE = false;
-    public static final boolean DEV_MODE_SKIP_AUTH = DEV_MODE ? true : false;
-
-    public static final boolean LOCAL_HOST = false;
+    public static final boolean LOCAL_HOST = true;
 
     public static final String BASE_TAG = "RM:";
 

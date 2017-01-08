@@ -1,7 +1,4 @@
-#Fri Jan 06 15:55:13 EST 2017
-base.0=C\:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\transforms\\dex\\debug\\folders\\1000\\10\\instant-run_c97424e4b2a3bc72027a6f3114f292d3b66d0f36
-renamed.1=classes.dex
-renamed.0=classes2.dex
-file.1=C\:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\transforms\\dex\\debug\\folders\\1000\\10\\instant-run-bootstrap_4cd41ccfa417a54dae3e2b7a3cc42f98d44ce31b\\classes.dex
-base.1=C\:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\transforms\\dex\\debug\\folders\\1000\\10\\instant-run-bootstrap_4cd41ccfa417a54dae3e2b7a3cc42f98d44ce31b
-file.0=C\:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\transforms\\dex\\debug\\folders\\1000\\10\\instant-run_c97424e4b2a3bc72027a6f3114f292d3b66d0f36\\classes.dex
+#Sun Jan 08 13:00:41 EST 2017
+base.0=C\:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\transforms\\dex\\debug\\folders\\1000\\1f\\main
+renamed.0=classes.dex
+file.0=C\:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\transforms\\dex\\debug\\folders\\1000\\1f\\main\\classes.dex

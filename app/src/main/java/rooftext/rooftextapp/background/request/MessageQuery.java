@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import rooftext.rooftextapp.io.JSONBuilder;
 import rooftext.rooftextapp.utils.Tag;
@@ -62,7 +63,10 @@ public class MessageQuery {
                 Telephony.ThreadsColumns.TYPE,
             };
 
-        String ORDERBY = "date DESC LIMIT 20"; //TODO TEST GET RID OF LIMIT
+        String ORDERBY = "date DESC"; //TODO TEST GET RID OF LIMIT
+        if (Tag.LOCAL_HOST) {
+            ORDERBY += " LIMIT 60";
+        }
         final Cursor cursor = contentResolver.query(mSMSMMS,
                 SMSMMS_COLUMNS,
                 null,
@@ -104,7 +108,6 @@ public class MessageQuery {
                             Log.e(Tag.MESSAGE_MANAGER, "Could not add conversation.");
                             e.printStackTrace();
                         }
-
                     } while(cursor.moveToNext());
                 }
                 if(cursor != null){
@@ -583,26 +586,25 @@ public class MessageQuery {
     private String [] matchPhoneNumberToContactId(String phoneNumber) {
         Cursor cursor = null;
         String [] numberContactId = new String[2];
+        Log.e(Tag.MESSAGE_MANAGER, "Number searching for [" + phoneNumber + "]");
+        Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(phoneNumber));
+
+        Log.e(Tag.MESSAGE_MANAGER, "Number searching for [" + uri.toString() + "]");
+        Cursor contactLookup = contentResolver.query(
+                uri,
+                new String[] {
+                        ContactsContract.PhoneLookup.DISPLAY_NAME,
+                        android.provider.BaseColumns._ID
+                },
+                null,
+                null,
+                null);
+
         try {
-            Uri contentURI = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
-            String[] COLUMN = {
-                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY,
-                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
-                    ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER
-            };
-            String WHERE = ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER + " LIKE ?";
-            String[] QUESTIONMARK = {"%" + phoneNumber + "%",};
-            cursor = contentResolver.query(contentURI,
-                    COLUMN,
-                    WHERE,
-                    QUESTIONMARK,
-                    null
-            );
-            Log.d(Tag.MESSAGE_MANAGER, "Phone number [" + phoneNumber + "] query [" + cursor.toString() + "] mark [" + QUESTIONMARK[0] + "] [" + ContactsContract.CommonDataKinds.Phone.CONTENT_URI + "]");
-            JSONArray jsonArray = new JSONArray();
-            if (cursor.getCount() > 0 && cursor.moveToFirst()) {
-                numberContactId[0] = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY));
-                numberContactId[1] = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID));
+            if (contactLookup != null && contactLookup.getCount() > 0) {
+                contactLookup.moveToFirst();
+                numberContactId[0] = contactLookup.getString(0);
+                numberContactId[1] = contactLookup.getString(1);
             }
         } finally {
             if(cursor != null){
