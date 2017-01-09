@@ -52,36 +52,35 @@ public class MessageQuery {
     }
 
     public void sendAllConversationsAsync(final Context context) {
-        Uri mSMSMMS = Uri.parse("content://mms-sms/conversations?simple=true");
-
-        String [] SMSMMS_COLUMNS = new String[]{
-                Telephony.ThreadsColumns.DATE,
-                Telephony.ThreadsColumns._ID,
-                Telephony.ThreadsColumns.MESSAGE_COUNT,
-                Telephony.ThreadsColumns.READ,
-                Telephony.ThreadsColumns.RECIPIENT_IDS,
-                Telephony.ThreadsColumns.TYPE,
-            };
-
-        String ORDERBY = "date DESC"; //TODO TEST GET RID OF LIMIT
-        if (Tag.LOCAL_HOST) {
-            ORDERBY += " LIMIT 60";
-        }
-        final Cursor cursor = contentResolver.query(mSMSMMS,
-                SMSMMS_COLUMNS,
-                null,
-                null,
-                ORDERBY
-        );
         Log.d(Tag.MESSAGE_MANAGER, "ASYNC CONVERSATION START");
-        new AsyncTask<Cursor,Void,Void>() {
+        new AsyncTask<Void,Void,Void>() {
 
             @Override
-            protected Void doInBackground(Cursor... params) {
-                Cursor cursor = params[0];
+            protected Void doInBackground(Void... params) {
+                Uri mSMSMMS = Uri.parse("content://mms-sms/conversations?simple=true");
+
+                String [] SMSMMS_COLUMNS = new String[]{
+                        Telephony.ThreadsColumns.DATE,
+                        Telephony.ThreadsColumns._ID,
+                        Telephony.ThreadsColumns.MESSAGE_COUNT,
+                        Telephony.ThreadsColumns.READ,
+                        Telephony.ThreadsColumns.RECIPIENT_IDS,
+                        Telephony.ThreadsColumns.TYPE,
+                };
+
+                String ORDERBY = "date DESC"; //TODO TEST GET RID OF LIMIT
+                if (Tag.LOCAL_HOST) {
+                    ORDERBY += " LIMIT 60";
+                }
+                Cursor cursor = contentResolver.query(mSMSMMS,
+                        SMSMMS_COLUMNS,
+                        null,
+                        null,
+                        ORDERBY
+                );
                 JSONBuilder jsonObject = new JSONBuilder( JSONBuilder.Action.POST_CONVERSATIONS );
                 JSONArray jsonArray = new JSONArray();
-                if(cursor.getCount() > 0) {
+                if(cursor != null && cursor.getCount() > 0) {
                     cursor.moveToFirst();
                     do {
                         JSONObject conversation = new JSONObject();
@@ -127,99 +126,125 @@ public class MessageQuery {
                 }
                 return null;
             }
-        }.execute(cursor);
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
-    public JSONBuilder getConversationMessages(String thread_id, int limit, String offset, int period) {
-        Cursor smsCursor = getSMSMessages(thread_id,limit,offset,period);
-        Cursor mmsCursor = getMMSMessages(thread_id, limit,
-                Utils.convertSMStoMMSDate(offset),
-                period
-        );
+    public void getConversationMessagesAsync(final String thread_id,final int limit,final String offset,
+                                             final int period,final Context context,final Intent intent) {
+        new AsyncTask<Void,Void,Void>() {
 
-        JSONBuilder jsonObject = new JSONBuilder( JSONBuilder.Action.POST_MESSAGES );
-        JSONArray jsonArray = new JSONArray();
+            @Override
+            protected Void doInBackground(Void... params) {
+                Log.d(Tag.MESSAGE_MANAGER, "Starting conversation async");
+                Cursor smsCursor = getSMSMessages(thread_id,limit,offset,period);
+                Cursor mmsCursor = getMMSMessages(thread_id, limit,
+                        Utils.convertSMStoMMSDate(offset),
+                        period
+                );
 
-        try {
-            jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
-                    thread_id);
-            Log.e(Tag.MESSAGE_MANAGER, smsCursor + " " + smsCursor.getCount() + " " +
-                    mmsCursor + " " + mmsCursor.getCount());
+                //used to check if end of messages
+                int count = 0;
+                if (smsCursor != null) {
+                    count += smsCursor.getCount();
+                }
+                if (mmsCursor != null) {
+                    count += mmsCursor.getCount();
+                }
 
-            if(smsCursor != null && mmsCursor != null && smsCursor.getCount() > 0 && mmsCursor.getCount() > 0) {
-                smsCursor.moveToFirst();
-                mmsCursor.moveToFirst();
+                JSONBuilder jsonObject = new JSONBuilder( JSONBuilder.Action.POST_MESSAGES );
+                JSONArray jsonArray = new JSONArray();
 
-                String smsDate = smsCursor.getString(smsCursor.getColumnIndex(Telephony.TextBasedSmsColumns.DATE));
-                String mmsDate = Utils.convertMMStoSMSDate(mmsCursor.getString(mmsCursor.getColumnIndex(Telephony.BaseMmsColumns.DATE)));
-                for (int i = 0; i < limit; i++) {
-                    Log.e(Tag.MESSAGE_MANAGER, "date: " + smsDate + " " + mmsDate);
-                    if (smsDate != null && mmsDate != null) {
-                        int compare = smsDate.compareTo(mmsDate);
-                        Log.e(Tag.MESSAGE_MANAGER, "COMPARE: " + compare);
-                        if (compare > 0) {
-                            jsonArray.put(getSMSJSON(smsCursor));
-                            if (smsCursor.moveToNext()) {
-                                smsDate = smsCursor.getString(smsCursor.getColumnIndex(Telephony.TextBasedSmsColumns.DATE));
-                            } else {
-                                smsDate = null;
-                            }
-                        } else {
-                            Log.e(Tag.MESSAGE_MANAGER, "IN");
-                            jsonArray.put(getMMSJSON(mmsCursor));
-                            if (mmsCursor.moveToNext()) {
-                                mmsDate = Utils.convertMMStoSMSDate(mmsCursor.getString(mmsCursor.getColumnIndex(Telephony.BaseMmsColumns.DATE)));
-                            } else {
-                                mmsDate = null;
+                try {
+                    jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
+                            thread_id);
+                    Log.e(Tag.MESSAGE_MANAGER, smsCursor + " " + smsCursor.getCount() + " " +
+                            mmsCursor + " " + mmsCursor.getCount());
+
+                    if(smsCursor != null && mmsCursor != null && smsCursor.getCount() > 0 && mmsCursor.getCount() > 0) {
+                        smsCursor.moveToFirst();
+                        mmsCursor.moveToFirst();
+
+                        String smsDate = smsCursor.getString(smsCursor.getColumnIndex(Telephony.TextBasedSmsColumns.DATE));
+                        String mmsDate = Utils.convertMMStoSMSDate(mmsCursor.getString(mmsCursor.getColumnIndex(Telephony.BaseMmsColumns.DATE)));
+                        for (int i = 0; i < limit; i++) {
+                            Log.e(Tag.MESSAGE_MANAGER, "date: " + smsDate + " " + mmsDate);
+                            if (smsDate != null && mmsDate != null) {
+                                int compare = smsDate.compareTo(mmsDate);
+                                Log.e(Tag.MESSAGE_MANAGER, "COMPARE: " + compare);
+                                if (compare > 0) {
+                                    jsonArray.put(getSMSJSON(smsCursor));
+                                    if (smsCursor.moveToNext()) {
+                                        smsDate = smsCursor.getString(smsCursor.getColumnIndex(Telephony.TextBasedSmsColumns.DATE));
+                                    } else {
+                                        smsDate = null;
+                                    }
+                                } else {
+                                    Log.e(Tag.MESSAGE_MANAGER, "IN");
+                                    jsonArray.put(getMMSJSON(mmsCursor));
+                                    if (mmsCursor.moveToNext()) {
+                                        mmsDate = Utils.convertMMStoSMSDate(mmsCursor.getString(mmsCursor.getColumnIndex(Telephony.BaseMmsColumns.DATE)));
+                                    } else {
+                                        mmsDate = null;
+                                    }
+                                }
+                            } else if (smsDate != null && mmsDate == null) {
+                                jsonArray.put(getSMSJSON(smsCursor));
+                                if (smsCursor.moveToNext()) {
+                                    smsDate = smsCursor.getString(smsCursor.getColumnIndex(Telephony.TextBasedSmsColumns.DATE));
+                                } else {
+                                    smsDate = null;
+                                }
+                            } else if (smsDate == null && mmsDate != null) {
+                                jsonArray.put(getMMSJSON(mmsCursor));
+                                if (mmsCursor.moveToNext()) {
+                                    mmsDate = Utils.convertMMStoSMSDate(mmsCursor.getString(mmsCursor.getColumnIndex(Telephony.BaseMmsColumns.DATE)));
+                                } else {
+                                    mmsDate = null;
+                                }
                             }
                         }
-                    } else if (smsDate != null && mmsDate == null) {
-                        jsonArray.put(getSMSJSON(smsCursor));
-                        if (smsCursor.moveToNext()) {
-                            smsDate = smsCursor.getString(smsCursor.getColumnIndex(Telephony.TextBasedSmsColumns.DATE));
-                        } else {
-                            smsDate = null;
+                    } else if(smsCursor != null && (mmsCursor == null || mmsCursor.getCount() == 0)){
+                        Log.e(Tag.MESSAGE_MANAGER, "here: " + smsCursor + " " + mmsCursor);
+                        if(smsCursor.getCount() > 0) {
+                            smsCursor.moveToFirst();
+                            do {
+                                jsonArray.put(getSMSJSON(smsCursor));
+                            } while(smsCursor.moveToNext());
                         }
-                    } else if (smsDate == null && mmsDate != null) {
-                        jsonArray.put(getMMSJSON(mmsCursor));
-                        if (mmsCursor.moveToNext()) {
-                            mmsDate = Utils.convertMMStoSMSDate(mmsCursor.getString(mmsCursor.getColumnIndex(Telephony.BaseMmsColumns.DATE)));
-                        } else {
-                            mmsDate = null;
+                    } else if((smsCursor == null || smsCursor.getCount() == 0) && mmsCursor != null){
+                        Log.e(Tag.MESSAGE_MANAGER, "it: " + smsCursor + " " + mmsCursor);
+                        if(mmsCursor.getCount() > 0) {
+                            mmsCursor.moveToFirst();
+                            do {
+                                jsonArray.put(getMMSJSON(mmsCursor));
+                            } while(mmsCursor.moveToNext());
                         }
                     }
+                    jsonObject.put(thread_id, (Object) jsonArray);
+
+                    //puts in ending
+                    if (count <= limit) {
+                        jsonObject.put("end", "t");
+                    }
+                } catch (JSONException e) {
+                    Log.e(Tag.MESSAGE_MANAGER,"Could not add array to json.");
+                    e.printStackTrace();
                 }
-            } else if(smsCursor != null && (mmsCursor == null || mmsCursor.getCount() == 0)){
-                Log.e(Tag.MESSAGE_MANAGER, "here: " + smsCursor + " " + mmsCursor);
-                if(smsCursor.getCount() > 0) {
-                    smsCursor.moveToFirst();
-                    do {
-                        jsonArray.put(getSMSJSON(smsCursor));
-                    } while(smsCursor.moveToNext());
+                if (mmsCursor != null) {
+                    mmsCursor.close();
                 }
-            } else if((smsCursor == null || smsCursor.getCount() == 0) && mmsCursor != null){
-                Log.e(Tag.MESSAGE_MANAGER, "it: " + smsCursor + " " + mmsCursor);
-                if(mmsCursor.getCount() > 0) {
-                    mmsCursor.moveToFirst();
-                    do {
-                        jsonArray.put(getMMSJSON(mmsCursor));
-                    } while(mmsCursor.moveToNext());
+                if (smsCursor != null) {
+                    smsCursor.close();
                 }
+                Log.e(Tag.MESSAGE_MANAGER, "MessengerQuery: " + jsonObject);
+                if (jsonObject != null) {
+                    intent.putExtra(Tag.KEY_SEND_JSON_STRING, jsonObject.toString());
+                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                }
+                Log.d(Tag.MESSAGE_MANAGER, "Ending conversation async");
+                return null;
             }
-            if (mmsCursor != null) {
-                mmsCursor.close();
-            }
-            if (smsCursor != null) {
-                smsCursor.close();
-            }
-            jsonObject.put(thread_id,
-                    (Object) jsonArray);
-        } catch (JSONException e) {
-            Log.e(Tag.MESSAGE_MANAGER,"Could not add array to json.");
-            e.printStackTrace();
-        }
-        Log.e(Tag.MESSAGE_MANAGER, "MessengerQuery: " + jsonObject);
-        return jsonObject;
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     public static JSONObject getMMSJSON(Cursor cursor) throws JSONException {
@@ -281,6 +306,7 @@ public class MessageQuery {
         return message;
     }
 
+    //NOTE CURSOR MUST BE CLOSED BY RECEIVED COMMAND
     public static Cursor getSMSMessage(String messageId) {
         Uri contentURI = Telephony.Sms.CONTENT_URI;
         String [] COLUMN = {
@@ -340,102 +366,6 @@ public class MessageQuery {
                 QUESTIONMARK,
                 ORDERBY
         );
-    }
-
-    public JSONBuilder getSMS(String thread_id, int limit, String offset, int period){
-        Cursor cursor = getSMSMessages(thread_id, limit, offset, period);
-        JSONBuilder jsonObject = new JSONBuilder( JSONBuilder.Action.POST_MESSAGES );
-        JSONArray jsonArray = new JSONArray();
-        if(cursor.getCount() > 0) {
-            Log.d(Tag.MESSAGE_MANAGER, "AMOUNT: " + cursor.getCount() + " limit: " + limit + " offset: " + offset);
-            cursor.moveToFirst();
-            do {
-                JSONObject message = new JSONObject();
-                try {
-                    message.put(JSONBuilder.JSON_KEY_CONVERSATION.BODY.name().toLowerCase(),
-                            cursor.getString(0));
-                    message.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE_RECIEVED.name().toLowerCase(),
-                            cursor.getString(1));
-                    message.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE_SENT.name().toLowerCase(),
-                            cursor.getString(2));
-                    message.put(JSONBuilder.JSON_KEY_CONVERSATION.LOCKED.name().toLowerCase(),
-                            cursor.getString(3));
-                    message.put(JSONBuilder.JSON_KEY_CONVERSATION.SEEN.name().toLowerCase(),
-                            cursor.getString(4));
-                    message.put(JSONBuilder.JSON_KEY_CONVERSATION.READ.name().toLowerCase(),
-                            cursor.getString(5));
-                    message.put(JSONBuilder.JSON_KEY_CONVERSATION.SUBJECT.name().toLowerCase(),
-                            cursor.getString(6));
-                    jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
-                            cursor.getString(7));
-                    jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.ID.name().toLowerCase(),
-                            cursor.getString(8));
-                    jsonArray.put(message);
-                } catch (JSONException e) {
-                    Log.d(Tag.MESSAGE_MANAGER, "Could not find message.");
-                    e.printStackTrace();
-                }
-            } while(cursor.moveToNext());
-        }
-
-        try {
-            jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.MESSAGES.name().toLowerCase(),
-                    (Object) jsonArray);
-        } catch (JSONException e) {
-            Log.e(Tag.MESSAGE_MANAGER,"Could not add array to json.", e);
-        }
-        if(cursor != null){
-            cursor.close();
-        }
-        return jsonObject;
-    }
-
-    public JSONBuilder getMMS(String thread_id, int limit, String start_date, String end_date){
-        JSONBuilder jsonObject = new JSONBuilder( JSONBuilder.Action.POST_MESSAGES );
-        JSONArray jsonArray = new JSONArray();
-        Cursor cursor = getMMSMessages(thread_id, limit, "0", 0);
-        if(cursor.getCount() > 0) {
-            cursor.moveToFirst();
-            do {
-                JSONObject message = new JSONObject();
-                try {
-                    //TODO REMOVE THREAD_ID FROM CURSOR SEARCH
-                    message.put("date",
-                            cursor.getString(1));
-                    message.put("date sent",
-                            cursor.getString(2));
-                    message.put("locked",
-                            cursor.getString(3));
-                    message.put("seen",
-                            cursor.getString(4));
-                    message.put("read",
-                            cursor.getString(5));
-                    message.put("subject",
-                            cursor.getString(6));
-                    message.put("text_only",
-                            cursor.getString(7));
-                    message.put("id",
-                            cursor.getString(8));
-                    message.put("parts", getMMSParts(cursor.getString(8)));
-                    jsonArray.put(message);
-                } catch (JSONException e) {
-                    Log.e(Tag.MESSAGE_MANAGER, "Could not add contact.");
-                    e.printStackTrace();
-                }
-            } while(cursor.moveToNext());
-        }
-
-        try {
-            jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.MESSAGES.name().toLowerCase(),
-                    (Object) jsonArray);
-        } catch (JSONException e) {
-            Log.e(Tag.MESSAGE_MANAGER,"Could not add array to json.");
-            e.printStackTrace();
-        }
-        if(cursor != null){
-            cursor.close();
-        }
-        return jsonObject;
     }
 
     private static String getMMSAddress(String messageId) {
@@ -525,18 +455,18 @@ public class MessageQuery {
                 cursor.moveToFirst();
                 do {
                     JSONObject jsonObject = new JSONObject();
-                    jsonObject.put("CONTENT_TYPE",
+                    jsonObject.put(JSONBuilder.Parts.CONTENT_TYPE.toString().toUpperCase(),
                             cursor.getString(0));
-                    jsonObject.put("TEXT",
+                    jsonObject.put(JSONBuilder.Parts.TEXT.toString().toUpperCase(),
                             cursor.getString(1));
-                    jsonObject.put("id",
+                    jsonObject.put(JSONBuilder.Parts.ID.toString().toLowerCase(),
                             cursor.getString(2));
-                    jsonObject.put("message_id",
+                    jsonObject.put(JSONBuilder.Parts.MESSAGE_ID.toString().toLowerCase(),
                             message_id);
                     jsonArray.put(jsonObject);
                 } while (cursor.moveToNext());
-                cursor.close();
             }
+            cursor.close();
         }
         return jsonArray;
     }
@@ -584,33 +514,36 @@ public class MessageQuery {
     }
 
     private String [] matchPhoneNumberToContactId(String phoneNumber) {
-        Cursor cursor = null;
         String [] numberContactId = new String[2];
-        Log.e(Tag.MESSAGE_MANAGER, "Number searching for [" + phoneNumber + "]");
+        Log.d(Tag.MESSAGE_MANAGER, "Number searching for [" + phoneNumber + "]");
         Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(phoneNumber));
 
-        Log.e(Tag.MESSAGE_MANAGER, "Number searching for [" + uri.toString() + "]");
-        Cursor contactLookup = contentResolver.query(
-                uri,
-                new String[] {
-                        ContactsContract.PhoneLookup.DISPLAY_NAME,
-                        android.provider.BaseColumns._ID
-                },
-                null,
-                null,
-                null);
-
+        Log.d(Tag.MESSAGE_MANAGER, "Number searching for [" + uri.toString() + "]");
+        Cursor contactLookup = null;
         try {
-            if (contactLookup != null && contactLookup.getCount() > 0) {
-                contactLookup.moveToFirst();
-                numberContactId[0] = contactLookup.getString(0);
-                numberContactId[1] = contactLookup.getString(1);
+            contactLookup = contentResolver.query(
+                    uri,
+                    new String[] {
+                            ContactsContract.PhoneLookup.DISPLAY_NAME,
+                            android.provider.BaseColumns._ID
+                    },
+                    null,
+                    null,
+                    null);
+            if (contactLookup != null) {
+                if (contactLookup.getCount() > 0) {
+                    contactLookup.moveToFirst();
+                    numberContactId[0] = contactLookup.getString(0);
+                    numberContactId[1] = contactLookup.getString(1);
+                } else {
+                    Log.d(Tag.MESSAGE_MANAGER, "COULDNT FIND NAME FOR [" + phoneNumber + "]");
+                }
+                contactLookup.close();
             }
-        } finally {
-            if(cursor != null){
-                cursor.close();
-            }
+        } catch (Exception e) {
+            Log.e(Tag.MESSAGE_MANAGER, "ERROR OPENNING SPECIFC NUMBER");
         }
+
         return numberContactId;
     }
 
@@ -629,15 +562,16 @@ public class MessageQuery {
                         Uri uri = Uri.parse("content://mms/part/" + partId);
                         Log.e(Tag.MESSAGE_MANAGER, "TAG DATA [" + uri.getPath() + "]");
                         InputStream is = contentResolver.openInputStream(uri);
+                        Bitmap bmp = null;
 //                                Bitmap bmp = BitmapFactory.decodeStream(is);
 //                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
 //                                bmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
                         try {
-                            final int CHUNK_SIZE = 200000;
-                            final int size = is.available()/CHUNK_SIZE;
-                            byte [] isB = new byte[CHUNK_SIZE];
+//                            final int CHUNK_SIZE = 200000;
+//                            final int size = is.available()/CHUNK_SIZE;
+//                            byte [] isB = new byte[CHUNK_SIZE];
 
-                            Bitmap bmp = BitmapFactory.decodeStream(is);
+                            bmp = BitmapFactory.decodeStream(is);
                             ByteArrayOutputStream stream = new ByteArrayOutputStream();
                             bmp.compress(Bitmap.CompressFormat.JPEG, 45, stream);
 
@@ -646,7 +580,7 @@ public class MessageQuery {
                                     partId);
                             jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
                                     messageId);
-                            jsonBuilder.put("finish", "true");
+                            jsonBuilder.put("end", "t");
                             jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.DATA.name().toLowerCase(),
                                     Base64.encodeToString(stream.toByteArray(),Base64.DEFAULT));
                             Log.d(Tag.MESSAGE_MANAGER, "DATA Finished compressing");
@@ -679,10 +613,18 @@ public class MessageQuery {
                             LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
                         } catch (JSONException e) {
                             Log.d(Tag.MESSAGE_MANAGER, "Unable to add data", e);
-                        } catch (UnsupportedEncodingException e) {
-                            Log.d(Tag.MESSAGE_MANAGER, "Unable to add data unsopported encoding", e);
-                        } catch (IOException e) {
-                            Log.d(Tag.MESSAGE_MANAGER, "Unable to add data ioexception", e);
+//                        } catch (UnsupportedEncodingException e) {
+//                            Log.d(Tag.MESSAGE_MANAGER, "Unable to add data unsopported encoding", e);
+//                        } catch (IOException e) {
+//                            Log.d(Tag.MESSAGE_MANAGER, "Unable to add data ioexception", e);
+//                        }
+                        } finally {
+                            if (is != null) {
+                                is.close();
+                            }
+                            if (bmp != null) {
+                                bmp.recycle();
+                            }
                         }
                     } else {
                         //data is not image return fail
@@ -699,12 +641,13 @@ public class MessageQuery {
                             Log.d(Tag.MESSAGE_MANAGER, "Unable to finish json failed context", e);
                         }
                     }
-                } catch (FileNotFoundException e) {
+                } catch (IOException e) {
                     Log.e(Tag.MESSAGE_MANAGER, "ERROR READNG DATA!!", e);
                 }
                 return null;
             }
-        }.execute();
+            //NOTE MUST BE SERIAL SO IT DOES NOT RUN OUT OF MEMORY WITH MULTIPLE REQUESTS
+        }.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
 //        Cursor cursor = contentResolver.query(contentURI,
 //                COLUMN,
 //                WHERE,
@@ -749,61 +692,5 @@ public class MessageQuery {
 //            Log.e(Tag.MESSAGE_MANAGER, "ERROR READNG DATA!!", e);
 //        }
 //        return jsonBuilder;
-    }
-
-    private Bitmap getMmsImage(String id) {
-        Uri partURI = Uri.parse(id);//"content://mms/part/" + id);
-        InputStream is = null;
-        Bitmap bitmap = null;
-        try {
-            is = contentResolver.openInputStream(partURI);
-            bitmap = BitmapFactory.decodeStream(is);
-        } catch (IOException e) {
-            Log.e(Tag.MESSAGE_MANAGER, "Unable to OPEN input stream for data.", e);
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    Log.e(Tag.MESSAGE_MANAGER, "Unable to CLOSE input stream for data.", e);
-                }
-            }
-        }
-        return bitmap;
-    }
-
-    public static void listAllNormalizedNumber() {
-        Cursor cursor = null;
-        try {
-            Uri contentURI = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
-            String[] COLUMN = {
-                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY,
-                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
-                    ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER,
-                    ContactsContract.CommonDataKinds.Phone.NUMBER
-            };
-            String WHERE = ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER + " LIKE ?";
-            String[] QUESTIONMARK = {"%484888%",};
-            cursor = contentResolver.query(contentURI,
-                    COLUMN,
-                    WHERE,
-                    QUESTIONMARK,
-                    null
-            );
-            if (cursor.getCount() > 0 && cursor.moveToFirst()) {
-                do{
-                Log.d(Tag.MESSAGE_MANAGER, cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY)) + " " +
-                cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)) + " " +
-                        cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER)) + " " +
-                                cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)));
-                } while (cursor.moveToNext());
-            } else {
-                Log.e(Tag.MESSAGE_MANAGER, "QUERY NOT WORKING GRR [" + cursor.getCount() + "]");
-            }
-        } finally {
-            if(cursor != null){
-                cursor.close();
-            }
-        }
     }
 }

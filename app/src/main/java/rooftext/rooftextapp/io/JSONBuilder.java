@@ -118,6 +118,13 @@ public class JSONBuilder extends JSONObject{
         POST_DATA,
     }
 
+    public enum Parts {
+        CONTENT_TYPE,
+        TEXT,
+        ID,
+        MESSAGE_ID
+    }
+
     public JSONBuilder( Action action ) {
         try {
             this.put( "action", action.name().toLowerCase() );

@@ -73,6 +73,28 @@ public class RequestManager extends Thread {
             } else if(action.equals(JSONBuilder.Action.GET_CONVERSATIONS.name().toLowerCase())) {
                 Log.d(Tag.REQUEST_MANAGER, "Querying conversations async");
                 messageQuery.sendAllConversationsAsync(context);
+            } else if(action.equals(JSONBuilder.Action.GET_CONTACTS.name().toLowerCase())) {
+                Log.d(Tag.REQUEST_MANAGER, "Querying contacts");
+                contactQuery.getContactsAsync(context);
+            } else if(action.equals(JSONBuilder.Action.GET_MESSAGES.name().toLowerCase())) {
+                Log.d(Tag.REQUEST_MANAGER, "Querying conversation messages async");
+                messageQuery.getConversationMessagesAsync(
+                        jsonBuilder.getString(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase()),
+                        jsonBuilder.getInt(JSONBuilder.JSON_KEY_CONVERSATION.AMOUNT.name().toLowerCase()),
+                        jsonBuilder.getString(JSONBuilder.JSON_KEY_CONVERSATION.OFFSET.name().toLowerCase()),
+                        jsonBuilder.getInt(JSONBuilder.JSON_KEY_CONVERSATION.PERIOD.name().toLowerCase()),
+                        context,
+                        new Intent(Tag.ACTION_LOCAL_SEND_MESSAGE)
+                );
+            } else if(action.equals(JSONBuilder.Action.CONNECTED.name().toLowerCase())) {
+                Intent intent = new Intent(Tag.ACTION_LOCAL_SEND_MESSAGE);
+                intent.putExtra(Tag.KEY_SEND_JSON_STRING,
+                        new JSONBuilder(JSONBuilder.Action.CONNECTED).toString());
+                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                Log.d(Tag.REQUEST_MANAGER, "Querying connected start async");
+                contactQuery.getContactsAsync(context);
+                messageQuery.sendAllConversationsAsync(context);
+                Log.d(Tag.REQUEST_MANAGER, "Querying sending connected async");
             } else {
                 //Synchronous request
                 requests.add(jsonBuilder);
@@ -121,25 +143,7 @@ public class RequestManager extends Thread {
                     JSONBuilder send = null;
 
                     Log.d(Tag.REQUEST_MANAGER, "Processing request action [" + action + "]");
-                    if(action.equals(JSONBuilder.Action.GET_CONTACTS.name().toLowerCase())) {
-                        Log.d(Tag.REQUEST_MANAGER, "Querying contacts");
-                        send = contactQuery.getContacts();
-//                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
-                    } else if(action.equals(JSONBuilder.Action.GET_SMS_CONVO.name().toLowerCase())) {
-                        send = messageQuery.getSMS("596", 5, "0", 1);
-                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
-                    } else if(action.equals(JSONBuilder.Action.GET_MMS_CONVO.name().toLowerCase())) {
-                        send = messageQuery.getMMS("596", 5, "0", "0");
-                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
-                    } else if(action.equals(JSONBuilder.Action.GET_MESSAGES.name().toLowerCase())) {
-                        send = messageQuery.getConversationMessages(
-                                jsonRequest.getString(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase()),
-                                jsonRequest.getInt(JSONBuilder.JSON_KEY_CONVERSATION.AMOUNT.name().toLowerCase()),
-                                jsonRequest.getString(JSONBuilder.JSON_KEY_CONVERSATION.OFFSET.name().toLowerCase()),
-                                jsonRequest.getInt(JSONBuilder.JSON_KEY_CONVERSATION.PERIOD.name().toLowerCase())
-                        );
-//                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
-                    } else if(action.equals(JSONBuilder.Action.SEND_MESSAGES.name().toLowerCase())) {
+                    if(action.equals(JSONBuilder.Action.SEND_MESSAGES.name().toLowerCase())) {
                         Log.d(Tag.REQUEST_MANAGER, "Attempting to send message[" + jsonRequest.toString() + "]");
 //                        String [] arrNumbers = {"9146108631","8143238900"};
 //                        SmsMmsDelivery smsMmsDelivery = new SmsMmsDelivery(
@@ -166,9 +170,6 @@ public class RequestManager extends Thread {
                         }
                         Log.d(Tag.REQUEST_MANAGER, "Added message: " + action);
                         smsMmsDelivery.sendMessage(context);
-                    } else if(action.equals(JSONBuilder.Action.CONNECTED.name().toLowerCase())) {
-                        send = new JSONBuilder(JSONBuilder.Action.CONNECTED);
-                        Log.d(Tag.REQUEST_MANAGER, send.toString(4));
                     } else {
                         Log.d(Tag.REQUEST_MANAGER, "Could not find action: " + action);
                     }
