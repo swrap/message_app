@@ -31,12 +31,12 @@ public class RequestManager extends Thread {
     private static MMSObserver mmsObserver = null;
     //Todo make these not static
     private boolean kill = false;
-    private static Context context;
+    private Context context;
     private ActionReceiver actionReceiver = new ActionReceiver();
 
     public static ConcurrentLinkedQueue<MessageWaiting> messagesWaiting = new ConcurrentLinkedQueue<MessageWaiting>();
 
-    protected RequestManager(Context context) {
+    private RequestManager(Context context) {
         this.context = context;
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(Tag.ACTION_LOCAL_RECEIVED_MESSAGE);
@@ -55,10 +55,11 @@ public class RequestManager extends Thread {
         return requestManager;
     }
 
-    public void addRequest(JSONBuilder jsonBuilder){
+    private void addRequest(JSONBuilder jsonBuilder){
         //check if Async, if async, create request here do not notify
         try {
             String action = jsonBuilder.getString(JSONBuilder.JSON_KEY_MAIN.ACTION.name().toLowerCase());
+            Log.d(Tag.REQUEST_MANAGER, "RETRIEVED ACTION [" + action + "]");
             if (action.equals(JSONBuilder.Action.GET_DATA.name().toLowerCase())) {
                     //SPECIAL CASE RUN WITH NON BLOCKING FOR QUERYING DATA
                     Intent intent = new Intent(Tag.ACTION_LOCAL_SEND_MESSAGE);
@@ -89,7 +90,7 @@ public class RequestManager extends Thread {
             } else if(action.equals(JSONBuilder.Action.CONNECTED.name().toLowerCase())) {
                 Intent intent = new Intent(Tag.ACTION_LOCAL_SEND_MESSAGE);
                 intent.putExtra(Tag.KEY_SEND_JSON_STRING,
-                        new JSONBuilder(JSONBuilder.Action.CONNECTED).toString());
+                        new JSONBuilder(JSONBuilder.Action.CONNECTED_REPLY).toString());
                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
                 Log.d(Tag.REQUEST_MANAGER, "Querying connected start async");
                 contactQuery.getContactsAsync(context);

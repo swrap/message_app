@@ -59,4 +59,7 @@ public class Tag {
 
     //Utils Tag
     public static final String UTILS = "Utils:";
+
+    //PENDING INTENT
+//    public static final int PENDING_INTENT_CLOSE_APP = 13737;
 }

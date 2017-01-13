@@ -61,7 +61,7 @@ public class JSONBuilder extends JSONObject{
         MMS,
         SMS, TEXT_ONLY, PARTS,
 
-        DATA, PERIOD,
+        DATA, PERIOD, CONTACT_ID, HEX_COLOR,
     }
 
     public enum Message_Type{
@@ -115,7 +115,7 @@ public class JSONBuilder extends JSONObject{
 
         //data actions
         GET_DATA,
-        POST_DATA,
+        POST_DATA, CONNECTED_REPLY,
     }
 
     public enum Parts {

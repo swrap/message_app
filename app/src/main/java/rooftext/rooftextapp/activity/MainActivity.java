@@ -15,7 +15,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,7 +23,6 @@ import java.util.List;
 import rooftext.rooftextapp.R;
 import rooftext.rooftextapp.background.BackgroundManager;
 import rooftext.rooftextapp.io.BindListener;
-import rooftext.rooftextapp.io.JSONBuilder;
 import rooftext.rooftextapp.background.io.SharedPreferenceManager;
 import rooftext.rooftextapp.utils.Tag;
 
@@ -72,6 +70,13 @@ public class MainActivity extends AppCompatActivity{
                 startService(new Intent(this,BackgroundManager.class));
             }
         }
+
+        ((Button)findViewById(R.id.logoutBtn)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                MainActivity.this.closeConnLogout();
+            }
+        });
     }
 
     private void updateConnectionUI() {
@@ -110,6 +115,10 @@ public class MainActivity extends AppCompatActivity{
 
     @Override
     public void onBackPressed() {
+        closeConnLogout();
+    }
+
+    private void closeConnLogout() {
         AlertDialog.Builder permissionsAlert = new AlertDialog.Builder(this);
         permissionsAlert.setMessage(R.string.back_button_dialog)
                 .setPositiveButton(R.string.back_button_logout, new DialogInterface.OnClickListener() {
@@ -119,7 +128,7 @@ public class MainActivity extends AppCompatActivity{
                         SharedPreferenceManager sharedPreferenceManager =
                                 SharedPreferenceManager.getInstance(MainActivity.this);
                         Message message = new Message();
-                        message.what = BackgroundManager.MSG_LOGOUT;
+                        message.what = BackgroundManager.MSG_LOGOUT_STOP_FOREGROUND;
                         bindListener.sendMessage(message);
                         Log.d(Tag.MAIN_ACTIVITY, "Logging out.");
                         MainActivity.this.finish();
@@ -131,6 +140,16 @@ public class MainActivity extends AppCompatActivity{
                 });
         permissionsAlert.create();
         permissionsAlert.show();
+
+//        Log.d(Tag.LOGIN_ACTIVITY, "request code [" + requestCode + "] [" + Tag.PENDING_INTENT_CLOSE_APP + "]");
+//        if (requestCode == Tag.PENDING_INTENT_CLOSE_APP) {
+//            Log.d(Tag.LOGIN_ACTIVITY, "request code [" + requestCode + "] YESSSS");
+//            //Finish this activity because closing
+//            finishAndRemoveTask();
+//            //STOP BACKGROUND SERVICE
+//            stopService(new Intent(getString(R.string.background_process)));
+//            Log.d(Tag.LOGIN_ACTIVITY, "stopped service");
+//        }
     }
 
     @Override

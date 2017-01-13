@@ -1,6 +1,8 @@
 package rooftext.rooftextapp.background;
 
+import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -28,6 +30,7 @@ import java.util.ArrayList;
 
 import rooftext.rooftextapp.Flush;
 import rooftext.rooftextapp.R;
+import rooftext.rooftextapp.activity.LoginActivity;
 import rooftext.rooftextapp.background.request.MessageObservers.SMSObserver;
 import rooftext.rooftextapp.background.request.RequestManager;
 import rooftext.rooftextapp.background.io.NetworkManager;
@@ -72,7 +75,6 @@ public class BackgroundManager extends Service implements Flush {
     @Override
     public void onCreate() {
         Log.e(Tag.BACKGROUND_MANAGER,"STARTING BACKMAN");
-
         //update version
         PackageInfo pInfo = null;
         try {
@@ -277,6 +279,25 @@ public class BackgroundManager extends Service implements Flush {
                 //if could not login then save session user/pass as empty
                 if (!retval) {
                     sharedPreferenceManager.saveSessionUsernamePass("", "");
+                } else {
+                    //if retval is true than must be logging in from main activity
+                    //start foreground service
+                    Intent notificationIntent = new Intent(BackgroundManager.this, LoginActivity.class);
+                    notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    PendingIntent pIntentOpenApp = PendingIntent.getActivity(BackgroundManager.this,
+                            0,
+                            notificationIntent,
+                            0);
+                    NotificationCompat.Builder notificationBuilder =
+                            new NotificationCompat.Builder(BackgroundManager.this)
+                                    //TODO ADD IMAGE FOR NOTIFICATION
+                                    .setSmallIcon(R.mipmap.ic_launcher)
+                                    .setContentTitle("RoofText")
+                                    .setContentText("We are running right! :)")
+                                    .setContentIntent(pIntentOpenApp);
+                    Notification notification = notificationBuilder.build();
+                    notification.flags |= Notification.FLAG_AUTO_CANCEL;
+                    startForeground(1500, notification);
                 }
                 Log.d(Tag.BACKGROUND_MANAGER, "Setting up replyTo");
                 Message message = new Message();
@@ -373,7 +394,7 @@ public class BackgroundManager extends Service implements Flush {
     public static final int MSG_SAVE_BACKGROUND_STATE = 8;
     public static final int MSG_ATTEMPT_LOGIN = 9;
     public static final int MSG_POST_WEBSOCKET_UPDATE = 11;
-    public static final int MSG_LOGOUT = 12;
+    public static final int MSG_LOGOUT_STOP_FOREGROUND = 12;
     public static final int MSG_RESET_CONNECTION = 13;
 
     public static final String KEY_ACTION = "KEY_ACTION"; //TODO REMOVE AFTER TESTING
@@ -423,18 +444,23 @@ public class BackgroundManager extends Service implements Flush {
                     attemptThreadLogin(msg.replyTo);
                     break;
                 case MSG_POST_WEBSOCKET_UPDATE:
+                    if (webSocketManager.getState() == WebSocketState.CLOSED) {
+                        //if the websocket is closed then try to reconnect
+                        attemptThreadLogin(null);
+                    }
                     Intent intent = new Intent(Tag.ACTION_WEBSOC_CHANGE);
                     intent.putExtra("state", webSocketManager.getLocalizeState());
                     Log.d(Tag.BACKGROUND_MANAGER, "POSTING STATE OF WEBSOCKET CHANGE.");
                     BackgroundManager.this.sendBroadcast(intent);
                     break;
-                case MSG_LOGOUT:
+                case MSG_LOGOUT_STOP_FOREGROUND:
                     Log.d(Tag.BACKGROUND_MANAGER,"Logging out of backMan.");
                     sessionManager.logout(sharedPreferenceManager.getSessionUsername(),
                             sharedPreferenceManager.getSessionPassword());
                     sharedPreferenceManager.saveSessionUsernamePass("", "");
                     sharedPreferenceManager.saveBackgroundState(false);
                     webSocketManager.disconnect();
+                    BackgroundManager.this.stopForeground(true);
                     break;
                 case MSG_RESET_CONNECTION:
                     Log.d(Tag.BACKGROUND_MANAGER, "Resetting connection [" + Tag.BASE_URL + "]");

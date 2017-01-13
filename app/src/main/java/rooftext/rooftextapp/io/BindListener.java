@@ -88,7 +88,7 @@ public class BindListener {
 
     public void logout() {
         Message message = new Message();
-        message.what = BackgroundManager.MSG_LOGOUT;
+        message.what = BackgroundManager.MSG_LOGOUT_STOP_FOREGROUND;
         sendMessage(message);
     }
 

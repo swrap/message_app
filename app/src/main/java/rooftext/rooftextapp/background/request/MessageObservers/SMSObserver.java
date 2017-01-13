@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.ContentObserver;
 import android.database.Cursor;
-import android.database.CursorJoiner;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -228,19 +227,22 @@ public class SMSObserver extends ContentObserver implements Flush{
                                         } catch (InterruptedException e) {
                                             Log.e(Tag.SMS_OBSERVER, "INTERRUPTED SMS SLEEEPING BADD");
                                         }
-                                        Cursor cursor = MessageQuery.getSMSMessage(params[0]);
-                                        JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.RECEIVED_MESSAGE);
-                                        String thread_id = cursor.getString(cursor.getColumnIndex(Telephony.Sms.THREAD_ID));
-                                        try {
-                                            jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
-                                                    thread_id);
-                                            jsonBuilder.put(thread_id,
-                                                    new JSONArray().put(MessageQuery.getSMSJSON(cursor)));
-                                        } catch (JSONException e) {
-                                            e.printStackTrace();
+                                        Cursor messageCursor = MessageQuery.getSMSMessage(params[0]);
+                                        if (messageCursor != null) {
+                                            JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.RECEIVED_MESSAGE);
+                                            String thread_id = messageCursor.getString(messageCursor.getColumnIndex(Telephony.Sms.THREAD_ID));
+                                            try {
+                                                jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
+                                                        thread_id);
+                                                jsonBuilder.put(thread_id,
+                                                        new JSONArray().put(MessageQuery.getSMSJSON(messageCursor)));
+                                            } catch (JSONException e) {
+                                                e.printStackTrace();
+                                            }
+                                            messageCursor.close();
+                                            Log.d(Tag.SMS_OBSERVER, "Received message, sending away! [" + jsonBuilder.toString() + "]");
+                                            webSocketManager.sendString(jsonBuilder.toString());
                                         }
-                                        Log.d(Tag.SMS_OBSERVER, "Received message, sending away! [" + jsonBuilder.toString() + "]");
-                                        webSocketManager.sendString(jsonBuilder.toString());
                                         return null;
                                     }
                                 }.execute(id);

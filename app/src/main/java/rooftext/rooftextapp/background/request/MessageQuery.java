@@ -62,8 +62,6 @@ public class MessageQuery {
                 String [] SMSMMS_COLUMNS = new String[]{
                         Telephony.ThreadsColumns.DATE,
                         Telephony.ThreadsColumns._ID,
-                        Telephony.ThreadsColumns.MESSAGE_COUNT,
-                        Telephony.ThreadsColumns.READ,
                         Telephony.ThreadsColumns.RECIPIENT_IDS,
                         Telephony.ThreadsColumns.TYPE,
                 };
@@ -90,10 +88,6 @@ public class MessageQuery {
                             //conversation
                             conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE.name().toLowerCase(),
                                     cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.DATE)));
-                            conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.MESSAGE_COUNT.name().toLowerCase(),
-                                    cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.MESSAGE_COUNT)));
-                            conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.READ.name().toLowerCase(),
-                                    cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.READ)));
                             //check for found found recipients
                             JSONArray matchRecipients = matchRecipientID(cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.RECIPIENT_IDS)).split(" "));
                             if( matchRecipients != null ) {
@@ -131,6 +125,7 @@ public class MessageQuery {
 
     public void getConversationMessagesAsync(final String thread_id,final int limit,final String offset,
                                              final int period,final Context context,final Intent intent) {
+        Log.d(Tag.MESSAGE_MANAGER, "GETTING CONVERSATIONS ASYNC");
         new AsyncTask<Void,Void,Void>() {
 
             @Override
@@ -223,7 +218,7 @@ public class MessageQuery {
                     jsonObject.put(thread_id, (Object) jsonArray);
 
                     //puts in ending
-                    if (count <= limit) {
+                    if (count < limit) {
                         jsonObject.put("end", "t");
                     }
                 } catch (JSONException e) {
@@ -254,20 +249,8 @@ public class MessageQuery {
 
         jsonObject.put(JSONBuilder.Message_Type.TYPE.name().toLowerCase(),
                 JSONBuilder.Message_Type.MMS.name().toLowerCase());
-//        jsonObject.put("thread_id",
-//                    cursor.getString(0));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE_RECIEVED.name().toLowerCase(),
                 Utils.convertMMStoSMSDate(cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.DATE))));
-        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE_SENT.name().toLowerCase(),
-                cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.DATE_SENT)));
-        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.LOCKED.name().toLowerCase(),
-                cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.LOCKED)));
-        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.SEEN.name().toLowerCase(),
-                cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.SEEN)));
-        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.READ.name().toLowerCase(),
-                cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.READ)));
-        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.SUBJECT.name().toLowerCase(),
-                cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.SUBJECT)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.TEXT_ONLY.name().toLowerCase(),
                 cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns.TEXT_ONLY)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.MESSAGE_TYPE.name().toLowerCase(),
@@ -275,8 +258,12 @@ public class MessageQuery {
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.PARTS.name().toLowerCase(),
                 getMMSParts(cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns._ID))));
         Log.d(Tag.MESSAGE_MANAGER, "PUTTING IN CONTACT ID");
+        String [] addressId = getMMSAddress(cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns._ID)));
+        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.CONTACT_ID.name().toLowerCase(),
+                addressId[0]);
+        //NOTE ID IS CHANGED  IN METHOD CALL
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.ADDRESS.name().toLowerCase(),
-                getMMSAddress(cursor.getString(cursor.getColumnIndex(Telephony.BaseMmsColumns._ID))));
+                addressId[1]);
         return message;
     }
 
@@ -291,16 +278,6 @@ public class MessageQuery {
                 cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.BODY)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE_RECIEVED.name().toLowerCase(),
                 cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.DATE)));
-        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE_SENT.name().toLowerCase(),
-                cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.DATE_SENT)));
-        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.LOCKED.name().toLowerCase(),
-                cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.LOCKED)));
-        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.SEEN.name().toLowerCase(),
-                cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.SEEN)));
-        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.READ.name().toLowerCase(),
-                cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.READ)));
-        jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.SUBJECT.name().toLowerCase(),
-                cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.SUBJECT)));
         jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.MESSAGE_TYPE.name().toLowerCase(),
                 cursor.getString(cursor.getColumnIndex(Telephony.TextBasedSmsColumns.TYPE)));
         return message;
@@ -312,11 +289,6 @@ public class MessageQuery {
         String [] COLUMN = {
                 Telephony.TextBasedSmsColumns.BODY,
                 Telephony.TextBasedSmsColumns.DATE,
-                Telephony.TextBasedSmsColumns.DATE_SENT,
-                Telephony.TextBasedSmsColumns.LOCKED,
-                Telephony.TextBasedSmsColumns.SEEN,
-                Telephony.TextBasedSmsColumns.READ,
-                Telephony.TextBasedSmsColumns.SUBJECT,
                 Telephony.TextBasedSmsColumns.THREAD_ID,
                 Telephony.Sms._ID,
                 Telephony.Sms.TYPE,
@@ -337,11 +309,6 @@ public class MessageQuery {
         String [] COLUMN = {
                 Telephony.TextBasedSmsColumns.BODY,
                 Telephony.TextBasedSmsColumns.DATE,
-                Telephony.TextBasedSmsColumns.DATE_SENT,
-                Telephony.TextBasedSmsColumns.LOCKED,
-                Telephony.TextBasedSmsColumns.SEEN,
-                Telephony.TextBasedSmsColumns.READ,
-                Telephony.TextBasedSmsColumns.SUBJECT,
                 Telephony.TextBasedSmsColumns.THREAD_ID,
                 Telephony.Sms._ID,
                 Telephony.Sms.TYPE,
@@ -368,7 +335,7 @@ public class MessageQuery {
         );
     }
 
-    private static String getMMSAddress(String messageId) {
+    private static String[] getMMSAddress(String messageId) {
         final String[] COLUMN =  new String[] {
                 Telephony.Mms.Addr.ADDRESS,
         };
@@ -383,14 +350,17 @@ public class MessageQuery {
                 COLUMN,
                 WHERE,
                 null, null);
-        String id = "";
-        if (cursor.moveToFirst()) {
-            id = cursor.getString(0);
-        }
+        String tempAddr = "";
         if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                tempAddr = cursor.getString(0);
+            }
             cursor.close();
         }
-        return id;
+
+        String [] temp = matchPhoneNumberToContactId(tempAddr);
+        temp[1] = tempAddr;
+        return temp;
     }
 
     private Cursor getMMSMessages(String thread_id, int limit, String offset, int period) {
@@ -398,11 +368,6 @@ public class MessageQuery {
         String [] COLUMN = {
                 Telephony.BaseMmsColumns.THREAD_ID,
                 Telephony.BaseMmsColumns.DATE,
-                Telephony.BaseMmsColumns.DATE_SENT,
-                Telephony.BaseMmsColumns.LOCKED,
-                Telephony.BaseMmsColumns.SEEN,
-                Telephony.BaseMmsColumns.READ,
-                Telephony.BaseMmsColumns.SUBJECT,
                 Telephony.BaseMmsColumns.TEXT_ONLY,
                 Telephony.BaseMmsColumns._ID,
                 Telephony.BaseMmsColumns.MESSAGE_BOX,
@@ -450,7 +415,7 @@ public class MessageQuery {
         );
 
         JSONArray jsonArray = new JSONArray();
-        if(cursor != null) {
+            if(cursor != null) {
             if (cursor.getCount() > 0) {
                 cursor.moveToFirst();
                 do {
@@ -478,7 +443,6 @@ public class MessageQuery {
 
         Cursor cursorCanonical = contentResolver.query(Uri.parse("content://mms-sms/canonical-addresses"),
                 new String[] {
-                        Telephony.CanonicalAddressesColumns._ID,
                         Telephony.CanonicalAddressesColumns.ADDRESS
                 },
                 Telephony.CanonicalAddressesColumns._ID + " IN (" + TextUtils.join(",", strings) + ")",
@@ -486,34 +450,32 @@ public class MessageQuery {
                 null
         );
 
-        if(cursorCanonical.getCount() > 0){
-            cursorCanonical.moveToFirst();
-            do {
-                JSONObject jsonObjectRecipient = new JSONObject();
-                jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.RECIPIENT_ID.name().toLowerCase(),
-                        cursorCanonical.getString(cursorCanonical.getColumnIndex(Telephony.CanonicalAddressesColumns._ID)));
-                String phoneNumber = cursorCanonical.getString(cursorCanonical.getColumnIndex(Telephony.CanonicalAddressesColumns.ADDRESS));
-                jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.PHONE_NUMBER.name().toLowerCase(),
-                        phoneNumber);
-                String [] numberContactId = matchPhoneNumberToContactId(phoneNumber);
-                if (numberContactId[0] == null || numberContactId[0].isEmpty() || numberContactId[1] == null || numberContactId[1].isEmpty()) {
-                    Log.d(Tag.MESSAGE_MANAGER, "Oh no! Message query just detected one of these was null. [" + numberContactId[0] + "] [" + numberContactId[1] + "]");
-                }
-                jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.FULL_NAME.name().toLowerCase(),
-                        numberContactId[0]);
-                jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.ADDRESS.name().toLowerCase(),
-                        numberContactId[1]);
-                jsonArray.put(jsonObjectRecipient);
-            }while (cursorCanonical.moveToNext());
-        }
-        if(cursorCanonical != null) {
+        if (cursorCanonical != null) {
+            if(cursorCanonical.getCount() > 0){
+                cursorCanonical.moveToFirst();
+                do {
+                    JSONObject jsonObjectRecipient = new JSONObject();
+                    String phoneNumber = cursorCanonical.getString(cursorCanonical.getColumnIndex(Telephony.CanonicalAddressesColumns.ADDRESS));
+                    jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.PHONE_NUMBER.name().toLowerCase(),
+                            phoneNumber);
+                    String [] numberContactId = matchPhoneNumberToContactId(phoneNumber);
+                    if (numberContactId[0] == null || numberContactId[0].isEmpty() || numberContactId[1] == null || numberContactId[1].isEmpty()) {
+                        Log.d(Tag.MESSAGE_MANAGER, "Oh no! Message query just detected one of these was null. [" + numberContactId[0] + "] [" + numberContactId[1] + "]");
+                    }
+                    jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.FULL_NAME.name().toLowerCase(),
+                            numberContactId[0]);
+                    jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.CONTACT_ID.name().toLowerCase(),
+                            numberContactId[1]);
+                    jsonArray.put(jsonObjectRecipient);
+                }while (cursorCanonical.moveToNext());
+            }
             cursorCanonical.close();
         }
         Log.d(Tag.MESSAGE_MANAGER, "ThreadId [" + jsonArray + "]");
         return jsonArray;
     }
 
-    private String [] matchPhoneNumberToContactId(String phoneNumber) {
+    private static String [] matchPhoneNumberToContactId(String phoneNumber) {
         String [] numberContactId = new String[2];
         Log.d(Tag.MESSAGE_MANAGER, "Number searching for [" + phoneNumber + "]");
         Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(phoneNumber));

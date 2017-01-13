@@ -68,6 +68,12 @@
                 android:gravity="center_horizontal"
                 android:textSize="@dimen/roofmessage_main_size" />
 
+            <Button
+                android:text="Close Connection/Logout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/logoutBtn" />
+
         </LinearLayout>
     </ScrollView>
 

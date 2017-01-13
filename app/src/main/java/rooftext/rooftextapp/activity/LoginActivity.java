@@ -94,7 +94,8 @@ public class LoginActivity extends AppCompatActivity {
         Log.d(Tag.LOGIN_ACTIVITY, "Shared Preference Manager background state["
                 + SharedPreferenceManager.getInstance(this).getBackgroundState() + "]");
         //move to next activity if already running
-        if (SharedPreferenceManager.getInstance(this).getBackgroundState()) { //TODO MAY NEED TO CHANGE THIS SHAREDPREFERENCE MANAGER
+        if (SharedPreferenceManager.getInstance(this).getBackgroundState()) {
+            //TODO MAY NEED TO CHANGE THIS SHAREDPREFERENCE MANAGER MORE THAN ONE OF THESE IN LOGIN
             Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
             LoginActivity.this.startActivityForResult(mainIntent, 55);
         }
@@ -233,7 +234,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         //HARD CODED VALUE FOR REQUEST CODE
-        Log.d(Tag.LOGIN_ACTIVITY, "resultCode [" + resultCode + "]");
+        Log.d(Tag.LOGIN_ACTIVITY, "resultCode [" + resultCode + "] requestCode [" + requestCode + "]");
         if (resultCode == 57) {
             //Finish this activity because invalid version
             finishAndRemoveTask();
