@@ -2,6 +2,7 @@ package rooftext.rooftextapp.background.io;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import rooftext.rooftextapp.R;
 
@@ -48,6 +49,7 @@ public class SharedPreferenceManager {
     }
 
     public boolean saveBackgroundState(boolean value) {
+        Log.d("SHARED_PREFERENCE_MANAGER","Value [" + value + "]");
         SharedPreferences.Editor editor = preferences.edit();
         return editor.putBoolean(PreferenceKey.BACKGROUND_STATE.name(), value).commit();
     }

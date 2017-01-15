@@ -633,8 +633,9 @@ int drawable design_ic_visibility 0x7f020054
 int drawable design_snackbar_background 0x7f020055
 int drawable ic_alert 0x7f020056
 int drawable ic_close_app 0x7f020057
-int drawable navigation_empty_icon 0x7f020058
-int drawable notification_template_icon_bg 0x7f020059
+int drawable ic_notify 0x7f020058
+int drawable navigation_empty_icon 0x7f020059
+int drawable notification_template_icon_bg 0x7f02005a
 int id action0 0x7f0d0086
 int id action_bar 0x7f0d005e
 int id action_bar_activity_content 0x7f0d0000

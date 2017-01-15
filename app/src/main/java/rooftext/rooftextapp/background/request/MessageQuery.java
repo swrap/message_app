@@ -20,13 +20,16 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import rooftext.rooftextapp.io.JSONBuilder;
 import rooftext.rooftextapp.utils.Tag;
@@ -66,9 +69,9 @@ public class MessageQuery {
                         Telephony.ThreadsColumns.TYPE,
                 };
 
-                String ORDERBY = "date DESC"; //TODO TEST GET RID OF LIMIT
+                String ORDERBY = "date DESC";
                 if (Tag.LOCAL_HOST) {
-                    ORDERBY += " LIMIT 60";
+                    ORDERBY += " LIMIT 5";
                 }
                 Cursor cursor = contentResolver.query(mSMSMMS,
                         SMSMMS_COLUMNS,
@@ -76,46 +79,82 @@ public class MessageQuery {
                         null,
                         ORDERBY
                 );
-                JSONBuilder jsonObject = new JSONBuilder( JSONBuilder.Action.POST_CONVERSATIONS );
-                JSONArray jsonArray = new JSONArray();
-                if(cursor != null && cursor.getCount() > 0) {
-                    cursor.moveToFirst();
-                    do {
-                        JSONObject conversation = new JSONObject();
-                        JSONObject conversationInfo = new JSONObject();
-                        try {
-                            conversation.put(cursor.getString(1), conversationInfo);
-                            //conversation
-                            conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE.name().toLowerCase(),
-                                    cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.DATE)));
-                            //check for found found recipients
-                            JSONArray matchRecipients = matchRecipientID(cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.RECIPIENT_IDS)).split(" "));
-                            if( matchRecipients != null ) {
-                                conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.RECIPIENTS.name().toLowerCase(),
-                                        matchRecipients);
-                            }
-                            conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.CONVO_TYPE.name().toLowerCase(),
-                                    cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.TYPE)));
-                            jsonArray.put(conversation);
-                        } catch (JSONException e) {
-                            Log.e(Tag.MESSAGE_MANAGER, "Could not add conversation.");
-                            e.printStackTrace();
-                        }
-                    } while(cursor.moveToNext());
-                }
-                if(cursor != null){
-                    cursor.close();
-                }
+
                 try {
-                    jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.CONVERSATIONS.name().toLowerCase(),
-                            (Object) jsonArray);
-                    Intent intent = new Intent(Tag.ACTION_LOCAL_SEND_MESSAGE);
-                    intent.putExtra(Tag.KEY_SEND_JSON_STRING, jsonObject.toString());
-                    Log.d(Tag.MESSAGE_MANAGER, "ASYNC CONVERSATION ABOUT TO SEND");
-                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-                    Log.d(Tag.MESSAGE_MANAGER, "ASYNC CONVERSATION SENT");
+                    int GROUP = 60, count = 0;
+                    if(cursor != null && cursor.moveToFirst()) {
+                        Log.d(Tag.MESSAGE_MANAGER, "GI [" + (cursor.getCount()/GROUP)+1 + "] ["
+                            + cursor.getCount() + "] ["+ GROUP + "]");
+                        int parts = (cursor.getCount()/GROUP);
+                        if (cursor.getCount() >  GROUP) {
+                            //if there is less than 60 parts then we need to continue to the last part
+                            parts++;
+                        } else {
+                            parts = 1;
+                        }
+                        for(int gI = 0; gI < parts; gI++) {
+                            JSONBuilder jsonObject = new JSONBuilder( JSONBuilder.Action.POST_CONVERSATIONS );
+                            JSONArray jsonArray = new JSONArray();
+                            ArrayList<String []> eachConvo = new ArrayList<String[]>(cursor.getCount());
+                            HashSet<String> recipId = new HashSet<String>(cursor.getCount());
+                            do {
+                                Log.d(Tag.MESSAGE_MANAGER, "GI CONT[" + count + "] ["
+                                        + cursor.getCount() + "] ["+ GROUP + "]");
+                                JSONObject conversation = new JSONObject();
+                                JSONObject conversationInfo = new JSONObject();
+                                try {
+                                    conversation.put(cursor.getString(1), conversationInfo);
+                                    conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.DATE.name().toLowerCase(),
+                                            cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.DATE)));
+                                    conversationInfo.put(JSONBuilder.JSON_KEY_CONVERSATION.CONVO_TYPE.name().toLowerCase(),
+                                            cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.TYPE)));
+                                    ArrayList<String> list = new ArrayList<String>();
+                                    String s = cursor.getString(cursor.getColumnIndex(Telephony.ThreadsColumns.RECIPIENT_IDS));
+                                    if (!s.equals("")) {
+                                        Pattern p = Pattern.compile("-?\\d+");
+                                        Matcher m = p.matcher(s);
+                                        while(m.find()) {
+                                            String t = m.group();
+                                            recipId.add(t);
+                                            list.add(t);
+                                        }
+                                        eachConvo.add(list.toArray(new String[list.size()]));
+                                        //if the list is not empty then add it the convo else do not
+                                        jsonArray.put(conversation);
+                                    }
+                                } catch (JSONException e) {
+                                    Log.e(Tag.MESSAGE_MANAGER, "Could not add conversation.");
+                                    e.printStackTrace();
+                                }
+                                count++;
+                            } while(cursor.moveToNext() && count < GROUP);
+                            count = 0;
+
+                            Log.d(Tag.MESSAGE_MANAGER, "ASYNC CONVERSATION MIDDLE START");
+                            HashMap<String, JSONObject> recipsIdPhoneNum = matchRecipientId(recipId);
+                            for(int i = 0; i < jsonArray.length(); i++) {
+                                JSONObject jo = (JSONObject)jsonArray.get(i);
+                                JSONArray arrT = new JSONArray();
+                                String [] strings = eachConvo.get(i);
+                                for(String s : strings) {
+                                    arrT.put(recipsIdPhoneNum.get(s));
+                                }
+                                String key = jo.keys().next();
+                                ((JSONObject)jo.get(key)).put(JSONBuilder.JSON_KEY_CONVERSATION.RECIPIENTS.name().toLowerCase(),
+                                        arrT);
+                            }
+                            Log.d(Tag.MESSAGE_MANAGER, "ASYNC CONVERSATION MIDDLE END");
+                            jsonObject.put(JSONBuilder.JSON_KEY_CONVERSATION.CONVERSATIONS.name().toLowerCase(),
+                                    jsonArray);
+                            Intent intent = new Intent(Tag.ACTION_LOCAL_SEND_MESSAGE);
+                            intent.putExtra(Tag.KEY_SEND_JSON_STRING, jsonObject.toString());
+                            Log.d(Tag.MESSAGE_MANAGER, "ASYNC CONVERSATION ABOUT TO SEND");
+                            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                            Log.d(Tag.MESSAGE_MANAGER, "ASYNC CONVERSATION SENT");
+                        }
+                    }
                 } catch (JSONException e) {
-                    Log.e(Tag.MESSAGE_MANAGER,"Could not add array to json.");
+                    Log.e(Tag.MESSAGE_MANAGER,"Could not add array to json. or other problems... internal");
                     e.printStackTrace();
                 }
                 return null;
@@ -436,16 +475,55 @@ public class MessageQuery {
         return jsonArray;
     }
 
+    private HashMap<String, JSONObject> matchRecipientId(HashSet<String> recipient_ids) throws JSONException {
+
+        HashMap<String, JSONObject> recips = null;
+        Cursor cursorCanonical = contentResolver.query(Uri.parse("content://mms-sms/canonical-addresses"),
+                new String[] {
+                        Telephony.CanonicalAddressesColumns._ID,
+                        Telephony.CanonicalAddressesColumns.ADDRESS
+                },
+                Telephony.CanonicalAddressesColumns._ID + " IN (" + TextUtils.join(",", recipient_ids) + ")",
+                null,
+                null
+        );
+
+        if (cursorCanonical != null) {
+            if(cursorCanonical.getCount() > 0){
+                recips = new HashMap<String,JSONObject>((int)(recipient_ids.size()*1.5));
+                cursorCanonical.moveToFirst();
+                do {
+                    JSONObject jsonObjectRecipient = new JSONObject();
+                    String phoneNumber = cursorCanonical.getString(cursorCanonical.getColumnIndex(Telephony.CanonicalAddressesColumns.ADDRESS));
+                    jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.PHONE_NUMBER.name().toLowerCase(),
+                            phoneNumber);
+                    String [] numberContactId = matchPhoneNumberToContactId(phoneNumber);
+                    if (numberContactId[0] == null || numberContactId[0].isEmpty() || numberContactId[1] == null || numberContactId[1].isEmpty()) {
+                        Log.d(Tag.MESSAGE_MANAGER, "Oh no! Message query just detected one of these was null. [" + numberContactId[0] + "] [" + numberContactId[1] + "]");
+                    }
+                    jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.FULL_NAME.name().toLowerCase(),
+                            numberContactId[0]);
+                    jsonObjectRecipient.put(JSONBuilder.JSON_KEY_CONVERSATION.CONTACT_ID.name().toLowerCase(),
+                            numberContactId[1]);
+                    recips.put(cursorCanonical.getString(cursorCanonical.getColumnIndex(Telephony.CanonicalAddressesColumns._ID)),
+                            jsonObjectRecipient);
+                }while (cursorCanonical.moveToNext());
+            }
+            cursorCanonical.close();
+        }
+        Log.d(Tag.MESSAGE_MANAGER, "ThreadId [" + recips + "]");
+        return recips;
+    }
+
     private JSONArray matchRecipientID(String [] recipient_ids) throws JSONException {
 
-        ArrayList<String> strings = new ArrayList<String>(Arrays.asList(recipient_ids));
         JSONArray jsonArray = new JSONArray();
 
         Cursor cursorCanonical = contentResolver.query(Uri.parse("content://mms-sms/canonical-addresses"),
                 new String[] {
                         Telephony.CanonicalAddressesColumns.ADDRESS
                 },
-                Telephony.CanonicalAddressesColumns._ID + " IN (" + TextUtils.join(",", strings) + ")",
+                Telephony.CanonicalAddressesColumns._ID + " IN (" + TextUtils.join(",", recipient_ids) + ")",
                 null,
                 null
         );

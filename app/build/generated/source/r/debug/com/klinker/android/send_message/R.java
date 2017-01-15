@@ -9,6 +9,7 @@ package com.klinker.android.send_message;
 public final class R {
 	public static final class drawable {
 		public static final int ic_alert = 0x7f020056;
+		public static final int ic_notify = 0x7f020058;
 	}
 	public static final class string {
 		public static final int auto_select_apn = 0x7f070024;

@@ -73,6 +73,9 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
 
         if (webSocket.getState() == WebSocketState.CLOSED) {
             try {
+                //NEED TO RESET HEADER WITH CORRECT COOKIES
+                webSocket.removeHeaders(COOKIE);
+                webSocket.addHeader(COOKIE, getCookies());
                 webSocket = webSocket.recreate();
             } catch (IOException e) {
                 Log.d(Tag.WEB_SOC_MANAGER, "Could not recreate connection.", e);
@@ -104,6 +107,7 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
         }
 
         Log.d(Tag.WEB_SOC_MANAGER, "State when leaving function: " + webSocket.getState());
+        Log.d(Tag.WEB_SOC_MANAGER, "URL Used to connect [" + WS_URL + "]");
         if ( webSocket.getState() == WebSocketState.OPEN ) {
             return true;
         }

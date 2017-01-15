@@ -1,4 +1,4 @@
-#Thu Jan 12 21:49:08 EST 2017
+#Sat Jan 14 18:54:59 EST 2017
 base.0=C\:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\transforms\\dex\\debug\\folders\\1000\\1f\\main
 renamed.0=classes.dex
 file.0=C\:\\Users\\Jesse Saran\\AndroidStudioProjects\\RoofMessageApp\\app\\build\\intermediates\\transforms\\dex\\debug\\folders\\1000\\1f\\main\\classes.dex

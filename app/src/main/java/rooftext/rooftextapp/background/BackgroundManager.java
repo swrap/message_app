@@ -275,6 +275,8 @@ public class BackgroundManager extends Service implements Flush {
                     }
                 }
             }
+            Log.d(Tag.BACKGROUND_MANAGER, "RETVAL FUCK [" + retval + "]");
+            sharedPreferenceManager.saveBackgroundState(retval);
             if (replyTo != null ) {
                 //if could not login then save session user/pass as empty
                 if (!retval) {
@@ -283,7 +285,7 @@ public class BackgroundManager extends Service implements Flush {
                     //if retval is true than must be logging in from main activity
                     //start foreground service
                     Intent notificationIntent = new Intent(BackgroundManager.this, LoginActivity.class);
-                    notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    notificationIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                     PendingIntent pIntentOpenApp = PendingIntent.getActivity(BackgroundManager.this,
                             0,
                             notificationIntent,

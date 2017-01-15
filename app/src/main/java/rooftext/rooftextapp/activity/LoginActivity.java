@@ -75,9 +75,9 @@ public class LoginActivity extends AppCompatActivity {
         List<ActivityManager.RunningAppProcessInfo> procInfos = activityManager.getRunningAppProcesses();
         for (int i = 0; i < procInfos.size(); i++)
         {
-            Log.d(Tag.LOGIN_ACTIVITY, "Searching for Process Name [" + procInfos.get(i).processName + "] ["
-                    + "roofmessage.roofmessageapp" + this.getString(R.string.background_process) + "]");
-            if (procInfos.get(i).processName.equals("roofmessage.roofmessageapp" + this.getString(R.string.background_process)))
+            Log.d(Tag.MAIN_ACTIVITY, "Searching for Process Name [" + procInfos.get(i).processName + "] ["
+                    + "rooftext.rooftextapp" + this.getString(R.string.background_process) + "]");
+            if (procInfos.get(i).processName.equals("rooftext.rooftextapp" + this.getString(R.string.background_process)))
             {
                 Log.d(Tag.LOGIN_ACTIVITY, "Matched Background Service");
                 Toast.makeText(getApplicationContext(), "Background service is running", Toast.LENGTH_LONG).show();
@@ -346,7 +346,16 @@ public class LoginActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         showProgress(false);
-        Log.d(Tag.LOGIN_ACTIVITY, "Resuming");
+        Log.d(Tag.LOGIN_ACTIVITY, "Resuming [" +
+                SharedPreferenceManager.getInstance(this).getBackgroundState()
+         + "]");
+        //move to next activity if already running
+//        if (SharedPreferenceManager.getInstance(this).getBackgroundState()) {
+//            Log.d(Tag.LOGIN_ACTIVITY, "RESUME going to main activity");
+//            //TODO MAY NEED TO CHANGE THIS SHAREDPREFERENCE MANAGER MORE THAN ONE OF THESE IN LOGIN
+//            Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
+//            LoginActivity.this.startActivityForResult(mainIntent, 55);
+//        }
     }
 
     @Override

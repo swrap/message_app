@@ -1,6 +1,7 @@
 package rooftext.rooftextapp.background.io;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -19,6 +20,7 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -176,53 +178,60 @@ public class SessionManager {
         return cookieManager;
     }
 
-    public boolean logout(String username, String password) {
-        try {
-            // get content from URLConnection;
-            // cookies are set by web site
-            URL url = new URL(LOGOUT_URL);
-            HttpURLConnection connection;
-            if (Tag.LOCAL_HOST) {
-                connection = (HttpURLConnection) url.openConnection();
-            } else {
-                connection = (HttpsURLConnection) url.openConnection();
-            }
-            connection.setConnectTimeout(connection_timeout);
-            connection.getContent();
-            int responseCode = connection.getResponseCode();
-            Log.d(Tag.SESSION_MANAGER, "Response code on get logout [" + responseCode + "]");
-            if (responseCode == 200) {
-                String csrf = getCSRFToken();
+    public void logout(final String username, final String password) {
+        new AsyncTask<Void,Void,Void>() {
 
-                url = new URL(LOGOUT_URL);
-                if (Tag.LOCAL_HOST) {
-                    connection = (HttpURLConnection) url.openConnection();
-                } else {
-                    connection = (HttpsURLConnection) url.openConnection();
-                }
-                connection.setRequestMethod("POST");
-                connection.setDoOutput(true);
+            @Override
+            protected Void doInBackground(Void... params) {
+                try {
+                    // get content from URLConnection;
+                    // cookies are set by web site
+                    URL url = new URL(LOGOUT_URL);
+                    HttpURLConnection connection;
+                    if (Tag.LOCAL_HOST) {
+                        connection = (HttpURLConnection) url.openConnection();
+                    } else {
+                        connection = (HttpsURLConnection) url.openConnection();
+                    }
+                    connection.setConnectTimeout(connection_timeout);
+                    connection.getContent();
+                    int responseCode = connection.getResponseCode();
+                    Log.d(Tag.SESSION_MANAGER, "Response code on get logout [" + responseCode + "]");
+                    if (responseCode == 200) {
+                        String csrf = getCSRFToken();
 
-                OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream());
-                String formParameters = CSRF_MID_TOKEN + "=" + csrf
-                        + "&username=" + username
-                        + "&password=" + password;
-                out.write(formParameters);
-                out.close();
-                Log.d(Tag.SESSION_MANAGER, "Response: " + connection.getResponseCode());
-                if (connection.getResponseCode() == RESPONSE_OKAY) {
-                    return true;
+                        url = new URL(LOGOUT_URL);
+                        if (Tag.LOCAL_HOST) {
+                            connection = (HttpURLConnection) url.openConnection();
+                        } else {
+                            connection = (HttpsURLConnection) url.openConnection();
+                        }
+                        connection.setRequestProperty("Referer", "https://rooftext.com");
+                        connection.setRequestMethod("POST");
+                        connection.setDoOutput(true);
+
+                        OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream());
+                        String formParameters = CSRF_MID_TOKEN + "=" + csrf
+                                + "&username=" + username
+                                + "&password=" + password;
+                        out.write(formParameters);
+                        out.close();
+                        Log.d(Tag.SESSION_MANAGER, "Response: " + connection.getResponseCode());
+                        if (connection.getResponseCode() == RESPONSE_OKAY) {
+
+                        }
+                    }
+                } catch (SocketTimeoutException e) {
+                    Log.d(Tag.SESSION_MANAGER, "Logout waited [" + connection_timeout + "] to connect but failed.");
+                } catch (ConnectException e) {
+                    Log.d(Tag.SESSION_MANAGER, "Unable to connect to host.", e);
+                } catch (Exception e) {
+                    Log.d(Tag.SESSION_MANAGER, "Failed for some reason.", e);
+                    e.printStackTrace();
                 }
+                return null;
             }
-        } catch (SocketTimeoutException e) {
-            Log.d(Tag.SESSION_MANAGER, "Logout waited [" + connection_timeout + "] to connect but failed.");
-        } catch (ConnectException e) {
-            Log.d(Tag.SESSION_MANAGER, "Unable to connect to host.", e);
-        } catch (Exception e) {
-            Log.d(Tag.SESSION_MANAGER, "Failed for some reason.", e);
-            e.printStackTrace();
-        }
-        return false;
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     private String getCSRFToken() {

@@ -2582,8 +2582,9 @@ containing a value of this type.
         public static final int design_snackbar_background=0x7f020055;
         public static final int ic_alert=0x7f020056;
         public static final int ic_close_app=0x7f020057;
-        public static final int navigation_empty_icon=0x7f020058;
-        public static final int notification_template_icon_bg=0x7f020059;
+        public static final int ic_notify=0x7f020058;
+        public static final int navigation_empty_icon=0x7f020059;
+        public static final int notification_template_icon_bg=0x7f02005a;
     }
     public static final class id {
         public static final int action0=0x7f0d0086;
