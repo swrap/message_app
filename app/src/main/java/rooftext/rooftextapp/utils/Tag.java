@@ -7,7 +7,7 @@ public class Tag {
 
     public static String VERSION = "2.1.0";
 
-    public static final boolean LOCAL_HOST = true;
+    public static final boolean LOCAL_HOST = false;
 
     public static final String BASE_TAG = "RM:";
 
@@ -20,6 +20,7 @@ public class Tag {
         public static final String MESSAGE_WAITING = BASE_TAG + "MessageWaiting";
         public static final String SMSMMSDELIVERY = BASE_TAG + "SMSMMSDelivery";
         public static final String SMS_OBSERVER = BASE_TAG + "SmsObserver";
+        public static final String SMS_RECEIVED_OBSERVER= BASE_TAG + "SmsRecObs";
         public static final String MMS_OBSERVER = BASE_TAG + "MmsObserver";
 
     //Activity Package

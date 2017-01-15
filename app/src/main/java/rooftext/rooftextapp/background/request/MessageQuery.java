@@ -98,8 +98,8 @@ public class MessageQuery {
                             ArrayList<String []> eachConvo = new ArrayList<String[]>(cursor.getCount());
                             HashSet<String> recipId = new HashSet<String>(cursor.getCount());
                             do {
-                                Log.d(Tag.MESSAGE_MANAGER, "GI CONT[" + count + "] ["
-                                        + cursor.getCount() + "] ["+ GROUP + "]");
+//                                Log.d(Tag.MESSAGE_MANAGER, "GI CONT[" + count + "] ["
+//                                        + cursor.getCount() + "] ["+ GROUP + "]");
                                 JSONObject conversation = new JSONObject();
                                 JSONObject conversationInfo = new JSONObject();
                                 try {
@@ -343,6 +343,28 @@ public class MessageQuery {
         );
     }
 
+    //NOTE CURSOR MUST BE CLOSED BY RECEIVED COMMAND
+    public static Cursor getSMSMessage(String address, String date) {
+        Uri contentURI = Telephony.Sms.CONTENT_URI;
+        String [] COLUMN = {
+                Telephony.TextBasedSmsColumns.BODY,
+                Telephony.TextBasedSmsColumns.DATE,
+                Telephony.TextBasedSmsColumns.THREAD_ID,
+                Telephony.Sms._ID,
+                Telephony.Sms.TYPE,
+        };
+        String WHERE = Telephony.TextBasedSmsColumns.DATE + " = ? AND "
+                + Telephony.TextBasedSmsColumns.ADDRESS + " = ? ";
+        String [] QUESTIONMARK = {date, address};
+        String ORDERBY = Telephony.Sms.Conversations.DEFAULT_SORT_ORDER + " limit " + 1;
+        return contentResolver.query(contentURI,
+                COLUMN,
+                WHERE,
+                QUESTIONMARK,
+                ORDERBY
+        );
+    }
+
     private Cursor getSMSMessages(String thread_id, int limit, String offset, int period){
         Uri contentURI = Telephony.Sms.CONTENT_URI;
         String [] COLUMN = {
@@ -555,10 +577,10 @@ public class MessageQuery {
 
     private static String [] matchPhoneNumberToContactId(String phoneNumber) {
         String [] numberContactId = new String[2];
-        Log.d(Tag.MESSAGE_MANAGER, "Number searching for [" + phoneNumber + "]");
+//        Log.d(Tag.MESSAGE_MANAGER, "Number searching for [" + phoneNumber + "]");
         Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(phoneNumber));
 
-        Log.d(Tag.MESSAGE_MANAGER, "Number searching for [" + uri.toString() + "]");
+//        Log.d(Tag.MESSAGE_MANAGER, "Number searching for [" + uri.toString() + "]");
         Cursor contactLookup = null;
         try {
             contactLookup = contentResolver.query(

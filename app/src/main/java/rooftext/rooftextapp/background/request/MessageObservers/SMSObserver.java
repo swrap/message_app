@@ -215,37 +215,45 @@ public class SMSObserver extends ContentObserver implements Flush{
                             Log.d(Tag.SMS_OBSERVER, "Columns [" + cols + "] col count ["
                                     + cursor.getColumnCount() + "]");
                             if (cursor.getColumnIndex(Telephony.Sms.THREAD_ID) == -1) {
+
                                 //does not have thread_id, querying the id then do later asyn thread for rest of data
-                                String id = cursor.getString(cursor.getColumnIndex("sub_id"));
-                                Log.d(Tag.SMS_OBSERVER, "Received message had no thread_id, id of message is [" + id + "]");
+                                String address = cursor.getString(cursor.getColumnIndex("address"));
+                                String date = cursor.getString(cursor.getColumnIndex("date"));
+                                do {
+                                    for(int i = 0; i < cursor.getColumnCount(); i++) {
+                                        Log.d(Tag.SMS_OBSERVER, cursor.getString(i) + " ");
+                                    }
+                                    Log.d(Tag.SMS_OBSERVER, "NEXT CUROSR");
+                                } while (cursor.moveToNext());
+                                Log.d(Tag.SMS_OBSERVER, "Received message had no thread_id, id of message is [" + address + "]");
                                 new AsyncTask<String, Void, Void>() {
                                     @Override
                                     protected Void doInBackground(String... params) {
                                         Log.d(Tag.SMS_OBSERVER, "Preparing to wait");
-                                        try {
-                                            Thread.sleep(500);
-                                        } catch (InterruptedException e) {
-                                            Log.e(Tag.SMS_OBSERVER, "INTERRUPTED SMS SLEEEPING BADD");
-                                        }
-                                        Cursor messageCursor = MessageQuery.getSMSMessage(params[0]);
+                                        Log.d(Tag.SMS_OBSERVER, "PARAMS [" + params[0] + "] [" + params[1] + "]");
+                                        Cursor messageCursor = MessageQuery.getSMSMessage(params[0], params[1]);
+                                        Log.d(Tag.SMS_OBSERVER, "PARAMS RET [" + messageCursor + "]");
                                         if (messageCursor != null) {
-                                            JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.RECEIVED_MESSAGE);
-                                            String thread_id = messageCursor.getString(messageCursor.getColumnIndex(Telephony.Sms.THREAD_ID));
-                                            try {
-                                                jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
-                                                        thread_id);
-                                                jsonBuilder.put(thread_id,
-                                                        new JSONArray().put(MessageQuery.getSMSJSON(messageCursor)));
-                                            } catch (JSONException e) {
-                                                e.printStackTrace();
+                                            Log.d(Tag.SMS_OBSERVER, "PARAMS COUNT [" + messageCursor.getColumnCount() + "]");
+                                            if (messageCursor.getColumnCount() > 0 && messageCursor.moveToFirst()) {
+                                                JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.RECEIVED_MESSAGE);
+                                                String thread_id = messageCursor.getString(messageCursor.getColumnIndex(Telephony.Sms.THREAD_ID));
+                                                try {
+                                                    jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.THREAD_ID.name().toLowerCase(),
+                                                            thread_id);
+                                                    jsonBuilder.put(thread_id,
+                                                            new JSONArray().put(MessageQuery.getSMSJSON(messageCursor)));
+                                                } catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                }
+                                                messageCursor.close();
+                                                Log.d(Tag.SMS_OBSERVER, "Received message, sending away! [" + jsonBuilder.toString() + "]");
+                                                webSocketManager.sendString(jsonBuilder.toString());
                                             }
-                                            messageCursor.close();
-                                            Log.d(Tag.SMS_OBSERVER, "Received message, sending away! [" + jsonBuilder.toString() + "]");
-                                            webSocketManager.sendString(jsonBuilder.toString());
                                         }
                                         return null;
                                     }
-                                }.execute(id);
+                                }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, address, date);
                             } else {
                                 JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.RECEIVED_MESSAGE);
                                 String thread_id = cursor.getString(cursor.getColumnIndex(Telephony.Sms.THREAD_ID));
