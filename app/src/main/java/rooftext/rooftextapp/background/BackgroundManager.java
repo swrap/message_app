@@ -58,6 +58,7 @@ public class BackgroundManager extends Service implements Flush {
     private static SharedPreferenceManager sharedPreferenceManager = null;
     private static SessionManager sessionManager = null;
     private UserLoginTask mAuthTask;
+    private boolean foreground = false;
 
     private ConnectionReciever connectionReciever;
 
@@ -275,31 +276,32 @@ public class BackgroundManager extends Service implements Flush {
                     }
                 }
             }
+            if (retval && !foreground) {
+                //if retval is true than must be logging in from main activity
+                //start foreground service
+                Intent notificationIntent = new Intent(BackgroundManager.this, LoginActivity.class);
+                notificationIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                PendingIntent pIntentOpenApp = PendingIntent.getActivity(BackgroundManager.this,
+                        0,
+                        notificationIntent,
+                        0);
+                NotificationCompat.Builder notificationBuilder =
+                        new NotificationCompat.Builder(BackgroundManager.this)
+                                .setSmallIcon(R.mipmap.ic_launcher)
+                                .setContentTitle("RoofText")
+                                .setContentText("We are running right! :)")
+                                .setContentIntent(pIntentOpenApp);
+                Notification notification = notificationBuilder.build();
+                notification.flags |= Notification.FLAG_AUTO_CANCEL;
+                startForeground(1500, notification);
+                foreground = true;
+            }
             Log.d(Tag.BACKGROUND_MANAGER, "RETVAL FUCK [" + retval + "]");
             sharedPreferenceManager.saveBackgroundState(retval);
             if (replyTo != null ) {
                 //if could not login then save session user/pass as empty
                 if (!retval) {
                     sharedPreferenceManager.saveSessionUsernamePass("", "");
-                } else {
-                    //if retval is true than must be logging in from main activity
-                    //start foreground service
-                    Intent notificationIntent = new Intent(BackgroundManager.this, LoginActivity.class);
-                    notificationIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    PendingIntent pIntentOpenApp = PendingIntent.getActivity(BackgroundManager.this,
-                            0,
-                            notificationIntent,
-                            0);
-                    NotificationCompat.Builder notificationBuilder =
-                            new NotificationCompat.Builder(BackgroundManager.this)
-                                    //TODO ADD IMAGE FOR NOTIFICATION
-                                    .setSmallIcon(R.mipmap.ic_launcher)
-                                    .setContentTitle("RoofText")
-                                    .setContentText("We are running right! :)")
-                                    .setContentIntent(pIntentOpenApp);
-                    Notification notification = notificationBuilder.build();
-                    notification.flags |= Notification.FLAG_AUTO_CANCEL;
-                    startForeground(1500, notification);
                 }
                 Log.d(Tag.BACKGROUND_MANAGER, "Setting up replyTo");
                 Message message = new Message();
@@ -463,6 +465,7 @@ public class BackgroundManager extends Service implements Flush {
                     sharedPreferenceManager.saveBackgroundState(false);
                     webSocketManager.disconnect();
                     BackgroundManager.this.stopForeground(true);
+                    foreground = false;
                     break;
                 case MSG_RESET_CONNECTION:
                     Log.d(Tag.BACKGROUND_MANAGER, "Resetting connection [" + Tag.BASE_URL + "]");
