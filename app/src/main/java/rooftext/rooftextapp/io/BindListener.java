@@ -1,9 +1,11 @@
 package rooftext.rooftextapp.io;
 
+import android.animation.ObjectAnimator;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.res.ObbInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -21,6 +23,14 @@ import rooftext.rooftextapp.utils.Tag;
  * Created by Jesse Saran on 7/22/2016.
  */
 public class BindListener {
+    //****NOTE DO NOT CHANGE THESE*****
+    public static final int ERROR_INVALID_VERSION_PATCH = 0,
+            ERROR_INVALID_VERSION_MINOR = 1,
+            ERROR_INVALID_VERSION_MAJOR = 2,
+            ERROR_NO_WIFI_ERROR = 3,
+            ERROR_INVALID_USER_PASS = 4,
+            ERROR_INVALID_WEBSOCKET_CONNECT = 5;
+
     private final Messenger mMessenger = new Messenger(new IncomingHandler());
     private Messenger mService = null;
     private boolean mIsBound;
@@ -55,24 +65,6 @@ public class BindListener {
         sendMessage(message);
     }
 
-    public void getConnectionUpdate() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (mService == null) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        Log.d(Tag.BIND_LISTENER, "Sleeping for connection interrupted.");
-                    }
-                }
-                Message message = new Message();
-                message.what = BackgroundManager.MSG_POST_WEBSOCKET_UPDATE;
-                sendMessage(message);
-            }
-        }).start();
-    }
-
     public boolean sendMessage(Message message) {
         message.replyTo = mMessenger;
         if (mService != null) {
@@ -86,12 +78,6 @@ public class BindListener {
         return false;
     }
 
-    public void logout() {
-        Message message = new Message();
-        message.what = BackgroundManager.MSG_LOGOUT_STOP_FOREGROUND;
-        sendMessage(message);
-    }
-
     private class IncomingHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
@@ -100,16 +86,18 @@ public class BindListener {
                     Log.d(Tag.BIND_LISTENER, "Received from service: " + msg.arg1);
                     break;
                 case BackgroundManager.MSG_ATTEMPT_LOGIN:
-                    Log.d(Tag.BIND_LISTENER, "Login response [" + msg.arg1 +
-                            "] userLoginTask [" + userLoginTask + "]");
                     if (userLoginTask != null) {
-                        loginResponse = (msg.arg1 != 0);
                         synchronized (userLoginTask) {
-                            userLoginTask.setDisplayMessage(msg.getData()
-                                    .getString(BackgroundManager.KEY_DISPLAY_MESSAGE));
-                            userLoginTask.notifyAll();
+                            Log.d(Tag.BIND_LISTENER, "Login response [" + msg.arg1 +
+                                    "] userLoginTask [" + userLoginTask + "] [" +
+                                    msg.arg2 + "] [" + (userLoginTask != null) + "]");
+                            if (userLoginTask != null) {
+                                loginResponse = (msg.arg1 != 0);
+                                userLoginTask.setError(msg.arg2);
+                                userLoginTask.notifyAll();
+                                userLoginTask = null;
+                            }
                         }
-                        userLoginTask = null;
                     }
                     break;
                 default:
@@ -123,18 +111,17 @@ public class BindListener {
     }
 
     private ServiceConnection mConnection = new ServiceConnection() {
+
         public void onServiceConnected(ComponentName className, IBinder service) {
             mService = new Messenger(service);
             Log.d(Tag.BIND_LISTENER, "Attached.");
 
             try {
-                Message msg = Message.obtain(null,
-                        BackgroundManager.MSG_REGISTER_CLIENT);
+                Message msg = Message.obtain(null, BackgroundManager.MSG_REGISTER_CLIENT);
                 msg.replyTo = mMessenger;
                 mService.send(msg);
 
-                msg = Message.obtain(null,
-                        BackgroundManager.MSG_SET_VALUE, this.hashCode(), 0);
+                msg = Message.obtain(null, BackgroundManager.MSG_SET_VALUE, this.hashCode(), 0);
                 mService.send(msg);
             } catch (RemoteException e) {
                 // In this case the service has crashed before we could even

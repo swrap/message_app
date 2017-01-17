@@ -13,13 +13,12 @@ public class SharedPreferenceManager {
     private static SharedPreferenceManager sharedPreferenceManager;
     private SharedPreferences preferences;
 
-    public enum PreferenceKey {
+    private enum PreferenceKey {
         USERNAME,
         PASSWORD,
         SESSION_USERNAME,
         SESSION_PASSWORD,
         REMEMBER_ME,
-        BACKGROUND_STATE,
     }
 
 
@@ -48,12 +47,6 @@ public class SharedPreferenceManager {
         return editor.putBoolean(PreferenceKey.REMEMBER_ME.name(), value).commit();
     }
 
-    public boolean saveBackgroundState(boolean value) {
-        Log.d("SHARED_PREFERENCE_MANAGER","Value [" + value + "]");
-        SharedPreferences.Editor editor = preferences.edit();
-        return editor.putBoolean(PreferenceKey.BACKGROUND_STATE.name(), value).commit();
-    }
-
     public boolean saveSessionUsernamePass(String username, String password) {
         SharedPreferences.Editor editor = preferences.edit();
         return editor.putString(PreferenceKey.SESSION_USERNAME.name(), username).commit() &&
@@ -70,10 +63,6 @@ public class SharedPreferenceManager {
 
     public boolean getRememberMe() {
         return preferences.getBoolean(PreferenceKey.REMEMBER_ME.name(), false);
-    }
-
-    public boolean getBackgroundState () {
-        return preferences.getBoolean(PreferenceKey.BACKGROUND_STATE.name(), false);
     }
 
     public String getSessionUsername() {

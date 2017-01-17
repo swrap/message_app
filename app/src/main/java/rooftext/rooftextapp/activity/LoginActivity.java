@@ -81,24 +81,19 @@ public class LoginActivity extends AppCompatActivity {
             {
                 Log.d(Tag.LOGIN_ACTIVITY, "Matched Background Service");
                 Toast.makeText(getApplicationContext(), "Background service is running", Toast.LENGTH_LONG).show();
+
+                //if the background service is currently running assume that we jumped back in from
+                //notify, we need to continue to the next activity
+                Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
+                LoginActivity.this.startActivityForResult(mainIntent, 55);
                 break;
             }
-            if (i == procInfos.size()-1 ) {
+            if (i == procInfos.size()-1) {
                 Log.d(Tag.LOGIN_ACTIVITY, "Login activity starting background manager.");
-                Intent intent = new Intent(this,BackgroundManager.class);
-                intent.putExtra(Tag.KEY_INTENT_LOGIN_ACTIVITY, true);
-                startService(intent);
+                startService(new Intent(this,BackgroundManager.class));
             }
         }
 
-        Log.d(Tag.LOGIN_ACTIVITY, "Shared Preference Manager background state["
-                + SharedPreferenceManager.getInstance(this).getBackgroundState() + "]");
-        //move to next activity if already running
-        if (SharedPreferenceManager.getInstance(this).getBackgroundState()) {
-            //TODO MAY NEED TO CHANGE THIS SHAREDPREFERENCE MANAGER MORE THAN ONE OF THESE IN LOGIN
-            Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
-            LoginActivity.this.startActivityForResult(mainIntent, 55);
-        }
         bindListener = new BindListener(this);
         bindListener.doBindService();
         setContentView(R.layout.activity_login);
@@ -346,16 +341,6 @@ public class LoginActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         showProgress(false);
-        Log.d(Tag.LOGIN_ACTIVITY, "Resuming [" +
-                SharedPreferenceManager.getInstance(this).getBackgroundState()
-         + "]");
-        //move to next activity if already running
-//        if (SharedPreferenceManager.getInstance(this).getBackgroundState()) {
-//            Log.d(Tag.LOGIN_ACTIVITY, "RESUME going to main activity");
-//            //TODO MAY NEED TO CHANGE THIS SHAREDPREFERENCE MANAGER MORE THAN ONE OF THESE IN LOGIN
-//            Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
-//            LoginActivity.this.startActivityForResult(mainIntent, 55);
-//        }
     }
 
     @Override
@@ -373,8 +358,7 @@ public class LoginActivity extends AppCompatActivity {
 
         private final String mUsername;
         private final String mPassword;
-        private String mErrorMessage = "";
-        private String displayMessage = "";
+        private int error = BindListener.ERROR_INVALID_USER_PASS;
 
         UserLoginTask(String username, String password) {
             mUsername = username;
@@ -383,7 +367,6 @@ public class LoginActivity extends AppCompatActivity {
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            mErrorMessage = getString(R.string.error_login);
             Log.d(Tag.LOGIN_ACTIVITY, "About to send message to login.");
             //set session use pass and then attempt login
             bindListener.sendUserPass(mUsername, mPassword, true);
@@ -395,6 +378,7 @@ public class LoginActivity extends AppCompatActivity {
             } catch (InterruptedException e) {
                 Log.d(Tag.LOGIN_ACTIVITY, "Waiting to login interrupted");
             }
+            Log.d(Tag.LOGIN_ACTIVITY, "Jumping out of return");
             return bindListener.getLoginResponse();
         }
 
@@ -404,10 +388,6 @@ public class LoginActivity extends AppCompatActivity {
 
             if (success) {
                 bindListener.sendUserPass(mUsername, mPassword, true);
-                Message message = new Message();
-                message.what = BackgroundManager.MSG_SAVE_BACKGROUND_STATE;
-                message.arg1 = 1;
-                bindListener.sendMessage(message);
                 Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
                 mainIntent.setAction(BackgroundManager.LOGIN_START);
                 //HARD coded value for value of 56 for fine return
@@ -415,29 +395,69 @@ public class LoginActivity extends AppCompatActivity {
                 Log.d(Tag.MAIN_ACTIVITY, "Coming back from Login Activity");
             } else {
                 showProgress(false);
-
-                if (displayMessage != null &&
-                        displayMessage.equals(LoginActivity.this.getString(R.string.invalid_version))) {
-                    Log.d(Tag.LOGIN_ACTIVITY, "Adding alert for correct version");
-                    AlertDialog.Builder correctVersionAlert = new AlertDialog.Builder(LoginActivity.this);
-                    correctVersionAlert.setMessage(displayMessage)
-                            .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                                @TargetApi(16)
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    LoginActivity.this.finishAndRemoveTask();
-                                    System.exit(0);
-                                }
-                            });
-                    correctVersionAlert.create();
-                    correctVersionAlert.show();
-                } else if (displayMessage != null &&
-                        displayMessage.equals(LoginActivity.this.getString(R.string.invalid_user_pass))) {
-                    mErrorMessage = displayMessage;
+                Toast toast;
+                AlertDialog.Builder correctVersionAlert;
+                switch (error) {
+                    case BindListener.ERROR_INVALID_VERSION_PATCH:
+                        Log.d(Tag.LOGIN_ACTIVITY, "Adding alert for correct version");
+                        correctVersionAlert = new AlertDialog.Builder(LoginActivity.this);
+                        correctVersionAlert.setMessage(String.format(LoginActivity.this.getString(R.string.invalid_version_patch)
+                                .replaceAll("XX","%"), Tag.VERSION))
+                                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                                    @TargetApi(16)
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                    }
+                                });
+                        correctVersionAlert.create();
+                        correctVersionAlert.show();
+                        break;
+                    case BindListener.ERROR_INVALID_VERSION_MINOR:
+                        Log.d(Tag.LOGIN_ACTIVITY, "Adding alert for correct version");
+                        correctVersionAlert = new AlertDialog.Builder(LoginActivity.this);
+                        correctVersionAlert.setMessage(String.format(LoginActivity.this.getString(R.string.invalid_version_minor)
+                                .replaceAll("XX","%"), Tag.VERSION))
+                                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                                    @TargetApi(16)
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                    }
+                                });
+                        correctVersionAlert.create();
+                        correctVersionAlert.show();
+                        break;
+                    case BindListener.ERROR_INVALID_VERSION_MAJOR:
+                        Log.d(Tag.LOGIN_ACTIVITY, "Adding alert for correct version");
+                        correctVersionAlert = new AlertDialog.Builder(LoginActivity.this);
+                        correctVersionAlert.setMessage(String.format(LoginActivity.this.getString(R.string.invalid_version_major)
+                                .replaceAll("XX","%"), Tag.VERSION))
+                                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                                    @TargetApi(16)
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                        LoginActivity.this.finishAndRemoveTask();
+                                        System.exit(0);
+                                    }
+                                });
+                        correctVersionAlert.create();
+                        correctVersionAlert.show();
+                        break;
+                    case BindListener.ERROR_NO_WIFI_ERROR:
+                        toast = Toast.makeText(LoginActivity.this, R.string.wifi_error_message, Toast.LENGTH_LONG);
+                        toast.setGravity(Gravity.CENTER | Gravity.TOP, 0, 250);
+                        toast.show();
+                        break;
+                    case BindListener.ERROR_INVALID_USER_PASS:
+                        toast = Toast.makeText(LoginActivity.this, R.string.invalid_user_pass, Toast.LENGTH_LONG);
+                        toast.setGravity(Gravity.CENTER | Gravity.TOP, 0, 250);
+                        toast.show();
+                        break;
+                    case BindListener.ERROR_INVALID_WEBSOCKET_CONNECT:
+                        toast = Toast.makeText(LoginActivity.this, R.string.invalid_websocket_connect, Toast.LENGTH_LONG);
+                        toast.setGravity(Gravity.CENTER | Gravity.TOP, 0, 250);
+                        toast.show();
+                        break;
                 }
-                Toast toast = Toast.makeText(LoginActivity.this, mErrorMessage, Toast.LENGTH_LONG);
-                toast.setGravity(Gravity.CENTER | Gravity.TOP, 0, 250);
-                toast.show();
             }
             mUsernameView.requestFocus();
             showKeyboard(true, mUsernameView);
@@ -449,8 +469,8 @@ public class LoginActivity extends AppCompatActivity {
             showProgress(false);
         }
 
-        public void setDisplayMessage(String s) {
-            displayMessage = s;
+        public void setError(int error) {
+            this.error = error;
         }
     }
 }

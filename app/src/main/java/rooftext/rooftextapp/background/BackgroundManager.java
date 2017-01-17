@@ -37,6 +37,7 @@ import rooftext.rooftextapp.background.io.NetworkManager;
 import rooftext.rooftextapp.background.io.SessionManager;
 import rooftext.rooftextapp.background.io.SharedPreferenceManager;
 import rooftext.rooftextapp.background.io.WebSocketManager;
+import rooftext.rooftextapp.io.BindListener;
 import rooftext.rooftextapp.io.JSONBuilder;
 import rooftext.rooftextapp.utils.PermissionsManager;
 import rooftext.rooftextapp.utils.Tag;
@@ -50,19 +51,18 @@ public class BackgroundManager extends Service implements Flush {
 
     public static final String LOGIN_START = "LOGIN START";
     private int sleep_time = 5000;
+    private boolean allowLogin = false;
 
     private RequestManager requestManager = null;
     private NetworkManager networkManager = null;
     private WebSocketManager webSocketManager = null;
     private SMSObserver smsObserver = null;
-    private static SharedPreferenceManager sharedPreferenceManager = null;
-    private static SessionManager sessionManager = null;
+    private SharedPreferenceManager sharedPreferenceManager = null;
+    private SessionManager sessionManager = null;
     private UserLoginTask mAuthTask;
     private boolean foreground = false;
 
     private ConnectionReciever connectionReciever;
-
-    private static boolean running = false;
 
     public BackgroundManager() {}
 
@@ -121,38 +121,11 @@ public class BackgroundManager extends Service implements Flush {
         intentFilter.addAction(Tag.ACTION_LOCAL_NETWORK_CHANGE);
         LocalBroadcastManager.getInstance(this).registerReceiver(connectionReciever,intentFilter);
 
-        running = true;
-        Log.d(Tag.BACKGROUND_MANAGER, "Background service has been created. Backgroundstate[" + sharedPreferenceManager.getBackgroundState() + "]");
+        Log.d(Tag.BACKGROUND_MANAGER, "Background service has been created.");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(Tag.BACKGROUND_MANAGER, "Background onStartCommand. Received start id [" + startId + "] [" + intent + "] backgroundstate[" + sharedPreferenceManager.getBackgroundState() + "]");
-        if (intent == null && sharedPreferenceManager.getBackgroundState() && networkManager.canConnectBackgroundService()) {
-            Log.d(Tag.BACKGROUND_MANAGER, "Starting login worker threads");
-            if (mAuthTask == null || mAuthTask.getState() == Thread.State.TERMINATED) {
-                mAuthTask = new UserLoginTask(sharedPreferenceManager.getUsername(),
-                        sharedPreferenceManager.getPassword(),
-                        null /*replyTo*/);
-                mAuthTask.start();
-            } else {
-                Log.d(Tag.BACKGROUND_MANAGER, "Thread already running :(... IDK?");
-            }
-        } else if (intent == null && !sharedPreferenceManager.getBackgroundState()) {
-            Log.d(Tag.BACKGROUND_MANAGER, "SharedPreferences background is false. And started after app closed. Stopping service.");
-            stopSelf();
-        } else if (intent != null && intent.getExtras() != null && intent.getExtras().getBoolean(Tag.KEY_INTENT_LOGIN_ACTIVITY)) {
-            Log.e(Tag.BACKGROUND_MANAGER, "Removed these.");
-            //should not start if started at start up of app
-//            if (mAuthTask == null || mAuthTask.getState() == Thread.State.TERMINATED) {
-//                mAuthTask = new UserLoginTask(sharedPreferenceManager.getUsername(),
-//                        sharedPreferenceManager.getPassword(),
-//                        null /*replyTo*/);
-//                mAuthTask.start();
-//            } else {
-//                Log.d(Tag.BACKGROUND_MANAGER, "Thread already running :(... IDK?");
-//            }
-        }
         return START_NOT_STICKY;// START_STICKY; //TODO TURN OFF FOR MATT TESTING
     }
 
@@ -179,12 +152,6 @@ public class BackgroundManager extends Service implements Flush {
         return retval;
     }
 
-    public boolean isRunning() {
-        return running;
-    }
-
-    //// TODO: 7/20/2016 check all thread.state.???? to do .equals(
-
     public void attemptThreadLogin(Messenger replyTo) {
         Log.d(Tag.BACKGROUND_MANAGER, "Attempting thread login, replyTo [" + replyTo + "]");
         String username = sharedPreferenceManager.getSessionUsername();
@@ -206,14 +173,11 @@ public class BackgroundManager extends Service implements Flush {
                     mAuthTask.start();
                 }
             } else {
-                //TODO REMOVE
-                Log.d(Tag.BACKGROUND_MANAGER, "Session values are empty.");
+                Log.d(Tag.BACKGROUND_MANAGER, "user pass values are empty.");
             }
         } else {
             Log.d(Tag.BACKGROUND_MANAGER, "Background manager is logged in, cancelling attempt to connect.");
         }
-        Log.d(Tag.BACKGROUND_MANAGER, "Background state is [" +
-                sharedPreferenceManager.getBackgroundState() + "]");
     }
 
     /**
@@ -225,6 +189,7 @@ public class BackgroundManager extends Service implements Flush {
         private final String mUsername;
         private final String mPassword;
         private final Messenger replyTo;
+        private int error = BindListener.ERROR_NO_WIFI_ERROR;
 
         /**
          * NOTE WILL NOT when replyto is not null with only attempt to connect once
@@ -236,47 +201,78 @@ public class BackgroundManager extends Service implements Flush {
         }
 
         public void run() {
-            boolean retval = false, versionProblems = false, internet = true;
+            boolean retval = false;
             Log.d(Tag.BACKGROUND_MANAGER, "Attempting login.");
             while(!retval) {
                 Log.d(Tag.BACKGROUND_MANAGER, "Updated base url to [" + Tag.BASE_URL + "]");
-                if (!(internet = networkManager.canConnectBackgroundService())) {
-                    Log.d(Tag.BACKGROUND_MANAGER, "No internet service, halting attempt to connect.");
+                if (sharedPreferenceManager.getSessionUsername().equals("") && sharedPreferenceManager.getSessionPassword().equals("")) {
+                    Log.d(Tag.BACKGROUND_MANAGER, "PROBLEM PROBLEM PROBLEM Got into connection somehow without session values. exiting.");
                     break;
                 } else {
-                    if (sharedPreferenceManager.getSessionUsername().equals("") && sharedPreferenceManager.getSessionPassword().equals("")) {
-                        Log.d(Tag.BACKGROUND_MANAGER, "PROBLEM PROBLEM PROBLEM Got into connection somehow without session values. exiting.");
-                        break;
-                    } else {
-                        if (sessionManager.correctVersion()) {
-                            retval = attemptLogin();
-                            Log.d(Tag.BACKGROUND_MANAGER, "attempted login retval [" + retval + "], replyTo [" + replyTo + "]");
-                            if (retval) {
-                                if (replyTo != null) {
-                                    Log.d(Tag.BACKGROUND_MANAGER, "Reply to is not null.");
-                                }
-                            } else {
-                                //if reply to has something than quit tring
-                                if(replyTo != null) {
-                                    Log.d(Tag.BACKGROUND_MANAGER, "Reply to is not null, quitting attempts to connect.");
-                                    break;
-                                }
-                                Log.d(Tag.BACKGROUND_MANAGER, "Could not connect, sleeping for [" + sleep_time + "] millis.");
-                                try {
-                                    sleep(sleep_time);
-                                } catch (InterruptedException e) {
-                                    Log.e(Tag.BACKGROUND_MANAGER, "Interrupted sleep. BAD! Breaking", e);
-                                    break;
+                    retval = attemptLogin();
+                    Log.d(Tag.BACKGROUND_MANAGER, "attempted login retval [" + retval + "], replyTo [" + replyTo + "]");
+
+                    if(replyTo != null) {
+                        //if reply to has something
+                        Log.d(Tag.BACKGROUND_MANAGER, "Reply to is not null, quitting attempts to connect.");
+                        //if could not login then save session user/pass as empty
+                        sharedPreferenceManager.saveSessionUsernamePass("", "");
+                        Log.d(Tag.BACKGROUND_MANAGER, "Setting up replyTo");
+                        Message message = new Message();
+                        message.what = MSG_ATTEMPT_LOGIN;
+                        message.arg1 = retval ? 1 : 0;
+                        if (!retval) {
+                            message.arg2 = error;
+                            if (sessionManager.getVersion() != null &&
+                                    !sessionManager.getVersion().isEmpty() &&
+                                    (error == BindListener.ERROR_INVALID_VERSION_PATCH ||
+                                            error == BindListener.ERROR_INVALID_VERSION_MINOR ||
+                                            error == BindListener.ERROR_INVALID_VERSION_MAJOR)) {
+                                //error with version :(
+                                Log.d(Tag.BACKGROUND_MANAGER, "PROBLEMS WITH WRONG VERSION");
+                                switch (error) {
+                                    case BindListener.ERROR_INVALID_VERSION_PATCH:
+                                        showNotificationAboutVersion(String.format(BackgroundManager.this.getString(R.string.invalid_version_patch)
+                                                .replaceAll("XX","%"), Tag.VERSION));
+                                        break;
+                                    case BindListener.ERROR_INVALID_VERSION_MINOR:
+                                        showNotificationAboutVersion(String.format(BackgroundManager.this.getString(R.string.invalid_version_minor)
+                                                .replaceAll("XX","%"), Tag.VERSION));
+                                        break;
+                                    case BindListener.ERROR_INVALID_VERSION_MAJOR:
+                                        showNotificationAboutVersion(String.format(BackgroundManager.this.getString(R.string.invalid_version_major)
+                                            .replaceAll("XX","%"), Tag.VERSION));
+                                        BackgroundManager.this.stopSelf();
+                                        break;
                                 }
                             }
-                        } else {
-                            versionProblems = true;
+                        }
+                        try {
+                            Log.d(Tag.BACKGROUND_MANAGER, "Sending response in message about login [" + retval + "]");
+                            replyTo.send(message);
+                        } catch (RemoteException e) {
+                            Log.d(Tag.BACKGROUND_MANAGER, "Could not send response back. Serious issue.");
+                        }
+                        break;
+                    }
+                    if (retval) {
+                        //retval is true break
+                        break;
+                    } else {
+                        //return val is false try again
+                        Log.d(Tag.BACKGROUND_MANAGER, "Could not connect, sleeping for [" + sleep_time + "] millis.");
+                        try {
+                            sleep(sleep_time);
+                        } catch (InterruptedException e) {
+                            Log.e(Tag.BACKGROUND_MANAGER, "Interrupted sleep. BAD! Breaking", e);
                             break;
                         }
                     }
                 }
             }
+
             if (retval && !foreground) {
+                //really only need this in testing when restarting service but may cause bugs, but not known at the moment
                 //if retval is true than must be logging in from main activity
                 //start foreground service
                 Intent notificationIntent = new Intent(BackgroundManager.this, LoginActivity.class);
@@ -295,52 +291,10 @@ public class BackgroundManager extends Service implements Flush {
                 notification.flags |= Notification.FLAG_AUTO_CANCEL;
                 startForeground(1500, notification);
                 foreground = true;
+                allowLogin = true;
             }
+
             Log.d(Tag.BACKGROUND_MANAGER, "RETVAL FUCK [" + retval + "]");
-            sharedPreferenceManager.saveBackgroundState(retval);
-            if (replyTo != null ) {
-                //if could not login then save session user/pass as empty
-                if (!retval) {
-                    sharedPreferenceManager.saveSessionUsernamePass("", "");
-                }
-                Log.d(Tag.BACKGROUND_MANAGER, "Setting up replyTo");
-                Message message = new Message();
-                message.what = MSG_ATTEMPT_LOGIN;
-                message.arg1 = retval ? 1 : 0;
-                Bundle bundle = new Bundle();
-                if (versionProblems && sessionManager.getVersion() != null) {
-                    bundle.putString(KEY_DISPLAY_MESSAGE,
-                            String.format(BackgroundManager.this.getString(R.string.invalid_version)
-                                    .replaceAll("XX","%"), Tag.VERSION, sessionManager.getVersion()));
-                    message.setData(bundle);
-                    Log.e(Tag.BACKGROUND_MANAGER, "PROBLEMS WITH WRONG VERSION SHUTTING DOWN BACKGROUND THREAD");
-                    showNotificationAboutVersion();
-                    sharedPreferenceManager.saveBackgroundState(false);
-                    BackgroundManager.this.stopSelf();
-                } else if (!retval) {
-                    //add in message that invalid user or pass
-                    bundle.putString(KEY_DISPLAY_MESSAGE,
-                            BackgroundManager.this.getString(R.string.invalid_user_pass));
-                    message.setData(bundle);
-                }
-                try {
-                    Log.d(Tag.BACKGROUND_MANAGER, "Sending response in message about login [" + retval + "]");
-                    replyTo.send(message);
-                } catch (RemoteException e) {
-                    Log.d(Tag.BACKGROUND_MANAGER, "Could not send response back. Serious issue.");
-                }
-            } else if (internet && versionProblems && sessionManager.getVersion() != null) {
-                Intent intent = new Intent(Tag.ACTION_LOCAL_INVALID_VERSION);
-                intent.putExtra(KEY_DISPLAY_MESSAGE,
-                        String.format(BackgroundManager.this.getString(R.string.invalid_version)
-                                .replaceAll("XX","%"), Tag.VERSION, sessionManager.getVersion()));
-                sharedPreferenceManager.saveBackgroundState(false);
-                Log.d(Tag.BACKGROUND_MANAGER, "Posting INVALID VERSION change for main activity ["
-                        + sharedPreferenceManager.getBackgroundState() + "]");
-                showNotificationAboutVersion();
-                BackgroundManager.this.sendBroadcast(intent);
-                BackgroundManager.this.stopSelf();
-            }
             //send change up state update
             Log.d(Tag.BACKGROUND_MANAGER, "Logged in successfully, sending update to ui.");
             Intent intent = new Intent(Tag.ACTION_WEBSOC_CHANGE);
@@ -349,16 +303,16 @@ public class BackgroundManager extends Service implements Flush {
             BackgroundManager.this.sendBroadcast(intent);
         }
 
-        private void showNotificationAboutVersion() {
+        private void showNotificationAboutVersion(String message) {
             NotificationCompat.Builder mBuilder =
                     new NotificationCompat.Builder(BackgroundManager.this)
                             //TODO ADD IMAGE FOR NOTIFICATION
                             .setSmallIcon(R.mipmap.ic_launcher)
                             .setContentTitle("RoofText: Invalid Version")
                             .setContentText("Update Version of App")
-                            .setSubText("The app will fail to connect without update.");
-            NotificationManager mNotificationManager =
-                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                            .setStyle(new android.support.v4.app.NotificationCompat.BigTextStyle()
+                                    .bigText(message));
+            NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             // mId allows you to update the notification later on.
             mNotificationManager.notify(100, mBuilder.build());
         }
@@ -375,11 +329,37 @@ public class BackgroundManager extends Service implements Flush {
                         retval = webSocketManager.createConnection();
                         if (!retval) {
                             //we can login but not create a connection
-                            Log.d(Tag.BACKGROUND_MANAGER, "Can login, but cannot connect socket.");
+                            Log.e(Tag.BACKGROUND_MANAGER, "Can login, but cannot connect socket.");
                             sessionManager.logout(mUsername, mPassword);
+                        } else {
+                            error = BindListener.ERROR_INVALID_WEBSOCKET_CONNECT;
                         }
+                    } else {
+                        //login error
+                        error = BindListener.ERROR_INVALID_USER_PASS;
+                    }
+                } else {
+                    //change error message based off of response
+                    Log.d(Tag.BACKGROUND_MANAGER, "VERSIONS [" + Tag.VERSION + "] [" + sessionManager.getVersion() + "]");
+                    String [] myVer = Tag.VERSION.split("\\.");
+                    String [] serVer = sessionManager.getVersion().split("\\.");
+                    Log.d(Tag.BACKGROUND_MANAGER, "myver [" + myVer.length + "] serVer [" + serVer.length + "]");
+                    if (!myVer[0].equals(serVer[0])) {
+                        //major version
+                        error = BindListener.ERROR_INVALID_VERSION_MAJOR;
+                    } else if (!myVer[1].equals(serVer[1])) {
+                        //minor version
+                        error = BindListener.ERROR_INVALID_VERSION_MINOR;
+                    } else if (!myVer[2].equals(serVer[2])) {
+                        //patch/bug version
+                        error = BindListener.ERROR_INVALID_VERSION_PATCH;
+                    } else {
+                        //default if they do not match assume major error and update
+                        error = BindListener.ERROR_INVALID_VERSION_MAJOR;
                     }
                 }
+            } else {
+                error = BindListener.ERROR_NO_WIFI_ERROR;
             }
             Log.d(Tag.BACKGROUND_MANAGER, "response on login [" + retval + "]");
             return retval;
@@ -391,19 +371,14 @@ public class BackgroundManager extends Service implements Flush {
     public static final int MSG_REGISTER_CLIENT = 1;
     public static final int MSG_UNREGISTER_CLIENT = 2;
     public static final int MSG_SET_VALUE = 3;
-    public static final int MSG_ACTION_BUTTON = 4;
     public static final int MSG_SAVE_USERNAME_PASS = 5;
     public static final int MSG_SAVE_SESSION_USERNAME_PASS = 6;
     public static final int MSG_SAVE_REMEMBERME = 7;
-    public static final int MSG_SAVE_BACKGROUND_STATE = 8;
     public static final int MSG_ATTEMPT_LOGIN = 9;
     public static final int MSG_POST_WEBSOCKET_UPDATE = 11;
     public static final int MSG_LOGOUT_STOP_FOREGROUND = 12;
-    public static final int MSG_RESET_CONNECTION = 13;
 
-    public static final String KEY_ACTION = "KEY_ACTION"; //TODO REMOVE AFTER TESTING
     public static final String KEY_USERNAME_PASS = "KEY_USERNAME_PASS";
-    public static final String KEY_CONNECTION_IP = "KEY_CONNECTION_IP";
 
     public static final String KEY_DISPLAY_MESSAGE = "KEY_DISPLAY_MESSAGE";
 
@@ -439,22 +414,19 @@ public class BackgroundManager extends Service implements Flush {
                 case MSG_SAVE_REMEMBERME:
                     sharedPreferenceManager.saveRememberMe(msg.arg1 == 0 ? false : true);
                     break;
-                case MSG_SAVE_BACKGROUND_STATE:
-                    Log.d(Tag.BACKGROUND_MANAGER,"Saving background state as[" + (msg.arg1 == 0 ? false : true) + "]");
-                    sharedPreferenceManager.saveBackgroundState(msg.arg1 == 0 ? false : true);
-                    break;
                 case MSG_ATTEMPT_LOGIN:
                     Log.d(Tag.BACKGROUND_MANAGER,"MSG_ATTEMPT_LOGIN");
                     attemptThreadLogin(msg.replyTo);
                     break;
                 case MSG_POST_WEBSOCKET_UPDATE:
-                    if (webSocketManager.getState() == WebSocketState.CLOSED) {
+                    if (webSocketManager.getState() == WebSocketState.CLOSED && allowLogin) {
                         //if the websocket is closed then try to reconnect
                         attemptThreadLogin(null);
                     }
                     Intent intent = new Intent(Tag.ACTION_WEBSOC_CHANGE);
                     intent.putExtra("state", webSocketManager.getLocalizeState());
-                    Log.d(Tag.BACKGROUND_MANAGER, "POSTING STATE OF WEBSOCKET CHANGE.");
+                    Log.d(Tag.BACKGROUND_MANAGER, "POSTING STATE OF WEBSOCKET CHANGE. [" +
+                            webSocketManager.getLocalizeState() + "]");
                     BackgroundManager.this.sendBroadcast(intent);
                     break;
                 case MSG_LOGOUT_STOP_FOREGROUND:
@@ -462,18 +434,9 @@ public class BackgroundManager extends Service implements Flush {
                     sessionManager.logout(sharedPreferenceManager.getSessionUsername(),
                             sharedPreferenceManager.getSessionPassword());
                     sharedPreferenceManager.saveSessionUsernamePass("", "");
-                    sharedPreferenceManager.saveBackgroundState(false);
                     webSocketManager.disconnect();
                     BackgroundManager.this.stopForeground(true);
                     foreground = false;
-                    break;
-                case MSG_RESET_CONNECTION:
-                    Log.d(Tag.BACKGROUND_MANAGER, "Resetting connection [" + Tag.BASE_URL + "]");
-                    if (webSocketManager.getState() == WebSocketState.CLOSED) {
-                        webSocketManager.createConnection();
-                    } else {
-                        webSocketManager.disconnect();
-                    }
                     break;
                 default:
                     super.handleMessage(msg);
@@ -485,7 +448,6 @@ public class BackgroundManager extends Service implements Flush {
         // Tell the user we stopped.
         Toast.makeText(this, R.string.remote_service_stopped, Toast.LENGTH_SHORT).show();
         Log.d(Tag.BACKGROUND_MANAGER, "Destroying now.");
-        running = false;
         this.unregisterReceiver(networkManager);
 //        this.unregisterReceiver(webSocketManager);
 //        this.unregisterReceiver(connectionReciever);
@@ -510,7 +472,7 @@ public class BackgroundManager extends Service implements Flush {
                 final String state = intent.getStringExtra("state");
                 Log.d(Tag.BACKGROUND_MANAGER, "State changed receiving broadcast. State [" + state + "], " +
                         "webSocketState [" + webSocketManager.localizeState(WebSocketState.CLOSED) + "]");
-                if (state.equals(webSocketManager.localizeState(WebSocketState.CLOSED))) {
+                if (state.equals(webSocketManager.localizeState(WebSocketState.CLOSED)) && allowLogin) {
                     Log.d(Tag.BACKGROUND_MANAGER, "Received websocket change state is [" + webSocketManager.getLocalizeState() + "]");
                     attemptThreadLogin(null);
                 }
@@ -522,7 +484,7 @@ public class BackgroundManager extends Service implements Flush {
                     Log.e(Tag.BACKGROUND_MANAGER, "Could not create cancelled action to send.");
                 }
                 webSocketManager.sendString(jsonObject.toString());
-            } else if (action.equals(Tag.ACTION_LOCAL_NETWORK_CHANGE) && sharedPreferenceManager.getBackgroundState()) {
+            } else if (action.equals(Tag.ACTION_LOCAL_NETWORK_CHANGE) && allowLogin) {
                 Log.d(Tag.BACKGROUND_MANAGER, "Local network change detected. Asking for new attemptThreadLogin");
                 attemptThreadLogin(null);
             }

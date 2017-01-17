@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity{
             }
         }
 
-        ((Button)findViewById(R.id.logoutBtn)).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.logoutBtn).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 MainActivity.this.closeConnLogout();

@@ -15,7 +15,6 @@
     <string name="permission_rationale">"Contact, Sending SMS, and Reading SMS are required."</string>
     <string name="contact_rationale">"We need to access your contacts in order to sync with your account."</string>
     <string name="sms_rationale">"We need to access your messages in order to sync with your account."</string>
-    <string name="error_login">"Failed to login:("</string>
     <string name="title_activity_login">RoofText: Sign In</string>
     <string name="error_permissions">Can not connect without the minimum permissions required for this app.</string>
     <string name="enable_permissions">Go to Permissions Page</string>
@@ -62,8 +61,12 @@
         run in, therefore you wont be connected to RoofText :(, so we will not be connected to the browser.
         Questions, check us out at: www.rooftext.com.</string>
 
-    <!-- Version -->
-    <string name="invalid_version">Your app is at version XXs, in order to connect to our servers you need the most up to date version XXs</string>
+    <!-- Errors on Login -->
+    <string name="invalid_version_patch">Your app is at version XXs, we made some light bug fixes, please go and update.</string>
+    <string name="invalid_version_minor">Your app is at version XXs, we recommend you update. You will be able to connect, but some services may not work 100 percent correctly.</string>
+    <string name="invalid_version_major">Your app is at version XXs, in order to connect to our servers you need the most up to date to the most recent version.</string>
     <string name="update">Update App</string>
     <string name="invalid_user_pass">Invalid username or password</string>
+    <string name="wifi_error_message">No wifi, failed to login</string>
+    <string name="invalid_websocket_connect">Error with socket connect. Contact service</string>
 </resources>
