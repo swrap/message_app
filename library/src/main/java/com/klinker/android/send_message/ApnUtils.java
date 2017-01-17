@@ -32,28 +32,32 @@ public class ApnUtils {
             if (listener != null) {
                 listener.onFinished();
             }
-        } else if (apns.size() == 1) {
-            setApns(context, apns.get(0));
-            if (listener != null) {
-                listener.onFinished();
-            }
         } else {
-            if (!PreferenceManager.getDefaultSharedPreferences(context).getBoolean("has_seen_select_apns_warning", false)) {
-                new AlertDialog.Builder(context)
-                        .setTitle(R.string.auto_select_apn)
-                        .setMessage(R.string.auto_select_multiple_apns)
-                        .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int num) {
-                                showApnChooser(context, apns, listener);
-                            }
-                        })
-                        .show();
-                PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean("has_seen_select_apns_warning", true).commit();
-            } else {
-                showApnChooser(context, apns, listener);
+            for (APN a : apns) {
+                if (a.mmsc.toLowerCase().contains("phone")) {
+                    setApns(context, a);
+                    return;
+                }
             }
+            setApns(context, apns.get(0));
         }
+//        } else {
+//            if (!PreferenceManager.getDefaultSharedPreferences(context).getBoolean("has_seen_select_apns_warning", false)) {
+//                new AlertDialog.Builder(context)
+//                        .setTitle(R.string.auto_select_apn)
+//                        .setMessage(R.string.auto_select_multiple_apns)
+//                        .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+//                            @Override
+//                            public void onClick(DialogInterface dialogInterface, int num) {
+//                                showApnChooser(context, apns, listener);
+//                            }
+//                        })
+//                        .show();
+//                PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean("has_seen_select_apns_warning", true).commit();
+//            } else {
+//                showApnChooser(context, apns, listener);
+//            }
+//        }
     }
 
     private static void showApnChooser(final Context context, final ArrayList<APN> apns, final OnApnFinishedListener listener) {
