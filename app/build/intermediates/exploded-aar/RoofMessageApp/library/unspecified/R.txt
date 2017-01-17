@@ -1,5 +1,4 @@
 int drawable ic_alert 0x7f020000
-int drawable ic_notify 0x7f020001
 int string auto_select_apn 0x7f040000
 int string auto_select_failed 0x7f040001
 int string auto_select_multiple_apns 0x7f040002

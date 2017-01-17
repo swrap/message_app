@@ -189,7 +189,7 @@ public class BackgroundManager extends Service implements Flush {
         private final String mUsername;
         private final String mPassword;
         private final Messenger replyTo;
-        private int error = BindListener.ERROR_NO_WIFI_ERROR;
+        private int error = -1;
 
         /**
          * NOTE WILL NOT when replyto is not null with only attempt to connect once
@@ -342,20 +342,22 @@ public class BackgroundManager extends Service implements Flush {
                     //change error message based off of response
                     Log.d(Tag.BACKGROUND_MANAGER, "VERSIONS [" + Tag.VERSION + "] [" + sessionManager.getVersion() + "]");
                     String [] myVer = Tag.VERSION.split("\\.");
-                    String [] serVer = sessionManager.getVersion().split("\\.");
-                    Log.d(Tag.BACKGROUND_MANAGER, "myver [" + myVer.length + "] serVer [" + serVer.length + "]");
-                    if (!myVer[0].equals(serVer[0])) {
-                        //major version
-                        error = BindListener.ERROR_INVALID_VERSION_MAJOR;
-                    } else if (!myVer[1].equals(serVer[1])) {
-                        //minor version
-                        error = BindListener.ERROR_INVALID_VERSION_MINOR;
-                    } else if (!myVer[2].equals(serVer[2])) {
-                        //patch/bug version
-                        error = BindListener.ERROR_INVALID_VERSION_PATCH;
-                    } else {
-                        //default if they do not match assume major error and update
-                        error = BindListener.ERROR_INVALID_VERSION_MAJOR;
+                    if (sessionManager.getVersion() != null) {
+                        String [] serVer = sessionManager.getVersion().split("\\.");
+                        Log.d(Tag.BACKGROUND_MANAGER, "myver [" + myVer.length + "] serVer [" + serVer.length + "]");
+                        if (!myVer[0].equals(serVer[0])) {
+                            //major version
+                            error = BindListener.ERROR_INVALID_VERSION_MAJOR;
+                        } else if (!myVer[1].equals(serVer[1])) {
+                            //minor version
+                            error = BindListener.ERROR_INVALID_VERSION_MINOR;
+                        } else if (!myVer[2].equals(serVer[2])) {
+                            //patch/bug version
+                            error = BindListener.ERROR_INVALID_VERSION_PATCH;
+                        } else {
+                            //default if they do not match assume major error and update
+                            error = BindListener.ERROR_INVALID_VERSION_MAJOR;
+                        }
                     }
                 }
             } else {

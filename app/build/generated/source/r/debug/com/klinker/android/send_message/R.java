@@ -9,7 +9,6 @@ package com.klinker.android.send_message;
 public final class R {
 	public static final class drawable {
 		public static final int ic_alert = 0x7f020056;
-		public static final int ic_notify = 0x7f020058;
 	}
 	public static final class string {
 		public static final int auto_select_apn = 0x7f070024;
@@ -18,18 +17,18 @@ public final class R {
 		public static final int dl_failure_notification = 0x7f070031;
 		public static final int download_later = 0x7f070032;
 		public static final int error = 0x7f070034;
-		public static final int invalid_destination = 0x7f070039;
-		public static final int message_delivered = 0x7f07003c;
-		public static final int message_not_delivered = 0x7f07003d;
-		public static final int message_queued = 0x7f07003e;
-		public static final int no_apn = 0x7f07003f;
-		public static final int no_subject = 0x7f070040;
-		public static final int ok = 0x7f070041;
-		public static final int service_message_not_found = 0x7f070052;
-		public static final int service_network_problem = 0x7f070053;
-		public static final int service_not_activated = 0x7f070054;
-		public static final int unknown_sender = 0x7f070061;
-		public static final int write_settings_permission = 0x7f070063;
+		public static final int invalid_destination = 0x7f070038;
+		public static final int message_delivered = 0x7f07003e;
+		public static final int message_not_delivered = 0x7f07003f;
+		public static final int message_queued = 0x7f070040;
+		public static final int no_apn = 0x7f070041;
+		public static final int no_subject = 0x7f070042;
+		public static final int ok = 0x7f070043;
+		public static final int service_message_not_found = 0x7f070054;
+		public static final int service_network_problem = 0x7f070055;
+		public static final int service_not_activated = 0x7f070056;
+		public static final int unknown_sender = 0x7f070063;
+		public static final int write_settings_permission = 0x7f070066;
 	}
 	public static final class xml {
 		public static final int apns = 0x7f060000;
