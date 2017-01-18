@@ -14,7 +14,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,12 +39,13 @@ public class MainActivity extends AppCompatActivity{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(Tag.MAIN_ACTIVITY, "Starting Main Activity");
         setContentView(R.layout.activity_main);
 
         connectionReciever = new ConnectionReciever();
         intent_filter.addAction(Tag.ACTION_RECEIVED_MESSAGE);
         intent_filter.addAction(Tag.ACTION_WEBSOC_CHANGE);
-        intent_filter.addAction(Tag.ACTION_LOCAL_INVALID_VERSION);
+        intent_filter.addAction(Tag.ACTION_FAILED_LOGIN);
         registerReceiver(connectionReciever, intent_filter);
 
         mStatus = (TextView) findViewById(R.id.status);
@@ -154,12 +154,14 @@ public class MainActivity extends AppCompatActivity{
 
     @Override
     protected void onPause() {
+        Log.d(Tag.MAIN_ACTIVITY, "Pause");
         updateConnectionUI();
         super.onPause();
     }
 
     @Override
     protected void onResume() {
+        Log.d(Tag.MAIN_ACTIVITY, "Resume");
         updateConnectionUI();
         super.onResume();
     }
@@ -187,32 +189,27 @@ public class MainActivity extends AppCompatActivity{
                         mMessage.setText(message);
                     }
                 });
-            } else if (action.equals(Tag.ACTION_LOCAL_INVALID_VERSION)) {
-                    Log.d(Tag.MAIN_ACTIVITY, "Recevied invalid version.");
-                    final String message = intent.getStringExtra(BackgroundManager.KEY_DISPLAY_MESSAGE);
-                    MainActivity.this.mStatus.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            android.support.v7.app.AlertDialog.Builder correctVersionAlert =
-                                    new android.support.v7.app.AlertDialog.Builder(MainActivity.this);
-                            correctVersionAlert.setMessage(message)
-                                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                                        @TargetApi(16)
-                                        @Override
-                                        public void onClick(DialogInterface dialogInterface, int i) {
-                                            //HARD coded value for value of 57 for invalid version
-                                            MainActivity.this.setResult(57);
-                                            MainActivity.this.finishAndRemoveTask();
-                                            Log.d(Tag.MAIN_ACTIVITY, "EXITING APP");
-                                            //TODO MAKE THIS FINISH MORE CLEANELY. Right now it goes to login when finished
-//                                            System.exit(0);
-                                        }
-                                    });
-                            correctVersionAlert.create();
-                            correctVersionAlert.show();
-                        }
-                    });
+            } else if (action.equals(Tag.ACTION_FAILED_LOGIN)) {
+                Log.d(Tag.MAIN_ACTIVITY, "Recevied invalid version.");
+                int message = intent.getIntExtra(BackgroundManager.KEY_DISPLAY_MESSAGE, -1);
+                if (message != -1) {
+                    android.support.v7.app.AlertDialog.Builder correctVersionAlert =
+                            new android.support.v7.app.AlertDialog.Builder(MainActivity.this);
+                    correctVersionAlert.setMessage(R.string.invalid_user_pass)
+                            .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                                @TargetApi(16)
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    stopService(new Intent(MainActivity.this, BackgroundManager.class));
+                                    MainActivity.this.setResult(55);
+                                    MainActivity.this.finishAndRemoveTask();
+                                    Log.d(Tag.MAIN_ACTIVITY, "Exiting main");
+                                }
+                            });
+                    correctVersionAlert.create();
+                    correctVersionAlert.show();
                 }
+            }
         }
     }
 }

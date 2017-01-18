@@ -65,6 +65,8 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(Tag.MAIN_ACTIVITY, "Starting Login Activity");
+
         //TODO add this in to fix threads
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -81,17 +83,18 @@ public class LoginActivity extends AppCompatActivity {
             {
                 Log.d(Tag.LOGIN_ACTIVITY, "Matched Background Service");
                 Toast.makeText(getApplicationContext(), "Background service is running", Toast.LENGTH_LONG).show();
-
-                //if the background service is currently running assume that we jumped back in from
-                //notify, we need to continue to the next activity
-                Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
-                LoginActivity.this.startActivityForResult(mainIntent, 55);
-                break;
             }
             if (i == procInfos.size()-1) {
                 Log.d(Tag.LOGIN_ACTIVITY, "Login activity starting background manager.");
                 startService(new Intent(this,BackgroundManager.class));
             }
+        }
+
+        if (SharedPreferenceManager.getInstance(this).getBackgroundState()) {
+            //if the background service is currently running assume that we jumped back in from
+            //notify, we need to continue to the next activity
+            Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
+            LoginActivity.this.startActivityForResult(mainIntent, 55);
         }
 
         bindListener = new BindListener(this);
@@ -347,6 +350,7 @@ public class LoginActivity extends AppCompatActivity {
     public void onDestroy() {
         Log.d(Tag.LOGIN_ACTIVITY,"CLOSING APP");
         bindListener.doUnbindService();
+        stopService(new Intent(LoginActivity.this, BackgroundManager.class));
         super.onDestroy();
     }
 

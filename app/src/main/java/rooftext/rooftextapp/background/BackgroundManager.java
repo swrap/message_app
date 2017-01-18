@@ -133,13 +133,21 @@ public class BackgroundManager extends Service implements Flush {
     public boolean flush() {
         Log.d(Tag.BACKGROUND_MANAGER, "Flushing now.");
         boolean retval = false;
+        if (connectionReciever != null) {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(connectionReciever);
+        } else {
+            Log.d(Tag.BACKGROUND_MANAGER, "Connection receiver is null");
+        }
+
         if (webSocketManager != null) {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(webSocketManager);
             retval = webSocketManager.flush();
         } else {
             Log.d(Tag.BACKGROUND_MANAGER, "Websocket manager is null");
         }
         if (networkManager != null) {
-            super.unregisterReceiver(networkManager);
+            unregisterReceiver(networkManager);
+            webSocketManager.flush();
         } else {
             Log.d(Tag.BACKGROUND_MANAGER, "Network manager is null");
         }
@@ -259,6 +267,17 @@ public class BackgroundManager extends Service implements Flush {
                         //retval is true break
                         break;
                     } else {
+                        Log.d(Tag.BACKGROUND_MANAGER, "RESPONSE [" + sessionManager.getLoginResponseCode() + "]");
+                        if (sessionManager.getLoginResponseCode() != -1) {
+                            //assume that password is invalid
+                            sharedPreferenceManager.saveSessionUsernamePass("","");
+                            allowLogin = false;
+                            sharedPreferenceManager.saveBackgroundState(false);
+                            stopForeground(true);
+                            BackgroundManager.this.stopSelf();
+                            Log.d(Tag.BACKGROUND_MANAGER, "RESPONSE Changer 3");
+                            return;
+                        }
                         //return val is false try again
                         Log.d(Tag.BACKGROUND_MANAGER, "Could not connect, sleeping for [" + sleep_time + "] millis.");
                         try {
@@ -290,6 +309,7 @@ public class BackgroundManager extends Service implements Flush {
                 Notification notification = notificationBuilder.build();
                 notification.flags |= Notification.FLAG_AUTO_CANCEL;
                 startForeground(1500, notification);
+                sharedPreferenceManager.saveBackgroundState(true);
                 foreground = true;
                 allowLogin = true;
             }
@@ -337,6 +357,13 @@ public class BackgroundManager extends Service implements Flush {
                     } else {
                         //login error
                         error = BindListener.ERROR_INVALID_USER_PASS;
+                        if (allowLogin) {
+                            //if allowed to be logged in then assume that is in background already
+                            //take out of foreground and send out intent
+                            Intent intent = new Intent(Tag.ACTION_FAILED_LOGIN);
+                            intent.putExtra(KEY_DISPLAY_MESSAGE, sessionManager.getLoginResponseCode());
+                            BackgroundManager.this.sendBroadcast(intent);
+                        }
                     }
                 } else {
                     //change error message based off of response
@@ -437,6 +464,7 @@ public class BackgroundManager extends Service implements Flush {
                             sharedPreferenceManager.getSessionPassword());
                     sharedPreferenceManager.saveSessionUsernamePass("", "");
                     webSocketManager.disconnect();
+                    sharedPreferenceManager.saveBackgroundState(false);
                     BackgroundManager.this.stopForeground(true);
                     foreground = false;
                     break;
@@ -450,9 +478,7 @@ public class BackgroundManager extends Service implements Flush {
         // Tell the user we stopped.
         Toast.makeText(this, R.string.remote_service_stopped, Toast.LENGTH_SHORT).show();
         Log.d(Tag.BACKGROUND_MANAGER, "Destroying now.");
-        this.unregisterReceiver(networkManager);
-//        this.unregisterReceiver(webSocketManager);
-//        this.unregisterReceiver(connectionReciever);
+        this.flush();
         Log.d(Tag.BACKGROUND_MANAGER, "Destroying done.");
         super.onDestroy();
     }

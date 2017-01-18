@@ -20,7 +20,6 @@ public class Tag {
         public static final String MESSAGE_WAITING = BASE_TAG + "MessageWaiting";
         public static final String SMSMMSDELIVERY = BASE_TAG + "SMSMMSDelivery";
         public static final String SMS_OBSERVER = BASE_TAG + "SmsObserver";
-        public static final String SMS_RECEIVED_OBSERVER= BASE_TAG + "SmsRecObs";
         public static final String MMS_OBSERVER = BASE_TAG + "MmsObserver";
 
     //Activity Package
@@ -38,7 +37,7 @@ public class Tag {
     public static final String ACTION_RECEIVED_MESSAGE = "roofmessage.roofmessageapp.WEBSOCKET_RECEIVED_MESSAGE";
     public static final String ACTION_LOCAL_RECEIVED_MESSAGE = "LOCAL_WEBSOCKET_RECEIVED_MESSAGE";
     public static final String ACTION_LOCAL_SEND_MESSAGE = "ACTION_LOCAL_SEND_MESSAGE";
-    public static final String ACTION_LOCAL_INVALID_VERSION = "ACTION_LOCAL_INVALID_VERSION";
+    public static final String ACTION_FAILED_LOGIN = "ACTION_FAILED_LOGIN"; // used to post login updates to main for error messages
     public static final String ACTION_LOCAL_WEBSOC_CHANGE = "ACTION_LOCAL_WEBSOC_CHANGE";
     public static final String ACTION_LOCAL_NETWORK_CHANGE = "ACTION_LOCAL_NETWORK_CHANGE";
         //used by websocket manager to send a jso
@@ -60,7 +59,4 @@ public class Tag {
 
     //Utils Tag
     public static final String UTILS = "Utils:";
-
-    //PENDING INTENT
-//    public static final int PENDING_INTENT_CLOSE_APP = 13737;
 }

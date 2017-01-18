@@ -19,6 +19,7 @@ public class SharedPreferenceManager {
         SESSION_USERNAME,
         SESSION_PASSWORD,
         REMEMBER_ME,
+        BACKGROUND_STATE
     }
 
 
@@ -53,6 +54,12 @@ public class SharedPreferenceManager {
                 editor.putString(PreferenceKey.SESSION_PASSWORD.name(), password).commit();
     }
 
+    public boolean saveBackgroundState(boolean value) {
+        Log.d("SHARED_PREFERENCE_MANAGER","Value [" + value + "]");
+        SharedPreferences.Editor editor = preferences.edit();
+        return editor.putBoolean(PreferenceKey.BACKGROUND_STATE.name(), value).commit();
+    }
+
     public String getUsername() {
         return preferences.getString(PreferenceKey.USERNAME.name(), "");
     }
@@ -71,5 +78,9 @@ public class SharedPreferenceManager {
 
     public String getSessionPassword() {
         return preferences.getString(PreferenceKey.SESSION_PASSWORD.name(), "");
+    }
+
+    public boolean getBackgroundState () {
+        return preferences.getBoolean(PreferenceKey.BACKGROUND_STATE.name(), false);
     }
 }

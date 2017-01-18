@@ -181,13 +181,8 @@ public class WebSocketManager extends BroadcastReceiver implements Flush{
     @Override
     public boolean flush() {
         Log.d(Tag.WEB_SOC_MANAGER, "Flushing now.");
-        webSocket.disconnect();
-        while (webSocket.getState() != WebSocketState.CLOSED) {
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException e) {
-                Log.d(Tag.WEB_SOC_MANAGER, "Flush sleep interrupted.");
-            }
+        if (webSocket != null) {
+            webSocket.disconnect();
         }
         Log.d(Tag.WEB_SOC_MANAGER, "Flushing done.");
         return true;

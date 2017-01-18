@@ -43,6 +43,7 @@ public class SessionManager {
     private final int RESPONSE_OKAY = 200;
     private final int connection_timeout = 4000;
     private String version;
+    private int loginResponseCode = -1;
 
     private SessionManager(Context context) {
         this.context = context;
@@ -97,7 +98,12 @@ public class SessionManager {
         return version;
     }
 
+    public int getLoginResponseCode() {
+        return loginResponseCode;
+    }
+
     public boolean login(String username, String password) {
+        loginResponseCode = -1;
         try {
             // get content from URLConnection;
             // cookies are set by web site //TODO Fix loading in dynamic url
@@ -157,7 +163,7 @@ public class SessionManager {
                 out.write(formParameters);
                 out.close();
                 Log.d(Tag.SESSION_MANAGER, "Response on post: " + connection.getResponseCode());
-                if (connection.getResponseCode() == RESPONSE_OKAY) {
+                if ((loginResponseCode = connection.getResponseCode()) == RESPONSE_OKAY) {
                     return true;
                 } else {
                     Log.d(Tag.SESSION_MANAGER, "Response reason for failing: " + connection.getResponseMessage());
