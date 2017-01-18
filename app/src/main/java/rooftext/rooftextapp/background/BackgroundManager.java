@@ -428,7 +428,9 @@ public class BackgroundManager extends Service implements Flush {
                 case MSG_SAVE_USERNAME_PASS:
                     bundle = msg.getData();
                     user_pass = bundle.getStringArray(KEY_USERNAME_PASS);
+                    Log.d(Tag.BACKGROUND_MANAGER, "user_pass [" + user_pass + "]");
                     if (user_pass != null && user_pass.length > 1) {
+                        Log.d(Tag.BACKGROUND_MANAGER, "user [" + user_pass[0] + "] [" + user_pass[1]);
                         sharedPreferenceManager.saveUserPass(user_pass[0], user_pass[1]);
                     }
                     break;
