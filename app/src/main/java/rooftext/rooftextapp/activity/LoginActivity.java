@@ -354,7 +354,7 @@ public class LoginActivity extends AppCompatActivity {
     public void onDestroy() {
         Log.d(Tag.LOGIN_ACTIVITY,"CLOSING APP");
         bindListener.doUnbindService();
-        stopService(new Intent(LoginActivity.this, BackgroundManager.class));
+//        stopService(new Intent(LoginActivity.this, BackgroundManager.class));
         super.onDestroy();
     }
 
