@@ -72,6 +72,8 @@ public class LoginActivity extends AppCompatActivity {
         StrictMode.setThreadPolicy(policy);
         //TODO might need to change background state
 
+
+        boolean backgroundExists = false;
         //check to see if background manager has started else quit
         ActivityManager activityManager = (ActivityManager) this.getSystemService( ACTIVITY_SERVICE );
         List<ActivityManager.RunningAppProcessInfo> procInfos = activityManager.getRunningAppProcesses();
@@ -83,6 +85,8 @@ public class LoginActivity extends AppCompatActivity {
             {
                 Log.d(Tag.LOGIN_ACTIVITY, "Matched Background Service");
                 Toast.makeText(getApplicationContext(), "Background service is running", Toast.LENGTH_LONG).show();
+                backgroundExists = true;
+                break;
             }
             if (i == procInfos.size()-1) {
                 Log.d(Tag.LOGIN_ACTIVITY, "Login activity starting background manager.");
@@ -90,7 +94,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         }
 
-        if (SharedPreferenceManager.getInstance(this).getBackgroundState()) {
+        if (backgroundExists && SharedPreferenceManager.getInstance(this).getBackgroundState()) {
             //if the background service is currently running assume that we jumped back in from
             //notify, we need to continue to the next activity
             Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);

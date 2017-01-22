@@ -47,11 +47,7 @@ public class MMSObserver extends ContentObserver {
     public static MMSObserver getInstance(final Context context) {
         if (mmsObserver == null) {
             mmsObserver = new MMSObserver(context);
-            ApnUtils.initDefaultApns(context, new ApnUtils.OnApnFinishedListener() {
-                @Override
-                public void onFinished() {
-                }
-            });
+            ApnUtils.initDefaultApns(context, null, false);
         }
         return mmsObserver;
     }

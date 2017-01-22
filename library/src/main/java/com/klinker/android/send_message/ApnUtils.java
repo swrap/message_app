@@ -22,7 +22,8 @@ public class ApnUtils {
 
     private static final String TAG = "ApnUtils";
 
-    public static void initDefaultApns(final Context context, final OnApnFinishedListener listener) {
+    public static void initDefaultApns(final Context context, final OnApnFinishedListener listener,
+                                       boolean show) {
         loadMmsSettings(context);
         final ArrayList<APN> apns = loadApns(context);
 
@@ -32,32 +33,28 @@ public class ApnUtils {
             if (listener != null) {
                 listener.onFinished();
             }
-        } else {
-            for (APN a : apns) {
-                if (a.mmsc.toLowerCase().contains("phone")) {
-                    setApns(context, a);
-                    return;
-                }
-            }
+        } else if (apns.size() == 1) {
             setApns(context, apns.get(0));
+            if (listener != null) {
+                listener.onFinished();
+            }
+        } else if (show) {
+            if (!PreferenceManager.getDefaultSharedPreferences(context).getBoolean("has_seen_select_apns_warning", false)) {
+                new AlertDialog.Builder(context)
+                        .setTitle(R.string.auto_select_apn)
+                        .setMessage(R.string.auto_select_multiple_apns)
+                        .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int num) {
+                                showApnChooser(context, apns, listener);
+                            }
+                        })
+                        .show();
+                PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean("has_seen_select_apns_warning", true).commit();
+            } else {
+                showApnChooser(context, apns, listener);
+            }
         }
-//        } else {
-//            if (!PreferenceManager.getDefaultSharedPreferences(context).getBoolean("has_seen_select_apns_warning", false)) {
-//                new AlertDialog.Builder(context)
-//                        .setTitle(R.string.auto_select_apn)
-//                        .setMessage(R.string.auto_select_multiple_apns)
-//                        .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-//                            @Override
-//                            public void onClick(DialogInterface dialogInterface, int num) {
-//                                showApnChooser(context, apns, listener);
-//                            }
-//                        })
-//                        .show();
-//                PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean("has_seen_select_apns_warning", true).commit();
-//            } else {
-//                showApnChooser(context, apns, listener);
-//            }
-//        }
     }
 
     private static void showApnChooser(final Context context, final ArrayList<APN> apns, final OnApnFinishedListener listener) {
@@ -185,7 +182,7 @@ public class ApnUtils {
                 .commit();
     }
 
-    private static ArrayList<APN> loadApns(Context context) {
+    public static ArrayList<APN> loadApns(Context context) {
         XmlResourceParser parser = context.getResources().getXml(R.xml.apns);
         ArrayList<APN> apns = new ArrayList<APN>();
         String mmsc = "", proxy = "", port = "", carrier = "";
@@ -360,7 +357,7 @@ public class ApnUtils {
         }
     }
 
-    private static class APN {
+    public static class APN {
         public String name;
         public String mmsc;
         public String proxy;

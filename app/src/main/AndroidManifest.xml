@@ -25,7 +25,8 @@
 
         <service android:name="rooftext.rooftextapp.background.BackgroundManager"
             android:exported="false"
-            android:process="@string/background_process"/>
+            android:largeHeap="true"/>
+            <!--android:process="@string/background_process"/>-->
 
         <activity android:name="rooftext.rooftextapp.activity.MainActivity"
             android:title="@string/title_activity_main">

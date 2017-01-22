@@ -69,4 +69,5 @@
     <string name="invalid_user_pass">Invalid username or password</string>
     <string name="wifi_error_message">No wifi, failed to login</string>
     <string name="invalid_websocket_connect">Error with socket connect. Contact service</string>
+    <string name="change_apn">Change APN</string>
 </resources>

@@ -14,9 +14,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.klinker.android.send_message.ApnUtils;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import rooftext.rooftextapp.R;
@@ -77,6 +81,20 @@ public class MainActivity extends AppCompatActivity{
                 MainActivity.this.closeConnLogout();
             }
         });
+
+        findViewById(R.id.change_apn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ApnUtils.initDefaultApns(MainActivity.this, null, true);
+            }
+        });
+
+        ArrayList<ApnUtils.APN> apns = ApnUtils.loadApns(this);
+        if (apns != null && apns.size() > 1) {
+            ApnUtils.initDefaultApns(MainActivity.this, null, true);
+        } else {
+            findViewById(R.id.change_apn).setVisibility(View.GONE);
+        }
     }
 
     private void updateConnectionUI() {

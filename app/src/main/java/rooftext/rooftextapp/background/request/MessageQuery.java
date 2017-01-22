@@ -13,6 +13,7 @@ import android.provider.Telephony;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.Base64OutputStream;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -625,65 +626,72 @@ public class MessageQuery {
                         Log.e(Tag.MESSAGE_MANAGER, "TAG DATA [" + uri.getPath() + "]");
                         InputStream is = contentResolver.openInputStream(uri);
                         Bitmap bmp = null;
-//                                Bitmap bmp = BitmapFactory.decodeStream(is);
-//                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-//                                bmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                        ByteArrayOutputStream stream = null;
+                        Base64OutputStream base64OutputStream = null;
                         try {
-//                            final int CHUNK_SIZE = 200000;
-//                            final int size = is.available()/CHUNK_SIZE;
-//                            byte [] isB = new byte[CHUNK_SIZE];
-
                             bmp = BitmapFactory.decodeStream(is);
-                            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                            bmp.compress(Bitmap.CompressFormat.JPEG, 45, stream);
-
-                            JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.POST_DATA);
-                            jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.PART_ID.name().toLowerCase(),
-                                    partId);
-                            jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
-                                    messageId);
-                            jsonBuilder.put("end", "t");
-                            jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.DATA.name().toLowerCase(),
-                                    Base64.encodeToString(stream.toByteArray(),Base64.DEFAULT));
+                            stream = new ByteArrayOutputStream();
+                            base64OutputStream = new Base64OutputStream(stream,Base64.DEFAULT);
+                            Log.d(Tag.MESSAGE_MANAGER, "STREAM START SIZE [" + stream.size() + "][" + is.available() + "]");
+                            bmp.compress(Bitmap.CompressFormat.JPEG, 75, base64OutputStream);
+                            Log.d(Tag.MESSAGE_MANAGER, "STREAM SIZE [" + stream.size() + "][" + is.available() + "]");
+                            byte [] bytes = stream.toByteArray();
                             Log.d(Tag.MESSAGE_MANAGER, "DATA Finished compressing");
-//                                    Log.d(Tag.MESSAGE_MANAGER, "Chunk size " + CHUNK_SIZE
-//                                            + " INPUTSTREAM size: " + is.available()
-//                                            + " size: " + size);
-//                                    //send beginning
-//                                    for(int i = 0; i < size-1; i++) {
-//                                        Log.d(Tag.MESSAGE_MANAGER, "Reading byte: " + i + " of: " + size);
-//                                        is.read(isB,0,CHUNK_SIZE);
-//                                        JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.POST_DATA);
-//                                        jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
-//                                                message_id);
-//                                        jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.DATA.name().toLowerCase(),
-//                                                Base64.encode(isB, Base64.DEFAULT));
-//                                        intent.putExtra(Tag.KEY_SEND_JSON_STRING, jsonBuilder.toString());
-//                                        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-//                                    }
-//                                    //send remainder
-//                                    isB = new byte[is.available()];
-//                                    Log.d(Tag.MESSAGE_MANAGER, "Reading last byte of: " + size);
-//                                    is.read(isB,0,CHUNK_SIZE);
-//                                    JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.POST_DATA);
-//                                    jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
-//                                            message_id);
-//                                    jsonBuilder.put("finish", "true");
-//                                    jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.DATA.name().toLowerCase(),
-//                                            Base64.encode(isB, Base64.DEFAULT));
-                            intent.putExtra(Tag.KEY_SEND_JSON_STRING, jsonBuilder.toString());
-                            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-                        } catch (JSONException e) {
-                            Log.d(Tag.MESSAGE_MANAGER, "Unable to add data", e);
-//                        } catch (UnsupportedEncodingException e) {
-//                            Log.d(Tag.MESSAGE_MANAGER, "Unable to add data unsopported encoding", e);
-//                        } catch (IOException e) {
-//                            Log.d(Tag.MESSAGE_MANAGER, "Unable to add data ioexception", e);
-//                        }
-                        } finally {
+                            final int CHUNK_SIZE = 500000;
+                            final int size = bytes.length/CHUNK_SIZE;
+                            int sentSize = size+1;
+                            if (bytes.length%CHUNK_SIZE == 0) {
+                                sentSize--;
+                            }
+                            if (size > 0) {
+                                for(int i = 0; i < size; i++) {
+                                    String tempS = new String(bytes,(i*CHUNK_SIZE),CHUNK_SIZE);
+                                    Log.d(Tag.MESSAGE_MANAGER, "Reading byte: " + i + " of: " + size
+                                            + " [" + (i*CHUNK_SIZE) + "] [" + CHUNK_SIZE + "] [" + tempS.length() + "]");
+                                    JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.POST_DATA);
+                                    jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.PART_ID.name().toLowerCase(),
+                                            partId);
+                                    jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
+                                            messageId);
+                                    jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.DATA.name().toLowerCase(),
+                                            tempS);
+                                    jsonBuilder.put("order",i);
+                                    jsonBuilder.put("size",sentSize);
+                                    intent.putExtra(Tag.KEY_SEND_JSON_STRING, jsonBuilder.toString());
+                                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                                }
+                            }
+                            if (bytes.length%CHUNK_SIZE != 0) {
+                                //send remainder
+                                String tempS = new String(bytes, (size * CHUNK_SIZE), bytes.length - (size * CHUNK_SIZE));
+                                Log.d(Tag.MESSAGE_MANAGER, "Reading last byte of: " + size
+                                        + " [" + (size * CHUNK_SIZE) + "] ["
+                                        + (bytes.length - (size * CHUNK_SIZE)) + "] ["
+                                        + tempS.length() + "] [" + sentSize + "]");
+                                JSONBuilder jsonBuilder = new JSONBuilder(JSONBuilder.Action.POST_DATA);
+                                jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.PART_ID.name().toLowerCase(),
+                                        partId);
+                                jsonBuilder.put(JSONBuilder.JSON_KEY_MESSAGE_DELIVERY.MESSAGE_ID.name().toLowerCase(),
+                                        messageId);
+                                jsonBuilder.put(JSONBuilder.JSON_KEY_CONVERSATION.DATA.name().toLowerCase(),
+                                        tempS);
+                                jsonBuilder.put("order", sentSize-1);
+                                jsonBuilder.put("size", sentSize);
+                                intent.putExtra(Tag.KEY_SEND_JSON_STRING, jsonBuilder.toString());
+                                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                            }
                             if (is != null) {
                                 is.close();
                             }
+                            if (stream != null) {
+                                stream.close();
+                            }
+                            if (base64OutputStream != null) {
+                                base64OutputStream.close();
+                            }
+                        } catch (JSONException e) {
+                            Log.d(Tag.MESSAGE_MANAGER, "Unable to add data", e);
+                        } finally {
                             if (bmp != null) {
                                 bmp.recycle();
                             }
@@ -703,6 +711,7 @@ public class MessageQuery {
                             Log.d(Tag.MESSAGE_MANAGER, "Unable to finish json failed context", e);
                         }
                     }
+                    System.gc();
                 } catch (IOException e) {
                     Log.e(Tag.MESSAGE_MANAGER, "ERROR READNG DATA!!", e);
                 }
