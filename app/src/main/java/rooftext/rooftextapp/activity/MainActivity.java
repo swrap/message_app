@@ -57,23 +57,23 @@ public class MainActivity extends AppCompatActivity{
         bindListener.doBindService();
         updateConnectionUI();
 
-        ActivityManager activityManager = (ActivityManager) this.getSystemService( ACTIVITY_SERVICE );
-        List<ActivityManager.RunningAppProcessInfo> procInfos = activityManager.getRunningAppProcesses();
-        for (int i = 0; i < procInfos.size(); i++)
-        {
-            Log.d(Tag.MAIN_ACTIVITY, "Searching for Process Name [" + procInfos.get(i).processName + "] ["
-                + "rooftext.rooftextapp" + this.getString(R.string.background_process) + "]");
-            if (procInfos.get(i).processName.equals("rooftext.rooftextapp" + this.getString(R.string.background_process)))
-            {
-                Log.d(Tag.MAIN_ACTIVITY, "Matched Background Service");
-                Toast.makeText(getApplicationContext(), "Background service is running", Toast.LENGTH_LONG).show();
-                break;
-            }
-            if (i == procInfos.size()-1 ) {
-                Log.d(Tag.MAIN_ACTIVITY, "Starting Background manager");
-                startService(new Intent(this,BackgroundManager.class));
-            }
-        }
+//        ActivityManager activityManager = (ActivityManager) this.getSystemService( ACTIVITY_SERVICE );
+//        List<ActivityManager.RunningAppProcessInfo> procInfos = activityManager.getRunningAppProcesses();
+//        for (int i = 0; i < procInfos.size(); i++)
+//        {
+//            Log.d(Tag.MAIN_ACTIVITY, "Searching for Process Name [" + procInfos.get(i).processName + "] ["
+//                + "rooftext.rooftextapp" + this.getString(R.string.background_process) + "]");
+//            if (procInfos.get(i).processName.equals("rooftext.rooftextapp" + this.getString(R.string.background_process)))
+//            {
+//                Log.d(Tag.MAIN_ACTIVITY, "Matched Background Service");
+//                Toast.makeText(getApplicationContext(), "Background service is running", Toast.LENGTH_LONG).show();
+//                break;
+//            }
+//            if (i == procInfos.size()-1 ) {
+//                Log.d(Tag.MAIN_ACTIVITY, "Starting Background manager");
+//                startService(new Intent(this,BackgroundManager.class));
+//            }
+//        }
 
         findViewById(R.id.logoutBtn).setOnClickListener(new View.OnClickListener() {
             @Override

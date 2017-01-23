@@ -73,32 +73,35 @@ public class LoginActivity extends AppCompatActivity {
         //TODO might need to change background state
 
 
-        boolean backgroundExists = false;
-        //check to see if background manager has started else quit
-        ActivityManager activityManager = (ActivityManager) this.getSystemService( ACTIVITY_SERVICE );
-        List<ActivityManager.RunningAppProcessInfo> procInfos = activityManager.getRunningAppProcesses();
-        for (int i = 0; i < procInfos.size(); i++)
-        {
-            Log.d(Tag.MAIN_ACTIVITY, "Searching for Process Name [" + procInfos.get(i).processName + "] ["
-                    + "rooftext.rooftextapp" + this.getString(R.string.background_process) + "]");
-            if (procInfos.get(i).processName.equals("rooftext.rooftextapp" + this.getString(R.string.background_process)))
-            {
-                Log.d(Tag.LOGIN_ACTIVITY, "Matched Background Service");
-                Toast.makeText(getApplicationContext(), "Background service is running", Toast.LENGTH_LONG).show();
-                backgroundExists = true;
-                break;
-            }
-            if (i == procInfos.size()-1) {
-                Log.d(Tag.LOGIN_ACTIVITY, "Login activity starting background manager.");
-                startService(new Intent(this,BackgroundManager.class));
-            }
-        }
+//        boolean backgroundExists = false;
+//        //check to see if background manager has started else quit
+//        ActivityManager activityManager = (ActivityManager) this.getSystemService( ACTIVITY_SERVICE );
+//        List<ActivityManager.RunningAppProcessInfo> procInfos = activityManager.getRunningAppProcesses();
+//        for (int i = 0; i < procInfos.size(); i++)
+//        {
+//            Log.d(Tag.MAIN_ACTIVITY, "Searching for Process Name [" + procInfos.get(i).processName + "] ["
+//                    + "rooftext.rooftextapp" + this.getString(R.string.background_process) + "]");
+//            if (procInfos.get(i).processName.equals("rooftext.rooftextapp" + this.getString(R.string.background_process)))
+//            {
+//                Log.d(Tag.LOGIN_ACTIVITY, "Matched Background Service");
+//                Toast.makeText(getApplicationContext(), "Background service is running", Toast.LENGTH_LONG).show();
+//                backgroundExists = true;
+//                break;
+//            }
+//            if (i == procInfos.size()-1) {
+//                Log.d(Tag.LOGIN_ACTIVITY, "Login activity starting background manager.");
+//                startService(new Intent(this,BackgroundManager.class));
+//            }
+//        }
 
-        if (backgroundExists && SharedPreferenceManager.getInstance(this).getBackgroundState()) {
+        if (SharedPreferenceManager.getInstance(this).getBackgroundState()) {
             //if the background service is currently running assume that we jumped back in from
             //notify, we need to continue to the next activity
             Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
             LoginActivity.this.startActivityForResult(mainIntent, 55);
+        }
+        if (BackgroundManager.foreground) {
+            startService(new Intent(this,BackgroundManager.class));
         }
 
         bindListener = new BindListener(this);

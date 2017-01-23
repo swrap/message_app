@@ -5,7 +5,7 @@ package rooftext.rooftextapp.utils;
  */
 public class Tag {
 
-    public static String VERSION = "2.2.1";
+    public static String VERSION = "2.2.2";
 
     public static final boolean LOCAL_HOST = false;
 

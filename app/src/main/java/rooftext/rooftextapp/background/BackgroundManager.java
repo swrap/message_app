@@ -60,7 +60,7 @@ public class BackgroundManager extends Service implements Flush {
     private SharedPreferenceManager sharedPreferenceManager = null;
     private SessionManager sessionManager = null;
     private UserLoginTask mAuthTask;
-    private boolean foreground = false;
+    public static boolean foreground = false;
 
     private ConnectionReciever connectionReciever;
 
