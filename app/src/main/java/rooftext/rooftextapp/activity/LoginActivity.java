@@ -100,7 +100,7 @@ public class LoginActivity extends AppCompatActivity {
             Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
             LoginActivity.this.startActivityForResult(mainIntent, 55);
         }
-        if (BackgroundManager.foreground) {
+        if (!BackgroundManager.foreground) {
             startService(new Intent(this,BackgroundManager.class));
         }
 

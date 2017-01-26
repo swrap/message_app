@@ -289,6 +289,9 @@ public class BackgroundManager extends Service implements Flush {
                     }
                 }
             }
+            if (retval) {
+                sharedPreferenceManager.saveBackgroundState(true);
+            }
 
             if (retval && !foreground) {
                 //really only need this in testing when restarting service but may cause bugs, but not known at the moment
